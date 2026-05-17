@@ -1,6 +1,6 @@
 import logging
 
-from app.core.config import Config
+from ai_worker.core.config import Config
 from app.core.logger import setup_logger
 
 

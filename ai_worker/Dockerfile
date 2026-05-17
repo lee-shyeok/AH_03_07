@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --group ai --no-dev --frozen
+RUN uv sync --group ai --group app --no-dev --frozen
 
 # FastAPI app 모델 + ai_worker 소스 모두 복사 (TortoiseORM 모델 공유)
 COPY ./app ./app

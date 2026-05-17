@@ -25,3 +25,5 @@ class Config(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
     CELERY_WORKER_CONCURRENCY: int = 2
+
+    MEDIA_DIR: str = "media"

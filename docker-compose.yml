@@ -104,10 +104,11 @@ services:
     networks:
       - ws
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/6333'"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
   # 6. Nginx (웹 서버 - 요청 리버스 프록시로 전달)
   nginx:
