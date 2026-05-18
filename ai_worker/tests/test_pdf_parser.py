@@ -8,38 +8,28 @@ from ai_worker.utils.pdf_parser import (
 )
 
 
-_KOREAN_FONT_FILE = "/Library/Fonts/Arial Unicode.ttf"
-_KOREAN_FONT_NAME = "ArialUnicode"
-
-
 def _make_test_pdf(text: str, fontsize: float = 12.0) -> bytes:
     doc = fitz.open()
     page = doc.new_page()
-    page.insert_text(
-        (50, 100),
-        text,
-        fontsize=fontsize,
-        fontfile=_KOREAN_FONT_FILE,
-        fontname=_KOREAN_FONT_NAME,
-    )
+    page.insert_text((50, 100), text, fontsize=fontsize)
     return doc.tobytes()
 
 
 def test_extract_blocks_returns_text():
-    pdf_bytes = _make_test_pdf("류마티스 치료 지침")
+    pdf_bytes = _make_test_pdf("Rheumatoid treatment guidelines")
     blocks = extract_blocks(pdf_bytes)
     combined = " ".join(b.text for b in blocks)
-    assert "류마티스" in combined
+    assert "Rheumatoid" in combined
 
 
 def test_extract_blocks_page_number():
-    pdf_bytes = _make_test_pdf("테스트 텍스트")
+    pdf_bytes = _make_test_pdf("Test text")
     blocks = extract_blocks(pdf_bytes)
     assert all(b.page_number == 1 for b in blocks)
 
 
 def test_extract_blocks_font_size():
-    pdf_bytes = _make_test_pdf("헤더", fontsize=18.0)
+    pdf_bytes = _make_test_pdf("Header", fontsize=18.0)
     blocks = extract_blocks(pdf_bytes)
     assert any(b.font_size >= 18.0 for b in blocks)
 
@@ -70,7 +60,7 @@ def test_detect_section_title_no_match_returns_none():
 
 
 def test_check_pdf_safety_clean_pdf():
-    pdf_bytes = _make_test_pdf("안전한 문서")
+    pdf_bytes = _make_test_pdf("Safe document")
     check_pdf_safety(pdf_bytes)  # 예외 없이 통과
 
 
