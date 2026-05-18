@@ -37,8 +37,13 @@ def initialize(request: FixtureRequest) -> Generator[None, None]:
     try:
         with patch("tortoise.contrib.test.getDBConfig", Mock(return_value=get_test_db_config())):
             initializer(modules=TORTOISE_APP_MODELS)
-    except (ConnectionRefusedError, OSError):
-        db_available = False
+    except Exception as exc:
+        # MySQL not available (e.g. local dev without Docker) — fall back to SQLite in-memory
+        _app_models = [m for m in TORTOISE_APP_MODELS if m != "aerich.models"]
+        try:
+            initializer(modules=_app_models, db_url="sqlite://:memory:")
+        except Exception:
+            db_available = False
     yield
     if db_available:
         finalizer()
