@@ -20,11 +20,11 @@ class KnowledgeDocument(models.Model):
     source_organization = fields.CharField(max_length=100)
     published_year = fields.SmallIntField()
     error_message = fields.TextField(null=True)
-    uploaded_by_user = fields.ForeignKeyField("models.User", related_name="knowledge_documents")
+    uploaded_by_user = fields.ForeignKeyField("models.User", related_name="knowledge_documents", on_delete=fields.CASCADE)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
         table = "knowledge_base"
         unique_together = [("title", "source_organization", "published_year")]
-        indexes = [("status",), ("uploaded_by_user_id",), ("created_at",)]
+        indexes = [("status",), ("uploaded_by_user",), ("created_at",)]
