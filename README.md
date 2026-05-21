@@ -1,16 +1,93 @@
-# flutter_application_1
+# 🏥 AI 헬스케어 앱 - Flutter 프론트엔드
 
-A new Flutter project.
+> AI-HealthCare-03 | 7조 | 이승혁 담당
 
-## Getting Started
+## 📱 구현 화면
 
-This project is a starting point for a Flutter application.
+### 🔐 인증
+| 기능 | 설명 |
+|------|------|
+| 회원가입 | 이메일 인증 기반 회원가입 |
+| 로그인 | JWT 토큰 기반 로그인 |
+| 로그아웃 | 토큰 만료 처리 |
 
-A few resources to get you started if this is your first Flutter project:
+### 🏠 메인
+| 기능 | 설명 |
+|------|------|
+| 대시보드 | 오늘의 복약, 최근 진료기록, 안내문 요약 |
+| AI 건강 챗봇 | 건강 관련 질문 챗봇 |
+| 챗봇 대화 내역 | 세션별 대화 내역 조회 |
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 📋 진료기록
+| 기능 | 설명 |
+|------|------|
+| 진료기록 목록 | 전체 진료기록 조회 |
+| 진료기록 상세 | 진료기록 상세 조회 |
+| 진료기록 직접 입력 | 병원명, 진단명, 메모 직접 입력 |
+| 진료기록 수정 | 기존 진료기록 수정 |
+| 진료기록 삭제 | 진료기록 삭제 |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 📄 OCR
+| 기능 | 설명 |
+|------|------|
+| 의료문서 업로드 | 이미지/PDF 업로드 |
+| OCR 결과 검토 | OCR 결과 수정 및 확정 |
+| OCR 처리 내역 | 업로드한 의료문서 목록 조회 |
+
+### 📖 안내문
+| 기능 | 설명 |
+|------|------|
+| 안내문 목록 | 전체 안내문 조회 |
+| 안내문 상세 | 복약/생활습관/주의사항/권장검사 |
+| 안내문 재생성 | 최신 진료기록 기반 재생성 |
+| 안내문 평가 | 별점 + 코멘트 피드백 |
+
+### 🔔 알림
+| 기능 | 설명 |
+|------|------|
+| 알림 목록 | 전체 알림 조회 |
+| 복약 알림 설정 | 약품별 알림 시각/채널 설정 |
+| 알림 ON/OFF | 알림 유형별 활성화/비활성화 |
+
+### 👤 마이페이지
+| 기능 | 설명 |
+|------|------|
+| 내 정보 조회 | 프로필 정보 조회 |
+| 프로필 수정 | 이름, 휴대폰 수정 |
+| 비밀번호 변경 | 현재/새 비밀번호 변경 |
+| 콘텐츠 변환 내역 | 카드뉴스/TTS 변환 내역 |
+| 약품 이미지 인식 | 약품 사진으로 약품 검색 |
+| 회원탈퇴 | 계정 삭제 |
+
+## 🛠 기술 스택
+
+```
+Flutter (Dart)
+├── http: ^1.2.0          # API 통신
+├── flutter_secure_storage # JWT 토큰 저장
+├── image_picker: ^1.0.7   # 이미지 선택
+├── http_parser: ^4.0.0    # 파일 업로드
+└── intl                   # 날짜 포맷
+```
+
+## 🚀 실행 방법
+
+### 1. 백엔드 서버 실행
+```bash
+cd PythonProject
+# envs/.local.env 파일 생성 후
+docker compose up -d --build
+```
+
+### 2. Flutter 실행
+```bash
+cd flutter_application_1
+flutter pub get
+flutter run
+```
+
+## 📡 API 연동
+
+- Base URL: `http://localhost/api`
+- 인증: Bearer JWT Token
+- 백엔드: FastAPI + MySQL + Redis
