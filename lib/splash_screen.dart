@@ -7,6 +7,7 @@ import 'services/auth_service.dart';
 import 'main.dart';
 import 'login_page.dart';
 import 'onboarding_page.dart';
+import 'home_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,6 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _animController;
   late final Animation<double> _fadeAnim;
   late final AuthService _authService;
+  late final SecureTokenStorage _tokenStorage;
   Timer? _minTimer;
   bool _minTimerDone = false;
   bool _authCheckDone = false;
@@ -43,13 +45,11 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeIn,
-    );
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeIn);
     _animController.forward();
 
-    _authService = AuthService(tokenStorage: SecureTokenStorage());
+    _tokenStorage = SecureTokenStorage();
+    _authService = AuthService(tokenStorage: _tokenStorage);
 
     _minTimer = Timer(const Duration(milliseconds: _minSplashMs), () {
       _minTimerDone = true;
@@ -62,12 +62,26 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkStatus() async {
     try {
       final storage = const FlutterSecureStorage();
-      final results = await Future.wait([
-        _authService.isLoggedIn(),
-        storage.read(key: 'onboarding_done').then((v) => v == 'true'),
-      ]);
-      _isLoggedIn = results[0] as bool;
-      _hasSeenOnboarding = results[1] as bool;
+      final onboardingDone =
+          await storage.read(key: 'onboarding_done').then((v) => v == 'true');
+      _hasSeenOnboarding = onboardingDone;
+
+      // 토큰 존재 여부 먼저 확인
+      final accessToken = await _tokenStorage.getAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        _isLoggedIn = false;
+      } else {
+        // 실제 API 호출로 토큰 유효성 검증
+        try {
+          final isLoggedIn = await _authService.isLoggedIn()
+              .timeout(const Duration(seconds: 5));
+          _isLoggedIn = isLoggedIn;
+        } catch (_) {
+          // 네트워크 오류 or 토큰 만료 → 토큰 삭제 후 로그인으로
+          await _tokenStorage.deleteAll();
+          _isLoggedIn = false;
+        }
+      }
     } catch (_) {
       _isLoggedIn = false;
       _hasSeenOnboarding = false;
@@ -93,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
     } else if (_isLoggedIn == true) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const MainPage(),
+          pageBuilder: (_, __, ___) => const HomePage(),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
@@ -107,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
               if (!mounted) return;
               Navigator.of(context).pushReplacement(
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const MainPage(),
+                  pageBuilder: (_, __, ___) => const HomePage(),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),
                   transitionDuration: const Duration(milliseconds: 400),
@@ -166,10 +180,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 8),
               const Text(
                 '복약을 한눈에',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'services/auth_service.dart';
 import 'services/ocr_service.dart';
 import 'main.dart';
 import 'signup_page.dart';
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -70,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const MainPage(),
+            pageBuilder: (_, __, ___) => const HomePage(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 400),

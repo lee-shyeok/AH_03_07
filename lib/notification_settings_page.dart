@@ -1,840 +1,777 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/cupertino.dart';
+import '../services/notification_service.dart';
+import '../services/ocr_service.dart';
+import 'services/notification_service.dart';
 import 'services/ocr_service.dart';
-import 'main.dart';
-import 'login_page.dart';
+
+// ════════════════════════════════════════════════════════════
+// REQ-NOTI-001: 복약 알림 설정
+// ════════════════════════════════════════════════════════════
 
 class NotificationSettingsPage extends StatefulWidget {
-  const NotificationSettingsPage({super.key});
+  final TokenStorage tokenStorage;
+  final String medicationId;
+  final String medicationName;
+  final String? medicationType; // "자가면역" 등
+
+  const NotificationSettingsPage({
+    super.key,
+    required this.tokenStorage,
+    required this.medicationId,
+    required this.medicationName,
+    this.medicationType,
+  });
 
   @override
   State<NotificationSettingsPage> createState() =>
       _NotificationSettingsPageState();
 }
 
-class _NotificationSettingsPageState
-    extends State<NotificationSettingsPage> {
-  final _client = http.Client();
+class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
+  late final NotificationService _service;
 
-  bool _isLoading = true;
-  bool _isSaving = false;
+  // ── 상태 ──
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
 
-  List<Map<String, dynamic>> _reminders = [];
-  bool _medicationEnabled = true;
-  bool _guideEnabled = true;
-  bool _appEnabled = true;
-  bool _emailEnabled = false;
+  // 알림 설정 값
+  bool _isEnabled = true;
+  TimeOfDay _alertTime = const TimeOfDay(hour: 9, minute: 0);
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now().add(const Duration(days: 90));
+  final List<String> _weekdays = []; // 빈 배열 = 매일
+  final Set<String> _channels = {'push'};
+  bool _preAlertEnabled = false;
+  bool _missedAlertEnabled = false;
+
+  static const _weekdayLabels = ['월', '화', '수', '목', '금', '토', '일'];
+  static const _weekdayCodes = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
   @override
   void initState() {
     super.initState();
+    _service = NotificationService(tokenStorage: widget.tokenStorage);
     _loadSettings();
   }
 
   @override
   void dispose() {
-    _client.close();
+    _service.dispose();
     super.dispose();
   }
 
-  Future<String?> _getToken() async {
-    return SecureTokenStorage().getAccessToken();
-  }
-
-  void _handleUnauthorized() {
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginPage(
-          onLoginSuccess: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
-                transitionsBuilder: (_, anim, __, child) =>
-                    FadeTransition(opacity: anim, child: child),
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-              (route) => false,
-            );
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-      (route) => false,
-    );
-  }
-
-  // 알림 설정 + 복약 알림 목록 동시 로드
   Future<void> _loadSettings() async {
-    setState(() => _isLoading = true);
-
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('토큰 없음');
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-
-      // 알림 설정 조회
-      final settingResponse = await _client.get(
-        Uri.parse('${OcrConfig.baseUrl}/v1/notification-settings'),
-        headers: headers,
-      ).timeout(OcrConfig.timeoutDuration);
-
-      // 복약 알림 목록 조회
-      final reminderResponse = await _client.get(
-        Uri.parse('${OcrConfig.baseUrl}/v1/reminders'),
-        headers: headers,
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (settingResponse.statusCode == 401 ||
-          reminderResponse.statusCode == 401) {
-        _handleUnauthorized();
-        return;
-      }
-
-      if (settingResponse.statusCode == 200) {
-        final data = jsonDecode(settingResponse.body);
+      final settings = await _service.getSettings();
+      final existing = settings.where(
+        (s) => s.medicationId == widget.medicationId,
+      );
+      if (existing.isNotEmpty) {
+        final s = existing.first;
+        final parts = s.alertTime.split(':');
         setState(() {
-          _medicationEnabled = data['medication_enabled'] ?? true;
-          _guideEnabled = data['guide_enabled'] ?? true;
-          _appEnabled = data['app_enabled'] ?? true;
-          _emailEnabled = data['email_enabled'] ?? false;
+          _isEnabled = s.isEnabled;
+          _alertTime = TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 9,
+            minute: int.tryParse(parts[1]) ?? 0,
+          );
+          if (s.startDate.isNotEmpty) {
+            _startDate = DateTime.tryParse(s.startDate) ?? _startDate;
+          }
+          if (s.endDate.isNotEmpty) {
+            _endDate = DateTime.tryParse(s.endDate) ?? _endDate;
+          }
+          _weekdays
+            ..clear()
+            ..addAll(s.weekdays);
+          _channels
+            ..clear()
+            ..addAll(s.channels);
+          _preAlertEnabled = s.preAlertEnabled;
+          _missedAlertEnabled = s.missedAlertEnabled;
         });
       }
-
-      if (reminderResponse.statusCode == 200) {
-        final data = jsonDecode(reminderResponse.body);
-        setState(() {
-          _reminders = List<Map<String, dynamic>>.from(
-              data['items'] ?? []);
-        });
-      }
-
-      setState(() => _isLoading = false);
+    } on AuthException catch (e) {
+      if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showSnackBar('설정을 불러오지 못했습니다.');
-    }
-  }
-
-  // 복약 알림 등록 (POST /v1/reminders)
-  Future<void> _saveReminder(Map<String, dynamic> reminder) async {
-    setState(() => _isSaving = true);
-
-    try {
-      final token = await _getToken();
-      if (token == null) throw Exception('토큰 없음');
-
-      final response = await _client.post(
-        Uri.parse('${OcrConfig.baseUrl}/v1/reminders'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(reminder),
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 201) {
-        _showSnackBar('복약 알림이 저장됐습니다.');
-        _loadSettings();
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
-      } else {
-        _showSnackBar('저장에 실패했습니다.');
-      }
-    } catch (_) {
-      if (!mounted) return;
-      _showSnackBar('네트워크 오류가 발생했습니다.');
+      // 설정 없으면 기본값 사용
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  // 복약 알림 삭제 (DELETE /v1/reminders/{id})
-  Future<void> _deleteReminder(int id) async {
+  Future<void> _save() async {
+    setState(() => _saving = true);
     try {
-      final token = await _getToken();
-      if (token == null) return;
-
-      final response = await _client.delete(
-        Uri.parse('${OcrConfig.baseUrl}/v1/reminders/$id'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 204) {
-        setState(() => _reminders.removeWhere((r) => r['id'] == id));
-        _showSnackBar('알림이 삭제됐습니다.');
-      } else {
-        _showSnackBar('삭제에 실패했습니다.');
+      final setting = NotificationSetting(
+        medicationId: widget.medicationId,
+        medicationName: widget.medicationName,
+        isEnabled: _isEnabled,
+        alertTime:
+            '${_alertTime.hour.toString().padLeft(2, '0')}:${_alertTime.minute.toString().padLeft(2, '0')}',
+        startDate:
+            '${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}',
+        endDate:
+            '${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}',
+        weekdays: List.from(_weekdays),
+        channels: _channels.toList(),
+        preAlertEnabled: _preAlertEnabled,
+        missedAlertEnabled: _missedAlertEnabled,
+      );
+      await _service.saveSettings(setting);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('알림 설정이 저장됐습니다.'),
+            backgroundColor: Color(0xFF2ECC71),
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
       }
     } catch (_) {
-      if (!mounted) return;
-      _showSnackBar('오류가 발생했습니다.');
-    }
-  }
-
-  // 알림 설정 ON/OFF (PATCH /v1/notification-settings)
-  Future<void> _updateSetting(String key, bool value) async {
-    try {
-      final token = await _getToken();
-      if (token == null) return;
-
-      final response = await _client.patch(
-        Uri.parse('${OcrConfig.baseUrl}/v1/notification-settings'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({key: value}),
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 401) {
-        _handleUnauthorized();
-      } else if (response.statusCode != 200) {
-        _showSnackBar('설정 변경에 실패했습니다.');
-        // 실패 시 원래 값으로 되돌리기
-        setState(() {
-          if (key == 'medication_enabled') _medicationEnabled = !value;
-          if (key == 'guide_enabled') _guideEnabled = !value;
-          if (key == 'app_enabled') _appEnabled = !value;
-          if (key == 'email_enabled') _emailEnabled = !value;
-        });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('저장 중 오류가 발생했습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    } catch (_) {
-      if (!mounted) return;
-      _showSnackBar('오류가 발생했습니다.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _showAddReminderDialog() {
-    final drugNameController = TextEditingController();
-    final timeController = TextEditingController(text: '08:00');
-    List<String> selectedChannels = ['app'];
-
-    showModalBottomSheet(
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('복약 알림 추가',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // 약품명
-              const Text('약품명',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: drugNameController,
-                decoration: InputDecoration(
-                  hintText: '약품명 입력',
-                  hintStyle:
-                      const TextStyle(color: Colors.grey, fontSize: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFFF8C00)),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 알림 시각
-              const Text('알림 시각',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                    builder: (ctx, child) => Theme(
-                      data: Theme.of(ctx).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: Color(0xFFFF8C00),
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (picked != null) {
-                    setModalState(() {
-                      timeController.text =
-                          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.access_time,
-                          color: Color(0xFFFF8C00), size: 20),
-                      const SizedBox(width: 8),
-                      Text(timeController.text,
-                          style: const TextStyle(
-                              fontSize: 16, color: Colors.black87)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 알림 채널
-              const Text('알림 채널',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildChannelChip(
-                    label: '앱 알림',
-                    value: 'app',
-                    selected: selectedChannels.contains('app'),
-                    onTap: () => setModalState(() {
-                      selectedChannels.contains('app')
-                          ? selectedChannels.remove('app')
-                          : selectedChannels.add('app');
-                    }),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildChannelChip(
-                    label: '이메일',
-                    value: 'email',
-                    selected: selectedChannels.contains('email'),
-                    onTap: () => setModalState(() {
-                      selectedChannels.contains('email')
-                          ? selectedChannels.remove('email')
-                          : selectedChannels.add('email');
-                    }),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildChannelChip(
-                    label: 'SMS',
-                    value: 'sms',
-                    selected: selectedChannels.contains('sms'),
-                    onTap: () => setModalState(() {
-                      selectedChannels.contains('sms')
-                          ? selectedChannels.remove('sms')
-                          : selectedChannels.add('sms');
-                    }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // 저장 버튼
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (drugNameController.text.trim().isEmpty) {
-                      _showSnackBar('약품명을 입력해주세요.');
-                      return;
-                    }
-                    if (selectedChannels.isEmpty) {
-                      _showSnackBar('알림 채널을 하나 이상 선택해주세요.');
-                      return;
-                    }
-                    Navigator.pop(context);
-                    _saveReminder({
-                      'drug_name': drugNameController.text.trim(),
-                      'remind_times': [timeController.text],
-                      'start_date': DateTime.now()
-                          .toIso8601String()
-                          .split('T')[0],
-                      'weekdays': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-                      'channels': List<String>.from(selectedChannels),
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF8C00),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: const Text('저장',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
+      initialTime: _alertTime,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+        child: child!,
       ),
     );
+    if (picked != null) setState(() => _alertTime = picked);
   }
 
-  Widget _buildChannelChip({
-    required String label,
-    required String value,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFFF8C00).withOpacity(0.1)
-              : Colors.grey.shade100,
-          border: Border.all(
-            color: selected
-                ? const Color(0xFFFF8C00)
-                : Colors.grey.shade300,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? const Color(0xFFFF8C00) : Colors.grey,
-            fontSize: 13,
-            fontWeight:
-                selected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
+  Future<void> _pickDate({required bool isStart}) async {
+    final initial = isStart ? _startDate : _endDate;
+    final first = isStart ? DateTime(2020) : _startDate;
+    final last = DateTime(2030);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      locale: const Locale('ko'),
     );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+          if (_endDate.isBefore(_startDate)) _endDate = _startDate;
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
   }
+
+  String _formatDate(DateTime d) =>
+      '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
+
+  String _formatTime(TimeOfDay t) {
+    final h = t.hour;
+    final m = t.minute.toString().padLeft(2, '0');
+    final period = h < 12 ? '오전' : '오후';
+    final hour12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '$period $hour12:$m';
+  }
+
+  String _weekdaySummary() {
+    if (_weekdays.isEmpty) return '매일';
+    final sorted = _weekdays
+        .map((c) => _weekdayCodes.indexOf(c))
+        .where((i) => i >= 0)
+        .toList()
+      ..sort();
+    return sorted.map((i) => '${_weekdayLabels[i]}요일').join(', ');
+  }
+
+  // ── 색상 상수 ──
+  static const _green = Color(0xFF2ECC71);
+  static const _greenLight = Color(0xFFE8F8F0);
+  static const _greenBorder = Color(0xFFB7EACF);
+  static const _bg = Color(0xFFF8FAF8);
+  static const _cardBg = Colors.white;
+  static const _textPrimary = Color(0xFF1A1A1A);
+  static const _textSecondary = Color(0xFF888888);
+  static const _divider = Color(0xFFF0F0F0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _bg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios,
-              color: Colors.black87, size: 20),
+          icon: const Icon(Icons.chevron_left, color: _textPrimary, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          '알림 설정',
+          '복약 알림 설정',
           style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+            color: _textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: false,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                  color: Color(0xFFFF8C00)))
-          : RefreshIndicator(
-              color: const Color(0xFFFF8C00),
-              onRefresh: _loadSettings,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // 복약 알림 섹션
-                  _buildSectionHeader(
-                    title: '복약 알림',
-                    icon: Icons.medication_outlined,
-                    trailing: _isSaving
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: _green))
+          : _error != null
+              ? _buildError()
+              : _buildBody(),
+      bottomNavigationBar: _loading || _error != null
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green,
+                      disabledBackgroundColor: _green.withOpacity(0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: _saving
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: 22,
+                            height: 22,
                             child: CircularProgressIndicator(
-                              color: Color(0xFFFF8C00),
-                              strokeWidth: 2,
+                              color: Colors.white,
+                              strokeWidth: 2.5,
                             ),
                           )
-                        : IconButton(
-                            icon: const Icon(
-                                Icons.add_circle_outline,
-                                color: Color(0xFFFF8C00)),
-                            onPressed: _showAddReminderDialog,
-                          ),
-                  ),
-                  const SizedBox(height: 8),
-                  _reminders.isEmpty
-                      ? _buildEmptyReminder()
-                      : Column(
-                          children: _reminders
-                              .map((r) => _buildReminderCard(r))
-                              .toList(),
-                        ),
-
-                  const SizedBox(height: 20),
-
-                  // 알림 채널 설정
-                  _buildSectionHeader(
-                    title: '알림 채널 설정',
-                    icon: Icons.notifications_outlined,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildToggleCard(
-                    title: '앱 알림',
-                    subtitle: '앱 내 푸시 알림',
-                    value: _appEnabled,
-                    onChanged: (v) {
-                      setState(() => _appEnabled = v);
-                      _updateSetting('app_enabled', v);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  _buildToggleCard(
-                    title: '가이드 알림',
-                    subtitle: '새 건강 가이드 업데이트 시 알림',
-                    value: _guideEnabled,
-                    onChanged: (v) {
-                      setState(() => _guideEnabled = v);
-                      _updateSetting('guide_enabled', v);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  _buildToggleCard(
-                    title: '복약 알림',
-                    subtitle: '복약 시간 알림 활성화',
-                    value: _medicationEnabled,
-                    onChanged: (v) {
-                      setState(() => _medicationEnabled = v);
-                      _updateSetting('medication_enabled', v);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  _buildToggleCard(
-                    title: '이메일 알림',
-                    subtitle: '이메일로 알림 받기',
-                    value: _emailEnabled,
-                    onChanged: (v) {
-                      setState(() => _emailEnabled = v);
-                      _updateSetting('email_enabled', v);
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // 안내 문구
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color:
-                          const Color(0xFFFF8C00).withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFFF8C00).withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline,
-                            color: Color(0xFFFF8C00), size: 18),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            '모든 알림은 사용자 동의 기반으로 활성화·해제됩니다.',
+                        : const Text(
+                            '저장하기',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              height: 1.5,
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
                   ),
-                  const SizedBox(height: 16),
-                ],
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildSectionHeader({
-    required String title,
-    required IconData icon,
-    Widget? trailing,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFFFF8C00), size: 20),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const Spacer(),
-        if (trailing != null) trailing,
-      ],
-    );
-  }
-
-  Widget _buildEmptyReminder() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildError() {
+    return Center(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.notifications_off_outlined,
-              size: 40, color: Colors.grey.shade300),
-          const SizedBox(height: 12),
-          const Text('등록된 복약 알림이 없습니다.',
-              style: TextStyle(color: Colors.grey, fontSize: 14)),
-          const SizedBox(height: 4),
-          const Text('+ 버튼을 눌러 알림을 추가해보세요.',
-              style: TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(_error!, style: const TextStyle(color: _textSecondary)),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _error = null;
+                _loading = true;
+              });
+              _loadSettings();
+            },
+            child: const Text('다시 시도', style: TextStyle(color: _green)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildReminderCard(Map<String, dynamic> reminder) {
-    final id = reminder['id'] as int? ?? 0;
-    final drugName = reminder['drug_name'] as String? ?? '약품명 없음';
-    final remindTimes = (reminder['remind_times'] as List?)
-            ?.cast<String>() ??
-        [];
-    final channels =
-        (reminder['channels'] as List?)?.cast<String>() ?? [];
-    final isActive = reminder['is_active'] as bool? ?? true;
+  Widget _buildBody() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── 약품 헤더 카드 ──
+          _buildMedCard(),
+          const SizedBox(height: 24),
 
-    const channelLabels = {
-      'app': '앱',
-      'email': '이메일',
-      'sms': 'SMS',
-      'kakao': '카카오',
-    };
+          // ── 알림 설정 ──
+          _sectionLabel('알림 설정'),
+          const SizedBox(height: 8),
+          _buildSettingsCard([
+            _buildToggleRow(
+              label: '알림 받기',
+              value: _isEnabled,
+              onChanged: (v) => setState(() => _isEnabled = v),
+            ),
+            _buildDivider(),
+            _buildTapRow(
+              label: '알림 시간',
+              trailing: Text(
+                _formatTime(_alertTime),
+                style: const TextStyle(
+                  color: _green,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: _isEnabled ? _pickTime : null,
+            ),
+            _buildDivider(),
+            _buildTapRow(
+              label: '반복',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _weekdaySummary(),
+                    style: const TextStyle(
+                      color: _green,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down,
+                      color: _green, size: 18),
+                ],
+              ),
+              onTap: _isEnabled ? _showWeekdayPicker : null,
+            ),
+          ]),
+          const SizedBox(height: 20),
 
+          // ── 기간 설정 ──
+          _sectionLabel('복약 기간'),
+          const SizedBox(height: 8),
+          _buildSettingsCard([
+            _buildTapRow(
+              label: '시작일',
+              trailing: Text(
+                _formatDate(_startDate),
+                style: const TextStyle(
+                  color: _green,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: _isEnabled ? () => _pickDate(isStart: true) : null,
+            ),
+            _buildDivider(),
+            _buildTapRow(
+              label: '종료일',
+              trailing: Text(
+                _formatDate(_endDate),
+                style: const TextStyle(
+                  color: _green,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: _isEnabled ? () => _pickDate(isStart: false) : null,
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ── 알림 옵션 ──
+          _sectionLabel('알림 옵션'),
+          const SizedBox(height: 8),
+          _buildSettingsCard([
+            _buildToggleRowWithSub(
+              label: '5분 전 미리 알림',
+              sub: '복용 시간 5분 전 추가 알림',
+              value: _preAlertEnabled,
+              onChanged: _isEnabled
+                  ? (v) => setState(() => _preAlertEnabled = v)
+                  : null,
+            ),
+            _buildDivider(),
+            _buildToggleRowWithSub(
+              label: '미복용 시 재알림',
+              sub: '30분 후 재알림',
+              value: _missedAlertEnabled,
+              onChanged: _isEnabled
+                  ? (v) => setState(() => _missedAlertEnabled = v)
+                  : null,
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ── 알림 채널 ──
+          _sectionLabel('알림 채널'),
+          const SizedBox(height: 8),
+          _buildSettingsCard([
+            _buildCheckRow(
+              label: '앱 푸시',
+              checked: _channels.contains('push'),
+              onTap: _isEnabled
+                  ? () => _toggleChannel('push')
+                  : null,
+            ),
+            _buildDivider(),
+            _buildCheckRow(
+              label: '카카오톡',
+              checked: _channels.contains('kakao'),
+              onTap: _isEnabled
+                  ? () => _toggleChannel('kakao')
+                  : null,
+            ),
+            _buildDivider(),
+            _buildCheckRow(
+              label: '이메일',
+              checked: _channels.contains('email'),
+              onTap: _isEnabled
+                  ? () => _toggleChannel('email')
+                  : null,
+            ),
+          ]),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  void _toggleChannel(String channel) {
+    setState(() {
+      if (_channels.contains(channel)) {
+        if (_channels.length > 1) _channels.remove(channel);
+      } else {
+        _channels.add(channel);
+      }
+    });
+  }
+
+  void _showWeekdayPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '반복 요일',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '선택하지 않으면 매일 알림을 받습니다.',
+                    style: TextStyle(fontSize: 13, color: _textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (i) {
+                      final code = _weekdayCodes[i];
+                      final selected = _weekdays.contains(code);
+                      return GestureDetector(
+                        onTap: () {
+                          setInner(() {
+                            if (selected) {
+                              _weekdays.remove(code);
+                            } else {
+                              _weekdays.add(code);
+                            }
+                          });
+                          setState(() {});
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: selected ? _green : _bg,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: selected ? _green : const Color(0xFFDDDDDD),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _weekdayLabels[i],
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: selected ? Colors.white : _textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        '확인',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── 공통 위젯 ──
+
+  Widget _buildMedCard() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
       ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: isActive
-                  ? const Color(0xFFFF8C00).withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+              color: const Color(0xFFF0E8FF),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.access_alarm,
-                color: isActive
-                    ? const Color(0xFFFF8C00)
-                    : Colors.grey,
-                size: 22),
+            child: const Icon(Icons.medication_rounded,
+                color: Color(0xFF7C5CCF), size: 26),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(drugName,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-                const SizedBox(height: 4),
                 Text(
-                  remindTimes.join(', '),
+                  widget.medicationName,
                   style: const TextStyle(
-                      fontSize: 13, color: Colors.grey),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 4,
-                  children: channels
-                      .map((c) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF8C00)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              channelLabels[c] ?? c,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFFFF8C00)),
-                            ),
-                          ))
-                      .toList(),
-                ),
+                if (widget.medicationType != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF7C5CCF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      widget.medicationType!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline,
-                color: Colors.grey.shade400),
-            onPressed: () => _showDeleteConfirm(id, drugName),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildToggleCard({
-    required String title,
-    required String subtitle,
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        color: _textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(height: 1, thickness: 1, color: _divider,
+        indent: 16, endIndent: 16);
+  }
+
+  Widget _buildToggleRow({
+    required String label,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: _textPrimary)),
+          CupertinoSwitch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: _green,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildToggleRowWithSub({
+    required String label,
+    required String sub,
+    required bool value,
+    ValueChanged<bool>? onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(label,
                     style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87)),
+                        fontWeight: FontWeight.w500,
+                        color: _textPrimary)),
                 const SizedBox(height: 2),
-                Text(subtitle,
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade500)),
+                Text(sub,
+                    style: const TextStyle(
+                        fontSize: 12, color: _textSecondary)),
               ],
             ),
           ),
-          Switch(
+          CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFFFF8C00),
+            activeColor: _green,
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirm(int id, String drugName) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: const Text('알림 삭제',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('$drugName 알림을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소',
-                style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteReminder(id);
-            },
-            child: const Text('삭제',
-                style: TextStyle(color: Colors.red)),
-          ),
-        ],
+  Widget _buildTapRow({
+    required String label,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: onTap != null ? _textPrimary : _textSecondary)),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckRow({
+    required String label,
+    required bool checked,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: onTap != null ? _textPrimary : _textSecondary)),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: checked ? _green : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                    color: checked ? _green : const Color(0xFFCCCCCC),
+                    width: 1.5),
+              ),
+              child: checked
+                  ? const Icon(Icons.check, color: Colors.white, size: 15)
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }

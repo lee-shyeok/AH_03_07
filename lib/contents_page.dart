@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'services/ocr_service.dart';
 import 'main.dart';
 import 'login_page.dart';
+import 'home_page.dart';
 
 class ContentsPage extends StatefulWidget {
   const ContentsPage({super.key});
@@ -43,7 +44,7 @@ class _ContentsPageState extends State<ContentsPage> {
           onLoginSuccess: () {
             Navigator.of(context).pushAndRemoveUntil(
               PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
+                pageBuilder: (_, __, ___) => const HomePage(),
                 transitionsBuilder: (_, anim, __, child) =>
                     FadeTransition(opacity: anim, child: child),
                 transitionDuration: const Duration(milliseconds: 400),

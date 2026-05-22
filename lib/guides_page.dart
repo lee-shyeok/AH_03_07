@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'services/ocr_service.dart';
 import 'main.dart';
 import 'login_page.dart';
+import 'home_page.dart';
 
 class GuidesPage extends StatefulWidget {
   const GuidesPage({super.key});
@@ -87,7 +88,7 @@ class _GuidesPageState extends State<GuidesPage> {
           onLoginSuccess: () {
             Navigator.of(context).pushAndRemoveUntil(
               PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
+                pageBuilder: (_, __, ___) => const HomePage(),
                 transitionsBuilder: (_, anim, __, child) =>
                     FadeTransition(opacity: anim, child: child),
                 transitionDuration: const Duration(milliseconds: 400),

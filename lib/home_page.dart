@@ -8,6 +8,7 @@ import 'medical_records_page.dart';
 import 'guides_page.dart';
 import 'notifications_page.dart';
 import 'my_page.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,23 +18,26 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+  int _currentIndex = 2; // 홈이 가운데(index 2)
   bool _isLoggingOut = false;
   late final AuthService _authService;
+  late final List<Widget> _pages;
   DateTime? _lastBackPressed;
-
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    MedicalRecordsPage(),
-    GuidesPage(),
-    NotificationsPage(),
-    MyPage(),
-  ];
 
   @override
   void initState() {
     super.initState();
     _authService = AuthService(tokenStorage: SecureTokenStorage());
+    _pages = [
+      const MedicalRecordsPage(),  // 기록 (index 0)
+      const ChatPage(),             // 챗봇 (index 1)
+      const DashboardPage(),        // 홈 (index 2)
+      const NotificationsPage(),    // 알림 (index 3)
+      MyPage(
+        tokenStorage: SecureTokenStorage(),
+        onLogout: _handleLogout,
+      ),                            // 마이 (index 4)
+    ];
   }
 
   @override
@@ -44,40 +48,12 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _handleLogout() async {
     if (_isLoggingOut) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('로그아웃'),
-        content: const Text('로그아웃 하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              '로그아웃',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
     setState(() => _isLoggingOut = true);
-
     try {
       await _authService.logout();
     } catch (_) {}
-
     if (!mounted) return;
-
     setState(() => _isLoggingOut = false);
-
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => LoginPage(
@@ -102,11 +78,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<bool> _onWillPop() async {
-    if (_currentIndex != 0) {
-      setState(() => _currentIndex = 0);
+    if (_currentIndex != 2) {
+      setState(() => _currentIndex = 2);
       return false;
     }
-
     final now = DateTime.now();
     if (_lastBackPressed == null ||
         now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
@@ -137,7 +112,7 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFFFF8C00),
+          selectedItemColor: const Color(0xFF2ECC71),
           unselectedItemColor: Colors.grey,
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.bold,
@@ -146,34 +121,29 @@ class _HomePageState extends State<HomePage> {
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: const [
             BottomNavigationBarItem(
+              icon: Icon(Icons.monitor_heart_outlined),
+              activeIcon: Icon(Icons.monitor_heart),
+              label: '기록',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              activeIcon: Icon(Icons.chat_bubble),
+              label: '챗봇',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
               label: '홈',
-              tooltip: '홈',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.medical_services_outlined),
-              activeIcon: Icon(Icons.medical_services),
-              label: '진료기록',
-              tooltip: '진료기록',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              activeIcon: Icon(Icons.article),
-              label: '안내문',
-              tooltip: '안내문',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.notifications_outlined),
               activeIcon: Icon(Icons.notifications),
               label: '알림',
-              tooltip: '알림',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outlined),
+              icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: '마이페이지',
-              tooltip: '마이페이지',
+              label: '마이',
             ),
           ],
         ),

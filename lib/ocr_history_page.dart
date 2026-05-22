@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'services/ocr_service.dart';
 import 'main.dart';
 import 'login_page.dart';
+import 'home_page.dart';
 
 class OcrHistoryPage extends StatefulWidget {
   const OcrHistoryPage({super.key});
@@ -42,7 +43,7 @@ class _OcrHistoryPageState extends State<OcrHistoryPage> {
           onLoginSuccess: () {
             Navigator.of(context).pushAndRemoveUntil(
               PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
+                pageBuilder: (_, __, ___) => const HomePage(),
                 transitionsBuilder: (_, anim, __, child) =>
                     FadeTransition(opacity: anim, child: child),
                 transitionDuration: const Duration(milliseconds: 400),

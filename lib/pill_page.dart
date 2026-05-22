@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'services/ocr_service.dart';
 import 'main.dart';
 import 'login_page.dart';
+import 'home_page.dart';
 
 // ── 약품 이미지 업로드 (REQ-PILL-001) ────────────────────
 class PillRecognizePage extends StatefulWidget {
@@ -41,7 +42,7 @@ class _PillRecognizePageState extends State<PillRecognizePage> {
           onLoginSuccess: () {
             Navigator.of(context).pushAndRemoveUntil(
               PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
+                pageBuilder: (_, __, ___) => const HomePage(),
                 transitionsBuilder: (_, anim, __, child) =>
                     FadeTransition(opacity: anim, child: child),
                 transitionDuration: const Duration(milliseconds: 400),

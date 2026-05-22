@@ -1,816 +1,367 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'services/user_service.dart';
 import 'services/ocr_service.dart';
-import 'services/auth_service.dart';
-import 'main.dart';
-import 'login_page.dart';
-import 'notification_settings_page.dart';
-import 'contents_page.dart';
-import 'pill_page.dart';
+import 'user_edit_page.dart';
+import 'ocr_history_page.dart';
+import 'notification_toggle_page.dart';
 
 class MyPage extends StatefulWidget {
-  const MyPage({super.key});
+  final TokenStorage tokenStorage;
+  final VoidCallback? onLogout;
+
+  const MyPage({
+    super.key,
+    required this.tokenStorage,
+    this.onLogout,
+  });
 
   @override
   State<MyPage> createState() => _MyPageState();
 }
 
 class _MyPageState extends State<MyPage> {
-  bool _isLoading = true;
-  bool _hasError = false;
-  Map<String, dynamic>? _user;
-  final _client = http.Client();
-  late final AuthService _authService;
+  late final UserService _userService;
+
+  bool _loading = true;
+  String? _error;
+  UserProfile? _profile;
+
+  static const _green = Color(0xFF2ECC71);
+  static const _greenLight = Color(0xFFE8F8F0);
+  static const _bg = Color(0xFFF8FAF8);
+  static const _cardBg = Colors.white;
+  static const _textPrimary = Color(0xFF1A1A1A);
+  static const _textSecondary = Color(0xFF888888);
+  static const _divider = Color(0xFFF0F0F0);
+  static const _purple = Color(0xFF7C5CCF);
+  static const _purpleLight = Color(0xFFF0E8FF);
 
   @override
   void initState() {
     super.initState();
-    _authService = AuthService(tokenStorage: SecureTokenStorage());
-    _loadUserInfo();
+    _userService = UserService(tokenStorage: widget.tokenStorage);
+    _loadProfile();
   }
 
   @override
   void dispose() {
-    _client.close();
-    _authService.dispose();
+    _userService.dispose();
     super.dispose();
   }
 
-  Future<String?> _getToken() async {
-    return SecureTokenStorage().getAccessToken();
-  }
-
-  Future<void> _loadUserInfo() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
+  Future<void> _loadProfile() async {
+    setState(() { _loading = true; _error = null; });
     try {
-      final token = await _getToken();
-      if (token == null) throw Exception('토큰 없음');
-
-      final response = await _client.get(
-        Uri.parse('${OcrConfig.baseUrl}/v1/users/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _user = jsonDecode(response.body) as Map<String, dynamic>;
-          _isLoading = false;
-        });
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
-      } else {
-        setState(() {
-          _hasError = true;
-          _isLoading = false;
-        });
-      }
+      final profile = await _userService.getMe();
+      if (mounted) setState(() => _profile = profile);
+    } on AuthException catch (e) {
+      if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _hasError = true;
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _error = '정보를 불러올 수 없습니다.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _handleUnauthorized() {
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginPage(
-          onLoginSuccess: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
-                transitionsBuilder: (_, anim, __, child) =>
-                    FadeTransition(opacity: anim, child: child),
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-              (route) => false,
-            );
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-      (route) => false,
-    );
-  }
-
-  Future<void> _handleLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('로그아웃'),
-        content: const Text('로그아웃 하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('로그아웃', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      await _authService.logout();
-    } catch (_) {}
-
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginPage(
-          onLoginSuccess: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const MainPage(),
-                transitionsBuilder: (_, anim, __, child) =>
-                    FadeTransition(opacity: anim, child: child),
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-              (route) => false,
-            );
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-      (route) => false,
-    );
-  }
-
-  Future<void> _handleDeleteAccount() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('회원 탈퇴',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text(
-          '정말 탈퇴하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('탈퇴하기', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final token = await _getToken();
-      if (token == null) return;
-
-      final response = await _client.delete(
-        Uri.parse('${OcrConfig.baseUrl}/v1/users/me'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 204) {
-        await SecureTokenStorage().deleteAll();
-        Navigator.of(context).pushAndRemoveUntil(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => LoginPage(
-              onLoginSuccess: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  PageRouteBuilder(
-                    pageBuilder: (_, __, ___) => const MainPage(),
-                    transitionsBuilder: (_, anim, __, child) =>
-                        FadeTransition(opacity: anim, child: child),
-                    transitionDuration: const Duration(milliseconds: 400),
-                  ),
-                  (route) => false,
-                );
-              },
-            ),
-            transitionsBuilder: (_, anim, __, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('탈퇴 처리에 실패했습니다.')),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('오류가 발생했습니다.')),
-      );
-    }
-  }
-
-  void _openEditProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditProfilePage(user: _user!),
-      ),
-    ).then((_) => _loadUserInfo());
-  }
+  bool get _isAutoimmune => _profile?.userType == 'autoimmune';
+  Color get _themeColor => _isAutoimmune ? _purple : _green;
+  Color get _themeLightColor => _isAutoimmune ? _purpleLight : _greenLight;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          '마이페이지',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: false,
+      backgroundColor: _bg,
+      body: SafeArea(
+        child: _loading
+            ? Center(child: CircularProgressIndicator(color: _themeColor))
+            : _error != null
+                ? _buildError()
+                : _buildBody(),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF8C00)))
-          : _hasError
-              ? _buildError()
-              : RefreshIndicator(
-                  onRefresh: _loadUserInfo,
-                  color: const Color(0xFFFF8C00),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildProfileHeader(),
-                        const SizedBox(height: 16),
-                        _buildMenuSection(),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
     );
   }
 
   Widget _buildError() {
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+          Text(_error!, style: const TextStyle(color: _textSecondary)),
           const SizedBox(height: 16),
-          const Text('정보를 불러오지 못했습니다.',
-              style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadUserInfo,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF8C00),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('다시 시도',
-                style: TextStyle(color: Colors.white)),
+          TextButton(
+            onPressed: _loadProfile,
+            child: Text('다시 시도', style: TextStyle(color: _themeColor)),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => widget.onLogout?.call(),
+            child: const Text('로그아웃',
+                style: TextStyle(color: Colors.red, fontSize: 15)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
-    final name = _user?['name'] as String? ?? '';
-    final email = _user?['email'] as String? ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: const Color(0xFFFF8C00).withOpacity(0.15),
-            child: Text(
-              initial,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFFF8C00),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            email,
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: 120,
-            height: 36,
-            child: OutlinedButton(
-              onPressed: _openEditProfile,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFFF8C00)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-              ),
-              child: const Text(
-                '프로필 수정',
-                style: TextStyle(color: Color(0xFFFF8C00), fontSize: 13),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildBody() {
+    return RefreshIndicator(
+      onRefresh: _loadProfile,
+      color: _themeColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('마이페이지',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: _textPrimary)),
+            const SizedBox(height: 20),
+            _buildProfileCard(),
+            const SizedBox(height: 8),
+            _buildTypeBadge(),
+            const SizedBox(height: 20),
+            _sectionLabel('내 건강 정보'),
+            const SizedBox(height: 8),
+            _buildMenuCard(_healthMenuItems),
+            const SizedBox(height: 20),
+            _sectionLabel('앱 설정'),
+            const SizedBox(height: 8),
+            _buildMenuCard(_appSettingsMenuItems),
+            const SizedBox(height: 20),
+            _sectionLabel('지원'),
+            const SizedBox(height: 8),
+            _buildMenuCard(_supportMenuItems),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildProfileCard() {
+    final profile = _profile;
+    final heightStr = profile?.height != null ? '${profile!.height!.toStringAsFixed(0)}cm' : '-';
+    final weightStr = profile?.weight != null ? '${profile!.weight!.toStringAsFixed(0)}kg' : '-';
+    final birthStr = profile?.birthDate?.replaceAll('-', '.') ?? '-';
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE8E8E8)),
       ),
       child: Column(
         children: [
-          _buildMenuItem(
-            icon: Icons.notifications_outlined,
-            title: '알림 설정',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const NotificationSettingsPage()),
-            ),
+          Row(
+            children: [
+              Container(
+                width: 52, height: 52,
+                decoration: BoxDecoration(color: _themeLightColor, shape: BoxShape.circle),
+                child: Icon(Icons.person_outline, color: _themeColor, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profile?.name ?? '-',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _textPrimary)),
+                    const SizedBox(height: 2),
+                    Text(profile?.email ?? '-',
+                        style: const TextStyle(fontSize: 13, color: _textSecondary)),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, color: _textSecondary, size: 22),
+                onPressed: () => _navigate('user_edit'),
+              ),
+            ],
           ),
-          const Divider(height: 1, indent: 56),
-          _buildMenuItem(
-            icon: Icons.lock_outlined,
-            title: '비밀번호 변경',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const ChangePasswordPage()),
-            ),
-          ),
-          const Divider(height: 1, indent: 56),
-          _buildMenuItem(
-            icon: Icons.view_carousel_outlined,
-            title: '콘텐츠 변환 내역',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ContentsPage()),
-            ),
-          ),
-          const Divider(height: 1, indent: 56),
-          _buildMenuItem(
-            icon: Icons.medication_outlined,
-            title: '약품 이미지 인식',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const PillRecognizePage()),
-            ),
-          ),
-          const Divider(height: 1, indent: 56),
-          _buildMenuItem(
-            icon: Icons.logout,
-            title: '로그아웃',
-            onTap: _handleLogout,
-            color: Colors.red,
-          ),
-          const Divider(height: 1, indent: 56),
-          _buildMenuItem(
-            icon: Icons.person_remove_outlined,
-            title: '회원 탈퇴',
-            onTap: _handleDeleteAccount,
-            color: Colors.red,
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _buildStatBox('키 / 몸무게', '$heightStr / $weightStr')),
+              const SizedBox(width: 10),
+              Expanded(child: _buildStatBox('생년월일', birthStr)),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    final itemColor = color ?? Colors.black87;
-    return Semantics(
-      label: title,
-      child: ListTile(
-        leading: Icon(icon, color: itemColor, size: 22),
-        title: Text(
-          title,
-          style: TextStyle(color: itemColor, fontSize: 15),
-        ),
-        trailing: color == null
-            ? const Icon(Icons.chevron_right, color: Colors.grey, size: 20)
-            : null,
-        onTap: onTap,
+  Widget _buildStatBox(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: _textSecondary)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _textPrimary)),
+        ],
       ),
     );
   }
-}
 
-// ── 프로필 수정 페이지 ─────────────────────────────────
-class EditProfilePage extends StatefulWidget {
-  final Map<String, dynamic> user;
-  const EditProfilePage({super.key, required this.user});
-
-  @override
-  State<EditProfilePage> createState() => _EditProfilePageState();
-}
-
-class _EditProfilePageState extends State<EditProfilePage> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
-  bool _isLoading = false;
-  final _client = http.Client();
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController =
-        TextEditingController(text: widget.user['name'] as String? ?? '');
-    _phoneController = TextEditingController(
-        text: widget.user['phone_number'] as String? ?? '');
+  Widget _buildTypeBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(color: _themeColor, borderRadius: BorderRadius.circular(20)),
+      child: Text(
+        _isAutoimmune ? '자가면역' : '일반',
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _client.close();
-    super.dispose();
-  }
+  List<_MenuItem> get _healthMenuItems => _isAutoimmune
+      ? [
+          _MenuItem(icon: Icons.description_outlined, label: '질환 정보', route: 'disease_info'),
+          _MenuItem(icon: Icons.medication_outlined, label: '약물 목록', route: 'medication_list'),
+          _MenuItem(icon: Icons.monitor_heart_outlined, label: '위험요인 프로필', route: 'risk_profile'),
+          _MenuItem(icon: Icons.folder_outlined, label: '문서 보관함', route: 'documents'),
+        ]
+      : [
+          _MenuItem(icon: Icons.description_outlined, label: '진료 기록', route: 'medical_records'),
+          _MenuItem(icon: Icons.medication_outlined, label: '약물 목록', route: 'medication_list'),
+          _MenuItem(icon: Icons.monitor_heart_outlined, label: '건강 수치 기록', route: 'health_metrics'),
+          _MenuItem(icon: Icons.folder_outlined, label: '문서 보관함', route: 'documents'),
+        ];
 
-  Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isLoading = true);
+  List<_MenuItem> get _appSettingsMenuItems => [
+        _MenuItem(icon: Icons.notifications_none_outlined, label: '알림 설정', route: 'notification_settings'),
+        _MenuItem(icon: Icons.swap_horiz_outlined, label: '모드 전환', route: 'mode_switch'),
+        _MenuItem(icon: Icons.settings_outlined, label: '설정', route: 'settings'),
+      ];
 
-    try {
-      final token = await SecureTokenStorage().getAccessToken();
-      if (token == null) return;
+  List<_MenuItem> get _supportMenuItems => [
+        _MenuItem(icon: Icons.help_outline, label: '도움말', route: 'help'),
+        _MenuItem(icon: Icons.campaign_outlined, label: '문의하기', route: 'contact'),
+        _MenuItem(icon: Icons.logout, label: '로그아웃', route: 'logout', isDestructive: true),
+      ];
 
-      final response = await _client.patch(
-        Uri.parse('${OcrConfig.baseUrl}/v1/users/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'name': _nameController.text.trim(),
-          'phone_number': _phoneController.text.trim(),
+  Widget _buildMenuCard(List<_MenuItem> items) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+      ),
+      child: Column(
+        children: List.generate(items.length, (i) {
+          final item = items[i];
+          return Column(
+            children: [
+              _buildMenuRow(item),
+              if (i < items.length - 1)
+                const Divider(height: 1, thickness: 1, color: _divider, indent: 16, endIndent: 16),
+            ],
+          );
         }),
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('프로필이 수정됐습니다.')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('수정에 실패했습니다.')),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('오류가 발생했습니다.')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('프로필 수정',
-            style: TextStyle(
-                color: Colors.black87, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: '이름',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outlined),
-                ),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? '이름을 입력해주세요.' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: '휴대폰 번호',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone_outlined),
-                  hintText: '01012345678',
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return null;
-                  if (!RegExp(r'^01[0-9]{8,9}$').hasMatch(v)) {
-                    return '올바른 형식: 01012345678';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF8C00),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('저장하기',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+  Widget _buildMenuRow(_MenuItem item) {
+    return InkWell(
+      onTap: () => _handleMenuTap(item.route),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(item.icon, size: 22, color: item.isDestructive ? Colors.red : _textPrimary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(item.label,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: item.isDestructive ? Colors.red : _textPrimary)),
+            ),
+            Icon(Icons.chevron_right,
+                color: item.isDestructive ? Colors.red.withOpacity(0.5) : _textSecondary,
+                size: 20),
+          ],
         ),
       ),
     );
   }
-}
 
-// ── 비밀번호 변경 페이지 ───────────────────────────────
-class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({super.key});
-
-  @override
-  State<ChangePasswordPage> createState() => _ChangePasswordPageState();
-}
-
-class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscureCurrent = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
-  final _client = http.Client();
-
-  @override
-  void dispose() {
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    _client.close();
-    super.dispose();
+  void _handleMenuTap(String route) {
+    if (route == 'logout') { _confirmLogout(); return; }
+    _navigate(route);
   }
 
-  Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final token = await SecureTokenStorage().getAccessToken();
-      if (token == null) return;
-
-      final body = jsonEncode({
-        'current_password': _currentPasswordController.text,
-        'new_password': _newPasswordController.text,
-        'new_password_confirm': _confirmPasswordController.text,
-      });
-
-      final response = await _client.patch(
-        Uri.parse('${OcrConfig.baseUrl}/v1/users/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: body,
-      ).timeout(OcrConfig.timeoutDuration);
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('비밀번호가 변경됐습니다.')),
-        );
-        Navigator.pop(context);
-      } else if (response.statusCode == 400) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('현재 비밀번호가 올바르지 않습니다.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('변경에 실패했습니다. (${response.statusCode})')),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('오류가 발생했습니다.')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  void _navigate(String route) {
+    if (route == 'user_edit' && _profile != null) {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => UserEditPage(
+          tokenStorage: widget.tokenStorage,
+          profile: _profile!,
+          onWithdraw: widget.onLogout,
+        ),
+      ));
+      return;
     }
+    if (route == 'documents') {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => const OcrHistoryPage(),
+      ));
+      return;
+    }
+    if (route == 'notification_settings') {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => const NotificationTogglePage(),
+      ));
+      return;
+    }
+    debugPrint('Navigate to: $route');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('비밀번호 변경',
-            style: TextStyle(
-                color: Colors.black87, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _currentPasswordController,
-                obscureText: _obscureCurrent,
-                decoration: InputDecoration(
-                  labelText: '현재 비밀번호',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureCurrent
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () => setState(
-                        () => _obscureCurrent = !_obscureCurrent),
-                  ),
-                ),
-                validator: (v) =>
-                    v == null || v.isEmpty ? '현재 비밀번호를 입력해주세요.' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _newPasswordController,
-                obscureText: _obscureNew,
-                decoration: InputDecoration(
-                  labelText: '새 비밀번호',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureNew
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () =>
-                        setState(() => _obscureNew = !_obscureNew),
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return '새 비밀번호를 입력해주세요.';
-                  if (v.length < 8) return '8자 이상 입력해주세요.';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscureConfirm,
-                decoration: InputDecoration(
-                  labelText: '새 비밀번호 확인',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined),
-                    onPressed: () => setState(
-                        () => _obscureConfirm = !_obscureConfirm),
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return '비밀번호 확인을 입력해주세요.';
-                  if (v != _newPasswordController.text) {
-                    return '비밀번호가 일치하지 않습니다.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF8C00),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('변경하기',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('로그아웃',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+        content: const Text('로그아웃 하시겠습니까?', style: TextStyle(fontSize: 15)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소', style: TextStyle(color: _textSecondary)),
           ),
-        ),
+          TextButton(
+            onPressed: () { Navigator.pop(ctx); widget.onLogout?.call(); },
+            child: const Text('로그아웃',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _sectionLabel(String text) {
+    return Text(text,
+        style: const TextStyle(fontSize: 13, color: _textSecondary, fontWeight: FontWeight.w500));
+  }
+}
+
+class _MenuItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  final bool isDestructive;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+    this.isDestructive = false,
+  });
 }
