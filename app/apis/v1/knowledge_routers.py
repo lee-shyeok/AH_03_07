@@ -1,7 +1,10 @@
+import json
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.models import FieldCondition, Filter, MatchValue
 
 from app.core import config
 from app.core.logger import default_logger as logger
@@ -87,6 +90,23 @@ async def delete_knowledge_document(
     doc = await KnowledgeDocument.get_or_none(id=doc_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="문서를 찾을 수 없습니다.")
+
+    try:
+        qdrant = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT)
+        await qdrant.delete(
+            collection_name="medical_kb",
+            points_selector=Filter(
+                must=[FieldCondition(key="document_id", match=MatchValue(value=doc_id))]
+            ),
+        )
+        logger.info(json.dumps({"event": "kb_qdrant_delete", "doc_id": doc_id}))
+    except Exception as exc:
+        logger.error(json.dumps({"event": "kb_qdrant_delete_error", "doc_id": doc_id, "error": str(exc)}))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"벡터 스토어 삭제 실패: {exc}",
+        ) from exc
+
     if doc.file_path and Path(doc.file_path).exists():
         Path(doc.file_path).unlink()
     await doc.delete()
