@@ -47,3 +47,13 @@ media/
 .pytest_cache/
 .coverage
 htmlcov/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+android/local.properties
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
