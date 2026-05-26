@@ -8,6 +8,7 @@ TORTOISE_APP_MODELS = [
     "aerich.models",
     "app.models.users",
     "app.models.knowledge",
+    "app.models.health_guide",
 ]
 
 TORTOISE_ORM = {

@@ -96,6 +96,19 @@ ignore = ["UP046", "E501"]
 "__init__.py" = ["F401", "F403"]
 "db/migrations/*" = ["ALL"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.Header",
+    "fastapi.Cookie",
+    "fastapi.Form",
+    "fastapi.File",
+    "fastapi.Security",
+]
+
 [tool.ruff.format]
 # 포매터 설정
 quote-style = "double"
