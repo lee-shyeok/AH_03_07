@@ -41,6 +41,9 @@ class User(Base):
 
     # 탈퇴 Soft Delete (REQ-USER-008)
     deleted_at = Column(DateTime, nullable=True)
+    # 소셜 로그인
+    social_provider = Column(String(20), nullable=True)   # "google", "kakao", "naver"
+    social_id = Column(String(200), nullable=True)        # 소셜 고유 ID
     withdrawal_reason = Column(String(500), nullable=True)
 
     # 타임스탬프

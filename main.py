@@ -10,7 +10,7 @@ import logging
 load_dotenv('envs/.local.env')
 logging.basicConfig(level=logging.DEBUG)
 
-from routers import auth, users, medical_documents, medical_records, guides, chats, notifications, dashboard, consent_mode_disease, clinical, extra, guide_v2, postmvp
+from routers import auth, social_auth, users, medical_documents, medical_records, guides, chats, notifications, dashboard, consent_mode_disease, clinical, extra, guide_v2, postmvp
 from database import engine
 from extra_models import Base as ExtraBase
 from models import Base as UserBase
@@ -88,6 +88,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(auth.router, prefix="/v1/auth", tags=["auth"])
+app.include_router(social_auth.router, prefix="/v1/auth", tags=["social-auth"])
 app.include_router(users.router, prefix="/v1/users", tags=["users"])
 app.include_router(medical_documents.router, prefix="/v1", tags=["medical-documents"])
 app.include_router(medical_records.router, prefix="/v1", tags=["medical-records"])
