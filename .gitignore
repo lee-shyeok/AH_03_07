@@ -1,49 +1,45 @@
-# ── Python ────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# ── 가상환경 ──────────────────────────────────────────────
-.venv/
-venv/
-env/
-ENV/
-
-# ── 환경변수 (절대 올리면 안됨) ───────────────────────────
-.env
-envs/.local.env
-envs/.prod.env
-*.env
-
-# ── IDE ───────────────────────────────────────────────────
-.idea/
-.vscode/
-*.iml
-
-# ── OS ────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-
-# ── 로그 ──────────────────────────────────────────────────
+# Miscellaneous
+*.class
 *.log
-logs/
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
 
-# ── DB ────────────────────────────────────────────────────
-*.db
-*.sqlite3
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
 
-# ── 업로드 파일 ───────────────────────────────────────────
-uploads/
-media/
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
 
-# ── pytest ────────────────────────────────────────────────
-.pytest_cache/
-.coverage
-htmlcov/
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
