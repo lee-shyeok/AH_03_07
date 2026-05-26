@@ -17,6 +17,8 @@
 |------|------|
 | 회원가입 | 이메일 인증 기반 회원가입 |
 | 로그인 | JWT 토큰 기반 로그인 |
+| 구글 로그인 | Google OAuth 2.0 소셜 로그인 ✅ |
+| 네이버 로그인 | 네이버 OAuth 소셜 로그인 (웹 임시 구현) ✅ |
 | 로그아웃 | 토큰 삭제 및 로그인 화면 이동 |
 
 ### 🏠 메인
@@ -78,9 +80,9 @@ lib/
 ├── splash_screen.dart               # 스플래시 + 토큰 유효성 검사
 ├── onboarding_page.dart             # 온보딩 3페이지
 ├── user_type_page.dart              # 사용자 타입 선택
-├── login_page.dart                  # 로그인
+├── login_page.dart                  # 로그인 (구글/네이버 소셜 로그인 포함)
 ├── signup_page.dart                 # 회원가입
-├── home_page.dart                   # 바텀 네비게이션 (기록/챗봇/홈/알림/마이)
+├── home_page.dart                   # 바텀 네비게이션 (홈/기록/안내문/알림/마이)
 ├── dashboard_page.dart              # 홈 대시보드
 ├── search_page.dart                 # 검색
 ├── medical_records_page.dart        # 진료기록 목록/상세/입력/수정
@@ -99,7 +101,9 @@ lib/
     ├── auth_service.dart            # 로그인/로그아웃/토큰 갱신
     ├── ocr_service.dart             # OCR 업로드/결과 조회
     ├── user_service.dart            # 유저 정보 조회/수정/탈퇴
-    └── notification_service.dart    # 알림 설정 조회/저장
+    ├── notification_service.dart    # 알림 설정 조회/저장
+    ├── google_auth_service.dart     # 구글 소셜 로그인 ✅ NEW
+    └── naver_auth_service.dart      # 네이버 소셜 로그인 ✅ NEW
 ```
 
 ---
@@ -113,7 +117,9 @@ Flutter (Dart)
 ├── image_picker: ^1.0.7      # 이미지 선택
 ├── http_parser: ^4.0.0       # 파일 업로드
 ├── intl                      # 날짜 포맷
-└── flutter_localizations     # 한국어 로케일
+├── flutter_localizations     # 한국어 로케일
+├── google_sign_in: ^6.2.2    # 구글 소셜 로그인 ✅ NEW
+└── webview_flutter: ^4.13.0  # 네이버 로그인 웹뷰 ✅ NEW
 ```
 
 ---
@@ -136,7 +142,7 @@ flutter run
 
 ### 3. 브랜치
 ```
-feature/이승혁-frontend
+feature/이승혁-flutter
 ```
 
 ---
@@ -157,6 +163,8 @@ feature/이승혁-frontend
 | 로그인 | POST | `/v1/auth/login` |
 | 로그아웃 | POST | `/v1/auth/logout` |
 | 토큰 갱신 | POST | `/v1/auth/refresh` |
+| 구글 소셜 로그인 | POST | `/v1/auth/google` ✅ NEW |
+| 네이버 소셜 로그인 | POST | `/v1/auth/naver` ✅ NEW |
 | 내 정보 | GET/PATCH | `/v1/users/me` |
 | 진료기록 | GET/POST/PATCH/DELETE | `/v1/medical-records` |
 | OCR 업로드 | POST | `/v1/medical-documents` |
@@ -168,6 +176,25 @@ feature/이승혁-frontend
 
 ---
 
+## 🔐 소셜 로그인 설정
+
+### 구글 로그인
+- Google Cloud Console에서 OAuth 2.0 클라이언트 ID 발급 필요
+- 클라이언트 ID는 `envs/.local.env`에 저장 (`.gitignore` 적용)
+```
+GOOGLE_WEB_CLIENT_ID=...
+GOOGLE_ANDROID_CLIENT_ID=...
+GOOGLE_IOS_CLIENT_ID=...
+```
+
+### 네이버 로그인
+- Naver Developers에서 앱 등록 및 Client ID/Secret 발급 필요
+- 현재 웹 환경에서는 임시 구현 (모바일 앱 빌드 시 정식 구현 예정)
+```
+NAVER_CLIENT_ID=...
+NAVER_CLIENT_SECRET=...
+```
+
 ---
 
 ## ⚠️ 주의사항
@@ -176,3 +203,4 @@ feature/이승혁-frontend
 - 의료 진단/처방 관련 표현 사용 금지 (의료법 §27)
 - API 호출은 서비스 레이어로 분리
 - 컴포넌트는 PascalCase, 함수는 camelCase
+- 소셜 로그인 키는 절대 코드에 하드코딩 금지 (`.env` 파일 사용)
