@@ -29,6 +29,7 @@ TORTOISE_APP_MODELS = [
     "app.models.share_logs",
     "app.models.content_conversions",
     "app.models.pill_recognitions",
+    "app.models.audit_logs",
 ]
 
 TORTOISE_ORM = {

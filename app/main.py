@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 from app.apis.v1 import v1_routers
 from app.core.db.databases import initialize_tortoise
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
     default_response_class=ORJSONResponse,
@@ -14,7 +14,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:54510"],
+    allow_origins=[
+        "http://localhost:54510",
+        "http://172.30.1.85:54510",
+        "http://172.30.1.85",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

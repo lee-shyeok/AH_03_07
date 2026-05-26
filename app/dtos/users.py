@@ -1,9 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 from pydantic import BaseModel
-
-from app.models.users import Gender
-
+from app.models.users import Gender, UserMode
 
 class UserCreateRequest(BaseModel):
     email: str
@@ -13,11 +11,12 @@ class UserCreateRequest(BaseModel):
     birthday: date
     phone_number: str
 
-
 class UserUpdateRequest(BaseModel):
     name: str | None = None
     phone_number: str | None = None
 
+class UserModeUpdateRequest(BaseModel):
+    mode: UserMode
 
 class UserInfoResponse(BaseModel):
     id: UUID
@@ -26,6 +25,7 @@ class UserInfoResponse(BaseModel):
     gender: Gender
     birthday: date
     phone_number: str
+    mode: UserMode
     is_active: bool
     last_login: datetime | None
     created_at: datetime
@@ -34,7 +34,6 @@ class UserInfoResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
 class UserResponse(BaseModel):
     id: UUID
     email: str
@@ -42,10 +41,17 @@ class UserResponse(BaseModel):
     gender: Gender
     birthday: date
     phone_number: str
+    mode: UserMode
     is_active: bool
     last_login: datetime | None
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class UserModeResponse(BaseModel):
+    mode: UserMode
 
     class Config:
         from_attributes = True
