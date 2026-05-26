@@ -69,6 +69,7 @@ async def _embed_document_async(doc_id: int) -> None:
         start = time.monotonic()
 
         from pathlib import Path
+
         pdf_bytes = Path(doc.file_path).read_bytes()
 
         blocks = extract_blocks(pdf_bytes)
@@ -108,7 +109,7 @@ async def _embed_document_async(doc_id: int) -> None:
                     "text": chunks[meta["chunk_index"]],
                 },
             )
-            for meta, emb in zip(chunk_meta, embeddings)
+            for meta, emb in zip(chunk_meta, embeddings, strict=False)
         ]
         await qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
 
@@ -116,7 +117,9 @@ async def _embed_document_async(doc_id: int) -> None:
         doc.status = DocumentStatus.DONE
         await doc.save(update_fields=["chunk_count", "status", "updated_at"])
         duration = time.monotonic() - start
-        logger.info(f'{{"event": "embed_task_done", "doc_id": {doc_id}, "chunk_count": {len(chunks)}, "duration_sec": {duration:.1f}}}')
+        logger.info(
+            f'{{"event": "embed_task_done", "doc_id": {doc_id}, "chunk_count": {len(chunks)}, "duration_sec": {duration:.1f}}}'
+        )
 
     except Exception as exc:
         if doc is not None:
@@ -129,9 +132,7 @@ async def _embed_document_async(doc_id: int) -> None:
         await Tortoise.close_connections()
 
 
-def _build_chunk_metadata(
-    chunks: list[str], blocks: list[ParsedBlock], avg_font: float
-) -> list[dict]:
+def _build_chunk_metadata(chunks: list[str], blocks: list[ParsedBlock], avg_font: float) -> list[dict]:
     last_section: str | None = None
     result = []
     for i, chunk in enumerate(chunks):

@@ -1,4 +1,5 @@
 import pytest
+
 from app.dependencies.pdf_validator import (
     MAX_PDF_SIZE_BYTES,
     check_pdf_magic,
@@ -34,14 +35,15 @@ def test_check_pdf_size_zero():
     assert check_pdf_size(0) is True
 
 
-import pytest
-from unittest.mock import AsyncMock
-from fastapi import UploadFile
+from unittest.mock import AsyncMock  # noqa: E402
+
+from fastapi import UploadFile  # noqa: E402
 
 
 @pytest.mark.asyncio
 async def test_validate_pdf_upload_valid_file():
     from app.dependencies.pdf_validator import validate_pdf_upload
+
     content = b"%PDF-1.4 test content"
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.read = AsyncMock(return_value=content)
@@ -51,8 +53,10 @@ async def test_validate_pdf_upload_valid_file():
 
 @pytest.mark.asyncio
 async def test_validate_pdf_upload_oversized_raises_413():
-    from app.dependencies.pdf_validator import validate_pdf_upload, MAX_PDF_SIZE_BYTES
     from fastapi import HTTPException
+
+    from app.dependencies.pdf_validator import MAX_PDF_SIZE_BYTES, validate_pdf_upload
+
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.read = AsyncMock(return_value=b"%PDF-" + b"x" * (MAX_PDF_SIZE_BYTES + 1))
     with pytest.raises(HTTPException) as exc_info:
@@ -62,8 +66,10 @@ async def test_validate_pdf_upload_oversized_raises_413():
 
 @pytest.mark.asyncio
 async def test_validate_pdf_upload_invalid_magic_raises_400():
-    from app.dependencies.pdf_validator import validate_pdf_upload
     from fastapi import HTTPException
+
+    from app.dependencies.pdf_validator import validate_pdf_upload
+
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.read = AsyncMock(return_value=b"NOT A PDF CONTENT")
     with pytest.raises(HTTPException) as exc_info:

@@ -3,7 +3,6 @@
 DB 연결 없이 실행 가능하도록 ORM 모델 작업을 포함한 모든 외부 의존성을 Mock 처리.
 """
 
-import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import fitz
@@ -65,9 +64,7 @@ async def test_embed_task_sets_status_done(
     mock_openai = mock_openai_cls.return_value
     fake_embedding = MagicMock()
     fake_embedding.embedding = [0.1] * 1536
-    mock_openai.embeddings.create = AsyncMock(
-        return_value=MagicMock(data=[fake_embedding])
-    )
+    mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[fake_embedding]))
 
     mock_qdrant = mock_qdrant_cls.return_value
     mock_qdrant.delete = AsyncMock()
@@ -103,9 +100,7 @@ async def test_embed_task_idempotent_deletes_before_upsert(
     mock_doc_cls.get = AsyncMock(return_value=mock_doc)
 
     mock_openai = mock_openai_cls.return_value
-    mock_openai.embeddings.create = AsyncMock(
-        return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
-    )
+    mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)]))
     mock_qdrant = mock_qdrant_cls.return_value
     mock_qdrant.delete = AsyncMock()
     mock_qdrant.upsert = AsyncMock()
