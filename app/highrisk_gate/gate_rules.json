@@ -1,0 +1,156 @@
+[
+  {
+    "code": "DYSPNEA",
+    "label": "호흡곤란",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": true,
+    "source": "REQ-SYMP-002"
+  },
+  {
+    "code": "ALTERED_CONSCIOUSNESS",
+    "label": "의식 저하",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": true,
+    "source": "REQ-SYMP-002"
+  },
+  {
+    "code": "JAUNDICE",
+    "label": "황달",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": true,
+    "source": "REQ-SYMP-002"
+  },
+  {
+    "code": "ABNORMAL_BLEEDING",
+    "label": "심한 멍·비정상 출혈",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": true,
+    "source": "REQ-SYMP-002"
+  },
+  {
+    "code": "CHEST_PAIN",
+    "label": "흉통",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": true,
+    "source": "REQ-SYMP-002"
+  },
+  {
+    "code": "FEVER",
+    "label": "발열",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "PERSISTENT_COUGH",
+    "label": "지속되는 기침",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "SEVERE_ABDOMINAL_PAIN",
+    "label": "심한 복통",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "SEVERE_EDEMA",
+    "label": "심한 부종",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "HERPES_ZOSTER_BLISTER",
+    "label": "대상포진 의심 수포",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "ORAL_ULCER",
+    "label": "입안 헐음·구내염",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "BLURRED_VISION",
+    "label": "시야 흐림",
+    "category": "SYMPTOM_CHECK",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "URINE_ABNORMALITY",
+    "label": "소변 이상",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "LIVER_FUNCTION_CONCERN",
+    "label": "간 기능 이상 자가 인지",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "KIDNEY_FUNCTION_CONCERN",
+    "label": "신장 기능 이상 자가 인지",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "TB_HISTORY",
+    "label": "결핵 이력",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "HEPATITIS_HISTORY",
+    "label": "간염 이력",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "RECURRENT_INFECTION",
+    "label": "반복 감염 이력",
+    "category": "SELF_REPORT",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "PREGNANT",
+    "label": "임신 중",
+    "category": "PREGNANCY",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "LACTATING",
+    "label": "수유 중",
+    "category": "PREGNANCY",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "PREGNANCY_PLANNING",
+    "label": "임신 계획",
+    "category": "PREGNANCY",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  },
+  {
+    "code": "LAB_THRESHOLD_EXCEEDED",
+    "label": "사용자가 설정한 검사 기준값 초과",
+    "category": "LAB_THRESHOLD",
+    "red_flag": false,
+    "source": "REQ-AUTO-006"
+  }
+]
