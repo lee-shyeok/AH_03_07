@@ -18,6 +18,7 @@ TORTOISE_APP_MODELS = [
     "app.models.activity_alert_setting",
     "app.models.medical_schedule",
     "app.models.lab_result",
+    "app.models.lupus_skin_log",
 ]
 
 TORTOISE_ORM = {
