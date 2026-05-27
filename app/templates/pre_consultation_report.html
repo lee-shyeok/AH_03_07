@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>진료 전 요약 리포트</title>
+    <link rel="stylesheet" href="pre_consultation_report.css">
+</head>
+<body>
+    <header>
+        <h1>진료 전 요약 리포트</h1>
+        <div class="meta">
+            <span>{{ user_name }} 님</span>
+            <span>생성 일시: {{ generated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            <span>대상 기간: {{ period_start }} ~ {{ period_end }}</span>
+        </div>
+    </header>
+
+    <section class="medications">
+        <h2>현재 복용 중 약물</h2>
+        {% if medications %}
+        <table>
+            <thead>
+                <tr><th>약품명</th><th>분류</th><th>주사 여부</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for med in medications %}
+                <tr>
+                    <td>{{ med.name }}</td>
+                    <td>{{ med.drug_class }}</td>
+                    <td>{{ '주사' if med.is_injection else '경구' }}</td>
+                    <td>{{ med.note or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">등록된 약물이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="activity-logs">
+        <h2>증상·플레어 일지</h2>
+        {% if activity_logs %}
+        <table>
+            <thead>
+                <tr><th>날짜</th><th>통증(VAS)</th><th>피로도</th><th>일상 어려움</th><th>아침 강직(분)</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for log in activity_logs %}
+                <tr>
+                    <td>{{ log.log_date }}</td>
+                    <td>{{ log.pain_vas }}</td>
+                    <td>{{ log.fatigue }}</td>
+                    <td>{{ log.daily_difficulty }}</td>
+                    <td>{{ log.morning_stiffness_min if log.morning_stiffness_min is not none else '' }}</td>
+                    <td>{{ log.note or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">해당 기간에 기록된 일지가 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="symptom-checks">
+        <h2>부작용 자가체크 이력</h2>
+        {% if symptom_checks %}
+        <table>
+            <thead>
+                <tr><th>기록 일시</th><th>체크한 증상</th><th>위험 증상 포함</th></tr>
+            </thead>
+            <tbody>
+                {% for check in symptom_checks %}
+                <tr>
+                    <td>{{ check.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ check.checked_symptoms | join(', ') }}</td>
+                    <td>{{ '예' if check.red_flag_triggered else '아니오' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">해당 기간에 기록된 자가체크 이력이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="lab-results">
+        <h2>검사 결과 이력</h2>
+        {% if lab_results %}
+        <table>
+            <thead>
+                <tr><th>검사일</th><th>검사 항목</th><th>수치</th><th>참고 범위(검사지 기재)</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for result in lab_results %}
+                <tr>
+                    <td>{{ result.test_date }}</td>
+                    <td>{{ result.test_item }}</td>
+                    <td>{{ result.value }}</td>
+                    <td>{{ result.reference_range or '' }}</td>
+                    <td>{{ result.note or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">해당 기간에 입력된 검사 결과가 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="medical-schedules">
+        <h2>검사·진료 일정</h2>
+        {% if medical_schedules %}
+        <table>
+            <thead>
+                <tr><th>일정 날짜</th><th>종류</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for schedule in medical_schedules %}
+                <tr>
+                    <td>{{ schedule.scheduled_date }}</td>
+                    <td>{{ schedule.schedule_type }}</td>
+                    <td>{{ schedule.note or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">등록된 일정이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="questions">
+        <h2>의료진에게 드리고 싶은 질문</h2>
+        {% if questions %}
+        <ol>
+            {% for q in questions %}
+            <li>{{ q }}</li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="empty">입력된 질문이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        <p>본 자료는 진료 시 의료진과 상의하기 위한 본인용 참고 자료이며,
+           의학적 진단·치료 권고가 아닙니다.</p>
+    </footer>
+</body>
+</html>

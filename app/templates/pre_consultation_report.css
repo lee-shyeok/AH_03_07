@@ -1,0 +1,36 @@
+@page {
+    size: A4;
+    margin: 1.5cm 1.5cm 2cm 1.5cm;
+    @bottom-center {
+        content: "Page " counter(page) " / " counter(pages);
+        font-size: 9pt;
+        color: #666;
+    }
+}
+
+body {
+    font-family: "Noto Sans CJK KR", "Noto Sans KR", sans-serif;
+    font-size: 10pt;
+    color: #222;
+    line-height: 1.5;
+}
+
+h1 { font-size: 16pt; margin: 0 0 0.3cm 0; }
+h2 { font-size: 11pt; margin: 0.4cm 0 0.15cm 0; padding-bottom: 2pt; border-bottom: 1px solid #ddd; }
+header .meta { font-size: 9pt; color: #555; }
+header .meta span { margin-right: 1em; }
+
+section { page-break-inside: avoid; }
+table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+th, td { padding: 3pt 4pt; border-bottom: 1px solid #eee; text-align: left; }
+th { background: #f6f6f6; font-weight: 600; }
+.empty { color: #888; font-style: italic; font-size: 9pt; }
+
+footer {
+    margin-top: 0.6cm;
+    padding-top: 0.3cm;
+    border-top: 1px solid #ccc;
+    font-size: 8pt;
+    color: #666;
+    text-align: center;
+}
