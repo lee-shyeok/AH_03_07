@@ -11,6 +11,8 @@ TORTOISE_APP_MODELS = [
     "app.models.health_guide",
     "app.models.user_disease",
     "app.models.audit_log",
+    "app.models.user_risk_profile",
+    "app.models.user_medication",
 ]
 
 TORTOISE_ORM = {
