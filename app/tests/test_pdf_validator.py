@@ -41,7 +41,6 @@ from unittest.mock import AsyncMock  # noqa: E402
 from fastapi import UploadFile  # noqa: E402
 
 
-
 @pytest.mark.asyncio
 async def test_validate_pdf_upload_valid_file():
     from app.dependencies.pdf_validator import validate_pdf_upload
