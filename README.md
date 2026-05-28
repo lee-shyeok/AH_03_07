@@ -1,200 +1,177 @@
-# 🏥 AI 헬스케어 앱 - Flutter 프론트엔드
-**AI-HealthCare-03 | 7조 | 이승혁 담당**
+# AI Healthcare Project Template
+
+이 프로젝트는 AI 모델 추론(Inference) 워커와 FastAPI API 서버를 통합한 서비스 템플릿입니다. 
+현대적인 Python 패키지 관리 도구인 `uv`와 컨테이너화 도구인 `Docker`를 활용하여 일관된 개발 및 배포 환경을 제공합니다.
 
 ---
 
-## 📱 구현 화면
+## 🚀 주요 특징
 
-### 🌟 온보딩 / 시작
-| 기능 | 설명 |
-|------|------|
-| 스플래시 | 앱 로고 및 토큰 유효성 검사 |
-| 온보딩 | 3페이지 앱 소개 슬라이드 |
-| 사용자 타입 선택 | 일반 환자 / 자가면역환자 선택 |
-
-### 🔐 인증
-| 기능 | 설명 |
-|------|------|
-| 회원가입 | 이메일 인증 기반 회원가입 |
-| 로그인 | JWT 토큰 기반 로그인 |
-| 구글 로그인 | Google OAuth 2.0 소셜 로그인 ✅ NEW |
-| 네이버 로그인 | 네이버 OAuth 소셜 로그인 (웹 임시 구현) ✅ NEW |
-| 로그아웃 | 토큰 삭제 및 로그인 화면 이동 |
-
-### 🏠 메인
-| 기능 | 설명 |
-|------|------|
-| 대시보드 | 오늘의 복약, 최근 진료기록, 안내문 요약 |
-| 검색 | 최근 검색어, 인기 검색어, 카테고리별 탐색 |
-| AI 건강 챗봇 | 건강 관련 질문 챗봇 |
-| 챗봇 대화 내역 | 세션별 대화 내역 조회 |
-
-### 📋 진료기록
-| 기능 | 설명 |
-|------|------|
-| 진료기록 목록 | 전체 진료기록 조회 |
-| 진료기록 상세 | 진료기록 상세 조회 |
-| 진료기록 직접 입력 | 병원명, 진단명, 메모 직접 입력 |
-| 진료기록 수정 | 기존 진료기록 수정 |
-| 진료기록 삭제 | 진료기록 삭제 |
-
-### 📄 OCR
-| 기능 | 설명 |
-|------|------|
-| 의료문서 업로드 | 이미지/PDF 업로드 |
-| OCR 결과 검토 | OCR 결과 수정 및 확정 |
-| OCR 처리 내역 | 업로드한 의료문서 목록 조회 |
-
-### 📖 안내문
-| 기능 | 설명 |
-|------|------|
-| 안내문 목록 | 전체 안내문 조회 |
-| 안내문 상세 | 복약/생활습관/주의사항/권장검사 |
-| 안내문 재생성 | 최신 진료기록 기반 재생성 |
-| 안내문 평가 | 별점 + 코멘트 피드백 |
-
-### 🔔 알림
-| 기능 | 설명 |
-|------|------|
-| 알림 목록 | 전체 알림 조회 및 읽음 처리 |
-| 복약 알림 설정 | 약품별 알림 시각/요일/채널 설정 |
-| 알림 ON/OFF | 알림 유형별 / 채널별 활성화 설정 |
-
-### 👤 마이페이지
-| 기능 | 설명 |
-|------|------|
-| 내 정보 조회 | 프로필 정보 조회 (일반/자가면역 모드) |
-| 프로필 수정 | 이름, 키/몸무게 수정 |
-| 휴대폰 번호 수정 | 휴대폰 번호 변경 |
-| 비밀번호 변경 | 현재/새 비밀번호 변경 |
-| 만성질환 / 알레르기 | 칩 형태 다중 입력 및 저장 |
-| 회원탈퇴 | 비밀번호 확인 후 계정 삭제 |
+- **FastAPI Framework**: 고성능 비동기 API 서버 구현.
+- **AI Worker**: 모델 추론 및 학습 작업을 API 서버와 분리하여 처리.
+- **UV Package Manager**: 매우 빠른 의존성 설치 및 가상환경 관리.
+- **Tortoise ORM**: 비동기 방식의 데이터베이스 모델링 및 쿼리 관리.
+- **Docker-Compose**: MySQL, Redis, Nginx를 포함한 전체 서비스 스택을 한 번에 실행.
+- **CI/CD Scripts**: 코드 포맷팅(Ruff), 타입 체크(Mypy), 테스트(Pytest)를 위한 자동화 스크립트 제공.
 
 ---
 
-## 🗂 파일 구조
+## 📂 프로젝트 구조
 
-```
-lib/
-├── main.dart                        # 앱 진입점, SecureTokenStorage
-├── splash_screen.dart               # 스플래시 + 토큰 유효성 검사
-├── onboarding_page.dart             # 온보딩 3페이지
-├── user_type_page.dart              # 사용자 타입 선택
-├── login_page.dart                  # 로그인 (구글/네이버 소셜 로그인 포함)
-├── signup_page.dart                 # 회원가입
-├── home_page.dart                   # 바텀 네비게이션 (홈/기록/안내문/알림/마이)
-├── dashboard_page.dart              # 홈 대시보드
-├── search_page.dart                 # 검색
-├── medical_records_page.dart        # 진료기록 목록/상세/입력/수정
-├── guides_page.dart                 # 안내문 목록/상세/재생성/평가
-├── notifications_page.dart          # 알림 목록
-├── notification_settings_page.dart  # 복약 알림 설정 (약품별)
-├── notification_toggle_page.dart    # 알림 ON/OFF 설정
-├── ocr_history_page.dart            # OCR 처리 내역
-├── chat_page.dart                   # 챗봇 + 대화 내역
-├── my_page.dart                     # 마이페이지
-├── user_edit_page.dart              # 내 정보 수정 + 회원탈퇴
-├── chip_section.dart                # 만성질환/알레르기 입력 컴포넌트
-├── pill_page.dart                   # 약품 이미지 인식 (Post-MVP)
-├── contents_page.dart               # 콘텐츠 변환 내역 (Post-MVP)
-└── services/
-    ├── auth_service.dart            # 로그인/로그아웃/토큰 갱신
-    ├── ocr_service.dart             # OCR 업로드/결과 조회
-    ├── user_service.dart            # 유저 정보 조회/수정/탈퇴
-    ├── notification_service.dart    # 알림 설정 조회/저장
-    ├── google_auth_service.dart     # 구글 소셜 로그인 ✅ NEW
-    └── naver_auth_service.dart      # 네이버 소셜 로그인 ✅ NEW
+```text
+.
+├── ai_worker/          # AI 모델 추론 및 학습 관련 코드 (Worker)
+│   ├── core/           # 워커 설정 및 로거
+│   ├── models/         # AI 모델 파일 보관 (PyTorch 등)
+│   ├── tasks/          # 실제 처리할 작업 정의
+│   └── main.py         # 워커 진입점
+├── app/                # FastAPI 서버 코드
+│   ├── apis/           # API 라우터 (v1 버전 관리)
+│   ├── core/           # 서버 설정 (pydantic-settings), DB 설정, JWT, Validator 등 핵심 기능
+│   ├── dtos/           # 데이터 전송 객체 (Pydantic models)
+│   ├── models/         # DB 테이블 정의
+│   ├── services/       # 비즈니스 로직
+│   └── main.py         # FastAPI 애플리케이션 진입점
+├── envs/               # 환경 변수 설정 파일 (.env)
+├── infra/              # 인프라 설정 관련 디렉터리
+│   ├── docker/         # Docker Compose 설정 (운영용)
+│   └── nginx/          # Nginx 설정 파일 (리버스 프록시)
+├── scripts/            # 배포 및 CI용 쉘 스크립트
+├── docker-compose.yml  # 로컬 개발용 서비스 실행 설정
+└── pyproject.toml      # uv 기반 의존성 관리 설정
 ```
 
 ---
 
-## 🛠 기술 스택
+## ⚙️ 사전 준비 사항
 
-```
-Flutter (Dart)
-├── http: ^1.2.0              # API 통신
-├── flutter_secure_storage    # JWT 토큰 저장 (웹: IndexedDB)
-├── image_picker: ^1.0.7      # 이미지 선택
-├── http_parser: ^4.0.0       # 파일 업로드
-├── intl                      # 날짜 포맷
-├── flutter_localizations     # 한국어 로케일
-├── google_sign_in: ^6.2.2    # 구글 소셜 로그인 ✅ NEW
-└── webview_flutter: ^4.13.0  # 네이버 로그인 웹뷰 ✅ NEW
-```
+- **Python**: 3.13 이상 (로컬 개발 환경용)
+- **UV**: Python 패키지 매니저 ([설치 가이드](https://github.com/astral-sh/uv))
+- **Docker & Docker-Compose**: 전체 서비스 실행용
 
 ---
 
-## 🚀 실행 방법
+## 🛠️ 설치 및 설정
 
-### 1. 백엔드 서버 실행
+### 1. 가상환경 구축 및 의존성 설치
+
+`uv`를 사용하여 프로젝트에 필요한 패키지를 설치합니다.
+
 ```bash
-cd PythonProject
-# envs/.local.env 파일 생성 후
-docker compose up -d --build
+# 의존성 설치 (가상환경 자동 생성)
+uv sync
+
+# 특정 그룹의 의존성만 설치하려는 경우
+uv sync --group app  # API 서버용
+uv sync --group ai   # AI 워커용
 ```
 
-### 2. Flutter 실행
+### 2. 환경 변수 설정
+
+`envs/` 디렉토리에 있는 예시 파일을 복사하여 `.env` 파일을 생성합니다.
+- 로컬용 
+    ```bash
+    cp envs/example.local.env envs/.local.env
+    ```
+- 배포용 
+    ```bash
+    cp envs/example.prod.env envs/.prod.env
+    ```
+
+생성된 `env` 파일 내의 환경변수들은 프로젝트 상황에 맞게 수정하세요.
+
+---
+
+## 🏃 실행 방법
+
+### 1. 로컬 및 개발 환경
+
+#### Docker Compose로 전체 스택 실행
+
+모든 서비스(API, Worker, DB, Redis, Nginx)를 한 번에 실행합니다.
+
 ```bash
-cd flutter_application_1
-flutter pub get
-flutter run
+docker-compose up -d --build
 ```
 
-### 3. 브랜치
+실행 후 다음 주소로 접속 가능합니다:
+- **API 서버**: [http://localhost/api/docs](http://localhost/api/docs) (Swagger UI)
+- **Nginx**: 80 포트를 통해 API 서버로 요청을 전달합니다.
+
+#### 로컬에서 개별 실행 (개발용)
+
+**FastAPI 서버 실행:**
+```bash
+uv run uvicorn app.main:app --reload
+# or
+docker compose up -d --build app
 ```
-feature/이승혁-flutter
+
+**AI Worker 실행:**
+```bash
+uv run python -m ai_worker.main
+# or
+docker compose up -d --build ai_worker
+```
+
+### 2. EC2 배포 환경 (Production)
+
+제공된 쉘 스크립트를 사용하여 AWS EC2 환경에 이미지를 빌드, 푸시 및 배포할 수 있습니다.
+
+#### 사전 준비
+- EC2 인스턴스 (Ubuntu 권장)
+- SSH 키 페어 (`~/.ssh/` 경로에 위치)
+- 도커 허브(Docker Hub) 계정 및 Personal Access Token
+- 배포용 환경 변수 설정 (`envs/.prod.env`)
+- 도메인 구매 (Gabia, GoDaddy, AWS Route53 등)
+
+#### 자동 배포 스크립트 실행
+`scripts/deployment.sh`는 도커 이미지 빌드, 레포지토리 푸시, EC2 접속 및 컨테이너 실행 과정을 자동화합니다.
+
+```bash
+chmod +x scripts/deployment.sh
+./scripts/deployment.sh
+```
+스크립트 실행 시 다음 정보를 입력해야 합니다:
+1. 도커 허브 계정 정보 (Username, PAT)
+2. 이미지를 업로드할 레포지토리 이름
+3. 배포할 서비스 선택 (FastAPI, AI-Worker) 및 버전(Tag)
+4. SSH 키 파일명 및 EC2 IP 주소
+5. https 사용여부
+   - 5-1. https인 경우 도메인 추가 입력  
+
+#### SSL(HTTPS) 설정 (Certbot)
+도메인을 연결하고 HTTPS를 적용하려면 `scripts/certbot.sh`를 사용합니다.
+
+```bash
+chmod +x scripts/certbot.sh
+./scripts/certbot.sh
+```
+1. 도메인 주소 및 이메일 입력
+2. SSH 키 파일명 및 EC2 IP 주소 입력
+3. Let's Encrypt를 통한 인증서 발급 및 Nginx 설정 자동 갱신 적용
+
+---
+
+## 🧪 테스트 및 품질 관리
+
+제공된 스크립트를 사용하여 코드의 품질을 검증할 수 있습니다.
+
+```bash
+# 테스트 실행
+./scripts/ci/run_test.sh
+
+# 코드 포맷팅 확인 (Ruff)
+./scripts/ci/code_fommatting.sh
+
+# 정적 타입 검사 (Mypy)
+./scripts/ci/check_mypy.sh
 ```
 
 ---
 
-## 📡 API 연동
+## 📝 개발 가이드
 
-| 항목 | 내용 |
-|------|------|
-| Base URL | `http://localhost/api` |
-| 인증 방식 | Bearer JWT Token |
-| Access Token | 30분 |
-| Refresh Token | 14일 |
-| 백엔드 | FastAPI + MySQL + Redis |
-
-### 주요 엔드포인트
-| 기능 | 메서드 | 경로 |
-|------|--------|------|
-| 로그인 | POST | `/v1/auth/login` |
-| 로그아웃 | POST | `/v1/auth/logout` |
-| 토큰 갱신 | POST | `/v1/auth/refresh` |
-| 구글 소셜 로그인 | POST | `/v1/auth/google` ✅ NEW |
-| 네이버 소셜 로그인 | POST | `/v1/auth/naver` ✅ NEW |
-| 내 정보 | GET/PATCH | `/v1/users/me` |
-| 진료기록 | GET/POST/PATCH/DELETE | `/v1/medical-records` |
-| OCR 업로드 | POST | `/v1/medical-documents` |
-| 안내문 | GET | `/v1/guides` |
-| 알림 | GET | `/v1/notifications` |
-| 알림 설정 | GET/POST | `/v1/notifications/settings` |
-| 대시보드 | GET | `/v1/dashboard` |
-| 챗봇 세션 | GET/POST | `/v1/chat/sessions` |
-
----
-
-## 🔐 소셜 로그인 설정
-
-### 구글 로그인
-- Google Cloud Console에서 OAuth 2.0 클라이언트 ID 발급
-- 웹 / Android / iOS 클라이언트 ID 각각 발급 필요
-- People API 활성화 필요
-- 클라이언트 ID는 백엔드 `envs/.local.env`에 저장
-
-### 네이버 로그인
-- Naver Developers에서 앱 등록 및 Client ID/Secret 발급
-- 현재 개발 상태 (배포 시 심사 필요)
-- 웹 환경에서는 임시 구현 (모바일 앱 빌드 시 정식 구현 예정)
-
----
-
-## ⚠️ 주의사항
-
-- 민감 의료정보 처리 시 면책문구 포함
-- 의료 진단/처방 관련 표현 사용 금지 (의료법 §27)
-- API 호출은 서비스 레이어로 분리
-- 컴포넌트는 PascalCase, 함수는 camelCase
-- 소셜 로그인 키는 절대 코드에 하드코딩 금지 (`.env` 파일 사용)
+- **API 추가**: `app/apis/v1/` 아래에 새로운 라우터 파일을 생성하고 `app/apis/v1/__init__.py`에 등록하세요.
+- **DB 모델 추가**: `app/models/`에 Tortoise 모델을 정의하고 `app/db/databases.py`의 `MODELS` 리스트에 추가하세요.
+- **AI 로직 추가**: `ai_worker/tasks/`에 새로운 처리 로직을 작성하고 `ai_worker/main.py`에서 호출하도록 구성하세요.
