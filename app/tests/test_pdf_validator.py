@@ -58,10 +58,8 @@ async def test_validate_pdf_upload_oversized_raises_413():
     from fastapi import HTTPException
 
     from app.dependencies.pdf_validator import MAX_PDF_SIZE_BYTES, validate_pdf_upload
- feature/이승혁-backend
 
 
- develop
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.read = AsyncMock(return_value=b"%PDF-" + b"x" * (MAX_PDF_SIZE_BYTES + 1))
     with pytest.raises(HTTPException) as exc_info:
@@ -74,7 +72,6 @@ async def test_validate_pdf_upload_invalid_magic_raises_400():
     from fastapi import HTTPException
 
     from app.dependencies.pdf_validator import validate_pdf_upload
- feature/이승혁-backend
 
 
 develop
