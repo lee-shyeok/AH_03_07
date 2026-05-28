@@ -17,6 +17,7 @@ from app.apis.v1.lupus_skin_routers import lupus_skin_router
 from app.apis.v1.medical_schedule_routers import medical_schedule_router
 from app.apis.v1.medication_routers import medication_router
 from app.apis.v1.mode_routers import mode_router
+from app.apis.v1.pill_recognition_routers import pill_router
 from app.apis.v1.pre_consultation_report_routers import pre_consultation_report_router
 from app.apis.v1.ra_exposure_routers import ra_exposure_router
 from app.apis.v1.risk_profile_routers import risk_profile_router
@@ -44,3 +45,4 @@ v1_routers.include_router(vaccine_prevention_router)
 v1_routers.include_router(lupus_skin_router)
 v1_routers.include_router(pre_consultation_report_router)
 v1_routers.include_router(ra_exposure_router)
+v1_routers.include_router(pill_router)
