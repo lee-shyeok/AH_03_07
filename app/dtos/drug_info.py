@@ -1,6 +1,8 @@
 import httpx
+
 from app.core import config
 from app.dtos.drug_info import DrugInfo, DrugSearchResponse
+
 
 class DrugInfoService:
     """식약처 의약품 정보 조회 (REQ-PILL-003)"""
@@ -36,19 +38,21 @@ class DrugInfoService:
 
         drugs = []
         for item in items:
-            drugs.append(DrugInfo(
-                item_name=item.get("itemName", ""),
-                entp_name=item.get("entpName"),
-                item_seq=item.get("itemSeq"),
-                efcy_qesitm=item.get("efcyQesitm"),
-                use_method_qesitm=item.get("useMethodQesitm"),
-                atpn_warn_qesitm=item.get("atpnWarnQesitm"),
-                atpn_qesitm=item.get("atpnQesitm"),
-                intrc_qesitm=item.get("intrcQesitm"),
-                se_qesitm=item.get("seQesitm"),
-                deposit_method_qesitm=item.get("depositMethodQesitm"),
-                item_image=item.get("itemImage"),
-            ))
+            drugs.append(
+                DrugInfo(
+                    item_name=item.get("itemName", ""),
+                    entp_name=item.get("entpName"),
+                    item_seq=item.get("itemSeq"),
+                    efcy_qesitm=item.get("efcyQesitm"),
+                    use_method_qesitm=item.get("useMethodQesitm"),
+                    atpn_warn_qesitm=item.get("atpnWarnQesitm"),
+                    atpn_qesitm=item.get("atpnQesitm"),
+                    intrc_qesitm=item.get("intrcQesitm"),
+                    se_qesitm=item.get("seQesitm"),
+                    deposit_method_qesitm=item.get("depositMethodQesitm"),
+                    item_image=item.get("itemImage"),
+                )
+            )
 
         return DrugSearchResponse(
             query=drug_name,
