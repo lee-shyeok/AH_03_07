@@ -32,6 +32,9 @@ class Config(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
     OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    DRUG_API_KEY: str = ""
+    DRUG_API_BASE_URL: str = "https://apis.data.go.kr/1471000/DrbEasyDrugInfoService"
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     MEDIA_DIR: str = "media"
