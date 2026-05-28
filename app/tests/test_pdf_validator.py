@@ -74,7 +74,6 @@ async def test_validate_pdf_upload_invalid_magic_raises_400():
     from app.dependencies.pdf_validator import validate_pdf_upload
 
 
-develop
     mock_file = AsyncMock(spec=UploadFile)
     mock_file.read = AsyncMock(return_value=b"NOT A PDF CONTENT")
     with pytest.raises(HTTPException) as exc_info:
