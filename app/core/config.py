@@ -30,15 +30,18 @@ class Config(BaseSettings):
     DB_CONNECT_TIMEOUT: int = 5
     DB_CONNECTION_POOL_MAXSIZE: int = 10
 
+    REDIS_URL: str = "redis://localhost:6379/0"
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    DRUG_API_KEY: str = ""
+    DRUG_API_BASE_URL: str = "https://apis.data.go.kr/1471000/DrbEasyDrugInfoService"
+    QDRANT_HOST: str = "localhost"
+    QDRANT_PORT: int = 6333
+    MEDIA_DIR: str = "media"
+
     COOKIE_DOMAIN: str = "localhost"
 
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 14 * 24 * 60
     JWT_LEEWAY: int = 5
-
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o-mini"
-
-    DRUG_API_KEY: str = ""
-    DRUG_API_BASE_URL: str = "https://apis.data.go.kr/1471000/DrbEasyDrugInfoService"
