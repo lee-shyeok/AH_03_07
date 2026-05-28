@@ -10,9 +10,37 @@ from app.dtos.autoimmune_care import (
     VaccineInfoItem,
     VaccinePreventionResponse,
 )
+from app.models.user_medication import DrugClass
 from app.models.user_risk_profile import PregnancyStatus
 from app.models.users import User
 from app.services.autoimmune_profile_service import MedicationService, RiskProfileService
+
+AUTOIMMUNE_NOTES_BY_DRUG_CLASS: dict[DrugClass, list[str]] = {
+    DrugClass.STEROID: [
+        "스테로이드 계열 약물입니다.",
+        "임의로 복용을 중단하면 부작용이 나타날 수 있어, 변경 전 의료진과 상의가 권장됩니다.",
+        "골밀도·혈당 등 정기 점검이 권장됩니다.",
+    ],
+    DrugClass.IMMUNOSUPPRESSANT: [
+        "면역억제제입니다.",
+        "감염 위험이 증가할 수 있어 일반적인 감염 예방에 유의하세요.",
+        "정기 혈액검사로 간·신장 기능 모니터링이 권장됩니다.",
+    ],
+    DrugClass.ANTIMALARIAL: [
+        "항말라리아제(예: 하이드록시클로로퀸) 계열입니다.",
+        "장기 복용 시 망막 관련 모니터링이 권장됩니다.",
+        "안과 검진(통상 6~12개월 주기)을 의료진과 상의해 잡으세요.",
+    ],
+    DrugClass.BIOLOGIC: [
+        "생물학적 제제입니다.",
+        "결핵·B형 간염 등 감염 사전 검사가 권장됩니다.",
+        "투여 중 정기적인 추적 관찰이 권장됩니다.",
+    ],
+    DrugClass.NSAID: [
+        "비스테로이드성 소염진통제입니다.",
+        "장기 복용 시 위장·신장 관련 모니터링이 권장됩니다.",
+    ],
+}
 
 # --- AUTO-003 ---
 MFDS_DRUG_SEARCH_BASE = "https://nedrug.mfds.go.kr"
@@ -97,6 +125,7 @@ class MedicationCardService:
                 consultation_checklist=CONSULTATION_CHECKLIST,
                 official_source_url=_build_mfds_search_url(med.name),
                 reference_sources=REFERENCE_SOURCES,
+                autoimmune_notes=AUTOIMMUNE_NOTES_BY_DRUG_CLASS.get(med.drug_class, []),
             )
             for med in meds
         ]

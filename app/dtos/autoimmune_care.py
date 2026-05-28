@@ -21,6 +21,7 @@ class MedicationCard(BaseModel):
     consultation_checklist: list[str]
     official_source_url: str
     reference_sources: list[SourceLink]
+    autoimmune_notes: list[str] = []
 
 
 class MedicationCardListResponse(BaseModel):

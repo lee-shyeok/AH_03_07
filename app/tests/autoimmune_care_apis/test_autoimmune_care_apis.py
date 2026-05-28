@@ -5,6 +5,7 @@ from starlette import status
 from tortoise.contrib.test import TestCase
 
 from app.main import app
+from app.services.autoimmune_care_service import AUTOIMMUNE_NOTES_BY_DRUG_CLASS
 
 BASE_URL = "http://test"
 
@@ -83,6 +84,55 @@ class TestMedicationCardApis(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             resp = await client.get("/api/v1/medication-cards")
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    async def test_medication_card_includes_autoimmune_notes(self):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "notes_steroid@example.com", "01033330009")
+            headers = {"Authorization": f"Bearer {token}"}
+            await client.post(
+                "/api/v1/medications",
+                json={"medications": [{"name": "프레드니솔론", "drug_class": "STEROID", "is_injection": False}]},
+                headers=headers,
+            )
+            resp = await client.get("/api/v1/medication-cards", headers=headers)
+        assert resp.status_code == status.HTTP_200_OK
+        card = resp.json()["cards"][0]
+        assert len(card["autoimmune_notes"]) > 0
+        assert "스테로이드" in card["autoimmune_notes"][0]
+
+    async def test_autoimmune_notes_match_drug_class(self):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "notes_match@example.com", "01033330010")
+            headers = {"Authorization": f"Bearer {token}"}
+            await client.post(
+                "/api/v1/medications",
+                json={
+                    "medications": [
+                        {"name": "메토트렉세이트", "drug_class": "IMMUNOSUPPRESSANT", "is_injection": False},
+                        {"name": "하이드록시클로로퀸", "drug_class": "ANTIMALARIAL", "is_injection": False},
+                        {"name": "아달리무맙", "drug_class": "BIOLOGIC", "is_injection": True},
+                        {"name": "이부프로펜", "drug_class": "NSAID", "is_injection": False},
+                    ]
+                },
+                headers=headers,
+            )
+            resp = await client.get("/api/v1/medication-cards", headers=headers)
+        from app.models.user_medication import DrugClass
+
+        cards = resp.json()["cards"]
+        for card in cards:
+            dc = DrugClass(card["drug_class"])
+            expected = AUTOIMMUNE_NOTES_BY_DRUG_CLASS.get(dc, [])
+            assert card["autoimmune_notes"] == expected
+
+
+class TestAutoImmuneNotesSafety(TestCase):
+    async def test_autoimmune_notes_have_no_forbidden_terms(self):
+        forbidden = ["악화", "진단", "처방", "약 조절", "비대면 진료", "의사 매칭"]
+        for dc, notes in AUTOIMMUNE_NOTES_BY_DRUG_CLASS.items():
+            for note in notes:
+                for term in forbidden:
+                    assert term not in note, f"금지 표현 '{term}' 발견 — {dc}: {note!r}"
 
 
 class TestPregnancySafetyApis(TestCase):
