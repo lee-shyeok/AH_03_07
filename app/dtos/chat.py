@@ -31,10 +31,12 @@ class RagSource(BaseModel):
 
 
 class MessageResponse(BaseModel):
+    message_id: int
+    role: MessageRole
     content: str
     rag_sources: list[RagSource]
     blocked_by_filter: bool
-    block_reason: str | None
+    block_reason: str | None = None
 
 
 class MessageItem(BaseModel):

@@ -5,8 +5,9 @@ from pydantic import Field
 
 from app.dependencies.security import get_request_user
 from app.dtos.base import BaseSerializerModel
-from app.dtos.chat import SessionStartResponse
+from app.dtos.chat import MessageRequest, MessageResponse, RagSource, SessionStartResponse
 from app.models.users import User
+from app.services.chat_message_service import ChatMessageService, get_chat_message_service
 from app.services.chat_service import chat_with_rag
 from app.services.chat_session_service import ChatSessionService
 
@@ -30,6 +31,28 @@ class ChatResponse(BaseSerializerModel):
     answer: str
     is_general_info: bool
     sources: list[ChatSource]
+
+
+@chat_router.post("/sessions/{session_id}/messages", status_code=status.HTTP_200_OK)
+async def create_chat_message(
+    session_id: int,
+    body: MessageRequest,
+    user: Annotated[User, Depends(get_request_user)],
+    session_service: Annotated[ChatSessionService, Depends(ChatSessionService)],
+    message_service: Annotated[ChatMessageService, Depends(get_chat_message_service)],
+) -> MessageResponse:
+    session = await session_service.get_user_session(user, session_id)
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="세션을 찾을 수 없습니다")
+    message = await message_service.handle_message(session, body.content)
+    return MessageResponse(
+        message_id=message.id,
+        role=message.role,
+        content=message.content,
+        rag_sources=[RagSource(**s) for s in message.rag_sources],
+        blocked_by_filter=message.blocked_by_filter,
+        block_reason=message.block_reason,
+    )
 
 
 @chat_router.post("/sessions", status_code=status.HTTP_201_CREATED)

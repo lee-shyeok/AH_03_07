@@ -40,7 +40,7 @@ def test_normal_message_not_blocked(svc: ChatValidationService) -> None:
 
 
 def test_safety_filter_detects_forbidden_term(svc: ChatValidationService) -> None:
-    assert svc.check_safety_expressions("이 약을 처방받으세요") == "처방"
+    assert svc.check_safety_expressions("제가 처방해드릴게요") == "처방해드릴"
 
 
 def test_safety_filter_passes_neutral_text(svc: ChatValidationService) -> None:

@@ -9,7 +9,21 @@ class BlockReason(StrEnum):
     INTENT_BLOCKED = "INTENT_BLOCKED"
 
 
-FORBIDDEN_TERMS = ["악화", "진단", "처방", "약 조절", "비대면 진료", "의사 매칭"]
+FORBIDDEN_TERMS = [
+    "진단해드립니다",
+    "진단해 드립니다",
+    "진단해드릴",
+    "진단해 드릴",
+    "진단해줄게",
+    "처방해드립니다",
+    "처방해 드립니다",
+    "처방해드릴",
+    "처방해 드릴",
+    "처방해줄게",
+    "약 조절",
+    "비대면 진료",
+    "의사 매칭",
+]
 
 BLOCKED_INTENT_KEYWORDS: dict[str, list[str]] = {
     "DIAGNOSIS_REQUEST": ["진단해줘", "무슨 병이야", "병명 알려줘", "진단해 주세요"],
