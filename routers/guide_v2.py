@@ -24,9 +24,8 @@ import os
 import re
 import secrets
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
@@ -34,19 +33,27 @@ from sqlalchemy.orm import Session
 from database import get_db
 from guide_models import Guide, GuideStatusEnum
 from guide_v2_models import (
-    GuideGenerationJob, GuideJobStatusEnum, GuideTypeEnum, GuideTriggerTypeEnum,
-    GuideSource, GuideSection,
-    PillRecognition, Report, ReportStatusEnum,
+    GuideGenerationJob,
+    GuideJobStatusEnum,
+    GuideSection,
+    GuideSource,
+    PillRecognition,
+    Report,
+    ReportStatusEnum,
 )
 from guide_v2_schemas import (
-    GuideGenerateRequest, GuideGenerationJobResponse,
-    GuideSourceResponse, GuideSectionResponse,
-    PrescriptionBrief,
+    GuideGenerateRequest,
+    GuideGenerationJobResponse,
+    GuideSectionResponse,
+    GuideSourceResponse,
     PillRecognitionResponse,
-    ReportCreateRequest, ReportResponse, ReportShareResponse,
+    PrescriptionBrief,
+    ReportCreateRequest,
+    ReportResponse,
+    ReportShareResponse,
 )
 from medical_record_models import MedicalRecord
-from ocr_models import MedicalDocument, DocumentTypeEnum
+from ocr_models import DocumentTypeEnum, MedicalDocument
 from security import get_current_user_id
 
 router = APIRouter()
@@ -96,7 +103,7 @@ def _sanitize_filename(name: str) -> str:
 def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
     """백그라운드 안내문 생성."""
     from database import SessionLocal
-    from guide_engine import generate_guide, DISCLAIMER
+    from guide_engine import DISCLAIMER, generate_guide
     from models import User
 
     db = SessionLocal()
@@ -106,7 +113,7 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
             return
 
         job.status = GuideJobStatusEnum.processing
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         db.commit()
 
         # 최근 진료기록 조회
@@ -118,7 +125,7 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
         if not records:
             job.status = GuideJobStatusEnum.failed
             job.error_message = "진료 기록이 없어 안내문을 생성할 수 없습니다."
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             db.commit()
             return
 
@@ -182,7 +189,7 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
             job.status = GuideJobStatusEnum.failed
             job.error_message = str(e)[:500]
 
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         db.commit()
     finally:
         db.close()
@@ -267,7 +274,7 @@ def get_guide_generation_job(
 
 @router.get(
     "/guides/{guide_id}/sources",
-    response_model=List[GuideSourceResponse],
+    response_model=list[GuideSourceResponse],
     summary="API-안내문-005: 안내문 출처 목록",
 )
 def get_guide_sources(
@@ -283,7 +290,7 @@ def get_guide_sources(
 
 @router.get(
     "/guides/{guide_id}/sections",
-    response_model=List[GuideSectionResponse],
+    response_model=list[GuideSectionResponse],
     summary="API-안내문-006: 안내문 섹션별 조회",
 )
 def get_guide_sections(
@@ -301,7 +308,7 @@ def get_guide_sections(
 
 @router.get(
     "/prescriptions",
-    response_model=List[PrescriptionBrief],
+    response_model=list[PrescriptionBrief],
     summary="API-처방전-001: 처방전 목록 조회",
 )
 def list_prescriptions(
@@ -406,7 +413,7 @@ async def recognize_pill(
 
 @router.get(
     "/pills/recognitions",
-    response_model=List[PillRecognitionResponse],
+    response_model=list[PillRecognitionResponse],
     summary="API-약품-006: 약품 인식 이력 조회",
 )
 def list_pill_recognitions(
@@ -447,9 +454,9 @@ def _run_report_generation(report_id: int, user_id: int) -> None:
 
         try:
             # 진료 전 요약 생성 (GPT 기반)
-            from guide_engine import _call_openai_vision
-            from ocr_engine import _OPENAI_API_KEY
             import urllib.request
+
+            from ocr_engine import _OPENAI_API_KEY
 
             if not _OPENAI_API_KEY:
                 raise RuntimeError("OPENAI_API_KEY가 설정되지 않았습니다.")
@@ -571,7 +578,7 @@ def share_report(
         raise HTTPException(status_code=400, detail="완료된 리포트만 공유할 수 있습니다.")
 
     token = secrets.token_urlsafe(64)
-    expires = datetime.now(timezone.utc) + timedelta(hours=REPORT_SHARE_EXPIRE_HOURS)
+    expires = datetime.now(UTC) + timedelta(hours=REPORT_SHARE_EXPIRE_HOURS)
 
     report.secure_link_token = token
     report.share_expires_at = expires

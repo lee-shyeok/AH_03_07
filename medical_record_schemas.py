@@ -1,16 +1,15 @@
 from datetime import date, datetime
-from typing import List, Optional
-from pydantic import BaseModel, field_validator, model_validator
 
+from pydantic import BaseModel, field_validator
 
 # ── 약품 ─────────────────────────────────────────────────
 
 class MedicationCreate(BaseModel):
     drug_name: str
-    dosage: Optional[str] = None
-    frequency: Optional[str] = None
-    duration_days: Optional[int] = None
-    timing: Optional[str] = None
+    dosage: str | None = None
+    frequency: str | None = None
+    duration_days: int | None = None
+    timing: str | None = None
 
     @field_validator("drug_name")
     @classmethod
@@ -33,10 +32,10 @@ class MedicationCreate(BaseModel):
 class MedicationResponse(BaseModel):
     id: int
     drug_name: str
-    dosage: Optional[str] = None
-    frequency: Optional[str] = None
-    duration_days: Optional[int] = None
-    timing: Optional[str] = None
+    dosage: str | None = None
+    frequency: str | None = None
+    duration_days: int | None = None
+    timing: str | None = None
 
     class Config:
         from_attributes = True
@@ -46,11 +45,11 @@ class MedicationResponse(BaseModel):
 
 class MedicalRecordCreate(BaseModel):
     visit_date: date
-    hospital_name: Optional[str] = None
+    hospital_name: str | None = None
     diagnosis: str
-    medications: List[MedicationCreate] = []
-    memo: Optional[str] = None
-    document_id: Optional[int] = None
+    medications: list[MedicationCreate] = []
+    memo: str | None = None
+    document_id: int | None = None
 
     @field_validator("visit_date")
     @classmethod
@@ -100,11 +99,11 @@ class MedicalRecordCreate(BaseModel):
 # ── 진료기록 수정 ─────────────────────────────────────────
 
 class MedicalRecordUpdate(BaseModel):
-    visit_date: Optional[date] = None
-    hospital_name: Optional[str] = None
-    diagnosis: Optional[str] = None
-    medications: Optional[List[MedicationCreate]] = None
-    memo: Optional[str] = None
+    visit_date: date | None = None
+    hospital_name: str | None = None
+    diagnosis: str | None = None
+    medications: list[MedicationCreate] | None = None
+    memo: str | None = None
 
     @field_validator("visit_date")
     @classmethod
@@ -159,7 +158,7 @@ class MedicalRecordUpdate(BaseModel):
 class MedicalRecordBrief(BaseModel):
     id: int
     visit_date: date
-    hospital_name: Optional[str] = None
+    hospital_name: str | None = None
     diagnosis: str
     medication_count: int
     has_guide: bool
@@ -170,11 +169,11 @@ class MedicalRecordBrief(BaseModel):
 class MedicalRecordDetail(BaseModel):
     id: int
     visit_date: date
-    hospital_name: Optional[str] = None
+    hospital_name: str | None = None
     diagnosis: str
-    medications: List[MedicationResponse]
-    memo: Optional[str] = None
-    document_id: Optional[int] = None
+    medications: list[MedicationResponse]
+    memo: str | None = None
+    document_id: int | None = None
     has_guide: bool
     guide_needs_update: bool
     created_at: datetime
@@ -182,7 +181,7 @@ class MedicalRecordDetail(BaseModel):
 
 
 class MedicalRecordListResponse(BaseModel):
-    items: List[MedicalRecordBrief]
+    items: list[MedicalRecordBrief]
     total: int
     page: int
     size: int

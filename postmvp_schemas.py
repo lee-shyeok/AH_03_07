@@ -1,10 +1,15 @@
 import json
-from datetime import date, datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, field_validator, model_validator
+from datetime import UTC, date, datetime
+from typing import Any
+
+from pydantic import BaseModel, field_validator
+
 from postmvp_models import (
-    HealthMetricTypeEnum, ContentTypeEnum, ContentStatusEnum,
-    ContentSourceTypeEnum, GameTypeEnum,
+    ContentSourceTypeEnum,
+    ContentStatusEnum,
+    ContentTypeEnum,
+    GameTypeEnum,
+    HealthMetricTypeEnum,
 )
 
 # 허용 overall_condition
@@ -32,9 +37,9 @@ BADGE_THRESHOLDS = {
 class HealthMetricCreate(BaseModel):
     metric_type: HealthMetricTypeEnum
     user_recorded_value: float
-    unit: Optional[str] = None
+    unit: str | None = None
     measured_at: datetime
-    memo: Optional[str] = None
+    memo: str | None = None
 
     @field_validator("user_recorded_value")
     @classmethod
@@ -55,9 +60,8 @@ class HealthMetricCreate(BaseModel):
     @field_validator("measured_at")
     @classmethod
     def measured_not_future(cls, v):
-        from datetime import timezone
-        now = datetime.now(timezone.utc)
-        measured = v if v.tzinfo else v.replace(tzinfo=timezone.utc)
+        now = datetime.now(UTC)
+        measured = v if v.tzinfo else v.replace(tzinfo=UTC)
         if measured > now:
             raise ValueError("측정 시각은 현재 시각 이후일 수 없습니다.")
         return v
@@ -74,9 +78,9 @@ class HealthMetricResponse(BaseModel):
     id: int
     metric_type: HealthMetricTypeEnum
     user_recorded_value: float
-    unit: Optional[str] = None
+    unit: str | None = None
     measured_at: datetime
-    memo: Optional[str] = None
+    memo: str | None = None
     created_at: datetime
 
     class Config:
@@ -87,10 +91,10 @@ class HealthMetricResponse(BaseModel):
 
 class DiarySymptomLogCreate(BaseModel):
     log_date: date
-    overall_condition: Optional[str] = None
-    body_parts: Optional[List[str]] = None
-    feeling: Optional[str] = None
-    memo: Optional[str] = None
+    overall_condition: str | None = None
+    body_parts: list[str] | None = None
+    feeling: str | None = None
+    memo: str | None = None
 
     @field_validator("log_date")
     @classmethod
@@ -135,10 +139,10 @@ class DiarySymptomLogCreate(BaseModel):
 class DiarySymptomLogResponse(BaseModel):
     id: int
     log_date: date
-    overall_condition: Optional[str] = None
-    body_parts: Optional[List[str]] = None
-    feeling: Optional[str] = None
-    memo: Optional[str] = None
+    overall_condition: str | None = None
+    body_parts: list[str] | None = None
+    feeling: str | None = None
+    memo: str | None = None
     created_at: datetime
 
     @classmethod
@@ -164,7 +168,7 @@ class DiarySymptomLogResponse(BaseModel):
 class DiaryMedicationLogCreate(BaseModel):
     log_date: date
     medication_id: int
-    time_slot: Optional[str] = None
+    time_slot: str | None = None
     taken: bool
 
     @field_validator("log_date")
@@ -186,7 +190,7 @@ class DiaryMedicationLogResponse(BaseModel):
     id: int
     medication_id: int
     log_date: date
-    time_slot: Optional[str] = None
+    time_slot: str | None = None
     taken: bool
     created_at: datetime
 
@@ -197,9 +201,9 @@ class DiaryMedicationLogResponse(BaseModel):
 # ── 일정 통합 캘린더 ──────────────────────────────────────
 
 class ScheduleResponse(BaseModel):
-    medications: List[Dict[str, Any]]           # 복약 알림 일정
-    prescriptions_end: List[Dict[str, Any]]     # 처방 종료 예정일
-    care_schedules: List[Dict[str, Any]]        # 진료·검사 일정
+    medications: list[dict[str, Any]]           # 복약 알림 일정
+    prescriptions_end: list[dict[str, Any]]     # 처방 종료 예정일
+    care_schedules: list[dict[str, Any]]        # 진료·검사 일정
 
 
 # ── 콘텐츠 변환 ───────────────────────────────────────────
@@ -212,7 +216,7 @@ class CardNewsCreateRequest(BaseModel):
 class TTSCreateRequest(BaseModel):
     source_id: int
     source_type: ContentSourceTypeEnum
-    voice_type: Optional[str] = "standard"
+    voice_type: str | None = "standard"
 
     @field_validator("voice_type")
     @classmethod
@@ -229,9 +233,9 @@ class ContentConversionResponse(BaseModel):
     source_type: ContentSourceTypeEnum
     source_id: int
     status: ContentStatusEnum
-    file_path: Optional[str] = None
-    file_size: Optional[int] = None
-    error_message: Optional[str] = None
+    file_path: str | None = None
+    file_size: int | None = None
+    error_message: str | None = None
     created_at: datetime
 
     class Config:
@@ -276,7 +280,7 @@ class BadgeInfo(BaseModel):
 
 class UserBadgesResponse(BaseModel):
     total_points: int
-    badges: List[BadgeInfo]
+    badges: list[BadgeInfo]
 
 
 # ── 관리자 안전 필터 로그 ─────────────────────────────────
@@ -284,9 +288,9 @@ class UserBadgesResponse(BaseModel):
 class SafetyFilterLogResponse(BaseModel):
     id: int
     target_type: str
-    target_id: Optional[int] = None
+    target_id: int | None = None
     blocked_reason: str
-    filter_stage: Optional[str] = None
+    filter_stage: str | None = None
     created_at: datetime
 
     class Config:

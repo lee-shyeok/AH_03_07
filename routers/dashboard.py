@@ -5,8 +5,7 @@
   GET /v1/dashboard   대시보드 데이터 일괄 조회
 """
 import json
-from datetime import date, datetime, timezone
-from typing import List, Optional
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -43,7 +42,7 @@ class DashboardGuideBrief(BaseModel):
 class DashboardRecordBrief(BaseModel):
     id: int
     visit_date: date
-    hospital_name: Optional[str] = None
+    hospital_name: str | None = None
     diagnosis: str
     medication_count: int
 
@@ -57,11 +56,11 @@ class DashboardOcrJob(BaseModel):
 
 
 class DashboardResponse(BaseModel):
-    recent_guides: List[DashboardGuideBrief]
+    recent_guides: list[DashboardGuideBrief]
     today_medication_reminders_total: int      # 오늘 알림 총 횟수
     today_medication_reminders_remaining: int  # 현재 시각 이후 남은 횟수
-    recent_records: List[DashboardRecordBrief]
-    pending_ocr_jobs: List[DashboardOcrJob]
+    recent_records: list[DashboardRecordBrief]
+    pending_ocr_jobs: list[DashboardOcrJob]
 
 
 # ── 엔드포인트 ────────────────────────────────────────────
@@ -82,7 +81,7 @@ def get_dashboard(
     - 최근 진료 기록 최대 3개
     - 진행 중인 OCR 작업
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today = date.today()
     today_weekday = _get_weekday_str(today)
     current_time_str = now.strftime("%H:%M")

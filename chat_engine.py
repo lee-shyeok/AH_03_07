@@ -6,7 +6,7 @@
 """
 import json
 import os
-from typing import AsyncGenerator, List, Dict
+from collections.abc import AsyncGenerator
 
 from dotenv import load_dotenv
 
@@ -84,7 +84,7 @@ def _check_guardrail(content: str) -> str | None:
 def build_system_prompt(
     chronic_diseases: str,
     allergy_info: str,
-    recent_guides: List[Dict[str, str]],
+    recent_guides: list[dict[str, str]],
 ) -> str:
     if recent_guides:
         guide_lines = [
@@ -105,9 +105,9 @@ def build_system_prompt(
 
 def build_messages(
     system_prompt: str,
-    history: List[Dict[str, str]],
+    history: list[dict[str, str]],
     user_message: str,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """최근 20개 메시지(10턴) + 현재 메시지."""
     recent = history[-20:] if len(history) > 20 else history
     messages = [{"role": "system", "content": system_prompt}]
@@ -117,7 +117,7 @@ def build_messages(
 
 
 async def stream_chat_response(
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
 ) -> AsyncGenerator[str, None]:
     """
     [수정 1] httpx AsyncClient로 진짜 비동기 SSE 스트리밍.

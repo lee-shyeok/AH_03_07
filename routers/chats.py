@@ -9,8 +9,7 @@
   POST   /v1/chat/messages/{id}/feedback       응답 평가
 """
 import json
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -19,15 +18,20 @@ from sqlalchemy.orm import Session
 
 from chat_engine import (
     _check_guardrail,
-    build_system_prompt,
     build_messages,
+    build_system_prompt,
     stream_chat_response,
 )
-from chat_models import ChatSession, ChatMessage, ChatFeedback, MessageRoleEnum
+from chat_models import ChatFeedback, ChatMessage, ChatSession, MessageRoleEnum
 from chat_schemas import (
-    ChatSessionResponse, ChatSessionListItem, ChatSessionListResponse,
-    ChatMessageRequest, ChatMessageResponse, ChatHistoryResponse,
-    ChatFeedbackRequest, ChatFeedbackResponse,
+    ChatFeedbackRequest,
+    ChatFeedbackResponse,
+    ChatHistoryResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
+    ChatSessionListItem,
+    ChatSessionListResponse,
+    ChatSessionResponse,
 )
 from database import get_db, redis_client
 from guide_models import Guide, GuideStatusEnum
@@ -63,11 +67,11 @@ def _expire_if_timeout(session: ChatSession, db: Session) -> None:
     """마지막 활동 후 30분 경과 시 세션 자동 종료."""
     if not session.is_active:
         return
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     last = session.last_activity_at
     # [수정 4] timezone naive/aware 혼용 방지
     if last.tzinfo is None:
-        last = last.replace(tzinfo=timezone.utc)
+        last = last.replace(tzinfo=UTC)
     if now - last > timedelta(minutes=SESSION_TIMEOUT_MINUTES):
         session.is_active = False
         session.ended_at = now
@@ -279,7 +283,7 @@ async def send_message(
         content=user_content,
     )
     db.add(user_msg)
-    session.last_activity_at = datetime.now(timezone.utc)
+    session.last_activity_at = datetime.now(UTC)
 
     try:
         db.commit()

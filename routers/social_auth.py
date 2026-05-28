@@ -1,14 +1,13 @@
 import json
 import os
-import httpx
 import secrets
-from typing import Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from database import get_db, redis_client, key_refresh_token
+from database import get_db, key_refresh_token, redis_client
 from models import User
 from security import create_access_token, create_refresh_token, hash_password
 
@@ -31,8 +30,8 @@ router = APIRouter()
 # ── 요청/응답 모델 ──────────────────────────────────────
 
 class GoogleLoginRequest(BaseModel):
-    id_token: Optional[str] = None
-    access_token: Optional[str] = None
+    id_token: str | None = None
+    access_token: str | None = None
 
 
 class NaverLoginRequest(BaseModel):
@@ -48,7 +47,7 @@ class SocialLoginResponse(BaseModel):
 
 # ── 구글 토큰 검증 ──────────────────────────────────────
 
-async def verify_google_token(id_token: Optional[str] = None, access_token: Optional[str] = None) -> dict:
+async def verify_google_token(id_token: str | None = None, access_token: str | None = None) -> dict:
     async with httpx.AsyncClient() as client:
         if id_token:
             response = await client.get(

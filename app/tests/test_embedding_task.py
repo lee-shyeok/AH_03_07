@@ -3,7 +3,6 @@
 DB 연결 없이 실행 가능하도록 ORM 모델 작업을 포함한 모든 외부 의존성을 Mock 처리.
 """
 
-import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import fitz

@@ -1,7 +1,8 @@
 import re
 from datetime import date, datetime
-from typing import Optional
+
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
+
 from models import GenderEnum
 
 # [수정 6] \S{8,} — 공백 문자 차단
@@ -37,9 +38,9 @@ class SignupRequest(BaseModel):
     password: str
     password_confirm: str
     name: str
-    birth_date: Optional[date] = None
-    gender: Optional[GenderEnum] = None
-    phone_number: Optional[str] = None
+    birth_date: date | None = None
+    gender: GenderEnum | None = None
+    phone_number: str | None = None
     email_token: str
 
     agreed_terms: bool
@@ -118,25 +119,25 @@ class UserMeResponse(BaseModel):
     id: int
     email: str
     name: str
-    birth_date: Optional[date] = None
-    gender: Optional[GenderEnum] = None
-    phone_number: Optional[str] = None
-    profile_image_url: Optional[str] = None
-    chronic_diseases: Optional[str] = None
-    allergy_info: Optional[str] = None
+    birth_date: date | None = None
+    gender: GenderEnum | None = None
+    phone_number: str | None = None
+    profile_image_url: str | None = None
+    chronic_diseases: str | None = None
+    allergy_info: str | None = None
     created_at: datetime
     class Config:
         from_attributes = True
 
 class UpdateUserRequest(BaseModel):
-    name: Optional[str] = None
-    phone_number: Optional[str] = None
-    profile_image_url: Optional[str] = None
-    chronic_diseases: Optional[str] = None
-    allergy_info: Optional[str] = None
-    current_password: Optional[str] = None
-    new_password: Optional[str] = None
-    new_password_confirm: Optional[str] = None
+    name: str | None = None
+    phone_number: str | None = None
+    profile_image_url: str | None = None
+    chronic_diseases: str | None = None
+    allergy_info: str | None = None
+    current_password: str | None = None
+    new_password: str | None = None
+    new_password_confirm: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -196,7 +197,7 @@ class UpdateUserRequest(BaseModel):
 # ── 회원탈퇴 ──────────────────────────────────────────────
 
 class WithdrawalRequest(BaseModel):
-    withdrawal_reason: Optional[str] = None
+    withdrawal_reason: str | None = None
 
     @field_validator("withdrawal_reason")
     @classmethod

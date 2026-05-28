@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Enum, Boolean, Date, DateTime, Text
-from sqlalchemy.sql import func
-from database import Base
 import enum
+
+from sqlalchemy import Boolean, Column, Date, DateTime, Enum, Integer, String, Text
+from sqlalchemy.sql import func
+
+from database import Base
 
 
 class GenderEnum(str, enum.Enum):

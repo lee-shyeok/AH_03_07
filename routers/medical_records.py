@@ -1,8 +1,7 @@
 """
 진료기록 라우터  REQ-MEDI-001 ~ REQ-MEDI-005
 """
-from datetime import date, datetime, timezone
-from typing import Optional
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -11,9 +10,12 @@ from sqlalchemy.orm import Session
 from database import get_db
 from medical_record_models import MedicalRecord, Medication
 from medical_record_schemas import (
-    MedicalRecordCreate, MedicalRecordUpdate,
-    MedicalRecordBrief, MedicalRecordDetail,
-    MedicalRecordListResponse, MedicationResponse,
+    MedicalRecordBrief,
+    MedicalRecordCreate,
+    MedicalRecordDetail,
+    MedicalRecordListResponse,
+    MedicalRecordUpdate,
+    MedicationResponse,
 )
 from ocr_models import MedicalDocument
 from security import get_current_user_id
@@ -116,10 +118,10 @@ def list_medical_records(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     order: str = Query("desc", pattern="^(asc|desc)$"),
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
-    hospital_name: Optional[str] = Query(None, max_length=MAX_FILTER_LEN),
-    diagnosis: Optional[str] = Query(None, max_length=MAX_FILTER_LEN),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    hospital_name: str | None = Query(None, max_length=MAX_FILTER_LEN),
+    diagnosis: str | None = Query(None, max_length=MAX_FILTER_LEN),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -250,7 +252,7 @@ def delete_medical_record(
     db: Session = Depends(get_db),
 ):
     record = _get_record_or_404(record_id, user_id, db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     record.deleted_at = now
     db.query(Medication).filter(Medication.record_id == record_id).delete()
     db.commit()

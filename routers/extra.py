@@ -13,23 +13,28 @@
 """
 import json
 import secrets
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
 from extra_models import (
-    DrugReference, ActivityThreshold,
-    Feedback, GuardianShare,
+    ActivityThreshold,
+    DrugReference,
+    Feedback,
+    GuardianShare,
 )
 from extra_schemas import (
-    DrugReferenceResponse,
-    ActivityThresholdUpsert, ActivityThresholdResponse,
-    FeedbackCreate, FeedbackResponse,
-    GuardianShareCreate, GuardianShareResponse, GuardianViewResponse,
     VALID_METRIC_TYPES,
+    ActivityThresholdResponse,
+    ActivityThresholdUpsert,
+    DrugReferenceResponse,
+    FeedbackCreate,
+    FeedbackResponse,
+    GuardianShareCreate,
+    GuardianShareResponse,
+    GuardianViewResponse,
 )
 from security import get_current_user_id
 
@@ -45,7 +50,7 @@ MAX_GUARDIAN_SHARES = 3  # 최대 보호자 3명
 
 @router.get(
     "/drug-references",
-    response_model=List[DrugReferenceResponse],
+    response_model=list[DrugReferenceResponse],
     summary="API-약품-007: 약품 기준정보 검색",
 )
 def search_drug_references(
@@ -72,7 +77,7 @@ def search_drug_references(
 
 @router.get(
     "/activity-logs/thresholds",
-    response_model=List[ActivityThresholdResponse],
+    response_model=list[ActivityThresholdResponse],
     summary="API-활성도-003: 활성도 알림 기준값 조회",
 )
 def get_thresholds(
@@ -228,7 +233,7 @@ def create_guardian_share(
 
 @router.get(
     "/guardians/shares",
-    response_model=List[GuardianShareResponse],
+    response_model=list[GuardianShareResponse],
     summary="API-보호자-002: 보호자 공유 목록",
 )
 def list_guardian_shares(
@@ -254,7 +259,7 @@ def revoke_guardian_share(
     """즉시 링크 무효화."""
     share = _get_share_or_404(share_id, user_id, db)
     share.is_revoked = True
-    share.revoked_at = datetime.now(timezone.utc)
+    share.revoked_at = datetime.now(UTC)
     db.commit()
 
 
@@ -289,10 +294,10 @@ def view_guardian_share(
         raise HTTPException(status_code=410, detail="철회된 공유 링크입니다.")
 
     # 만료 여부 확인
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expires = share.expires_at
     if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=timezone.utc)
+        expires = expires.replace(tzinfo=UTC)
     if now > expires:
         raise HTTPException(status_code=410, detail="만료된 공유 링크입니다.")
 
@@ -319,8 +324,8 @@ def view_guardian_share(
 
 def _build_shared_content(user_id: int, categories: list, db: Session) -> dict:
     """공유 카테고리에 따라 데이터를 조회하여 반환."""
-    from medical_record_models import MedicalRecord, Medication
     from guide_models import Guide, GuideStatusEnum
+    from medical_record_models import MedicalRecord
 
     content = {}
 

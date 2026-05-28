@@ -13,20 +13,26 @@
   PUT    /v1/diseases/{id}               질환 수정
   DELETE /v1/diseases/{id}              질환 삭제
 """
-from datetime import datetime, timezone
-from typing import List
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from consent_mode_disease_models import (
-    UserConsent, UserMode, UserDisease,
-    ConsentTypeEnum, UserModeEnum,
+    ConsentTypeEnum,
+    UserConsent,
+    UserDisease,
+    UserMode,
+    UserModeEnum,
 )
 from consent_mode_disease_schemas import (
-    ConsentUpsertRequest, ConsentResponse,
-    UserModeUpdate, UserModeResponse,
-    UserDiseaseCreate, UserDiseaseUpdate, UserDiseaseResponse,
+    ConsentResponse,
+    ConsentUpsertRequest,
+    UserDiseaseCreate,
+    UserDiseaseResponse,
+    UserDiseaseUpdate,
+    UserModeResponse,
+    UserModeUpdate,
 )
 from database import get_db
 from security import get_current_user_id
@@ -57,7 +63,7 @@ def _get_or_create_mode(user_id: int, db: Session) -> UserMode:
     return mode
 
 
-@router.get("/users/me/consents", response_model=List[ConsentResponse],
+@router.get("/users/me/consents", response_model=list[ConsentResponse],
             summary="API-사용자-004: 동의 이력 조회")
 def get_consents(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     return db.query(UserConsent).filter(
@@ -70,7 +76,7 @@ def get_consents(user_id: int = Depends(get_current_user_id), db: Session = Depe
 def upsert_consent(data: ConsentUpsertRequest,
                    user_id: int = Depends(get_current_user_id),
                    db: Session = Depends(get_db)):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     existing = db.query(UserConsent).filter(
         UserConsent.user_id == user_id,
         UserConsent.consent_type == data.consent_type,
@@ -125,7 +131,7 @@ def update_mode(data: UserModeUpdate,
 
     mode = _get_or_create_mode(user_id, db)
     mode.mode = data.mode
-    mode.selected_at = datetime.now(timezone.utc)
+    mode.selected_at = datetime.now(UTC)
     try:
         db.commit()
     except Exception:
@@ -165,7 +171,7 @@ def create_disease(data: UserDiseaseCreate,
     return disease
 
 
-@router.get("/diseases", response_model=List[UserDiseaseResponse],
+@router.get("/diseases", response_model=list[UserDiseaseResponse],
             summary="API-질환-002: 내 질환 목록 조회")
 def list_diseases(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     return db.query(UserDisease).filter(
@@ -203,5 +209,5 @@ def delete_disease(disease_id: int,
                    user_id: int = Depends(get_current_user_id),
                    db: Session = Depends(get_db)):
     disease = _get_disease_or_404(disease_id, user_id, db)
-    disease.deleted_at = datetime.now(timezone.utc)
+    disease.deleted_at = datetime.now(UTC)
     db.commit()

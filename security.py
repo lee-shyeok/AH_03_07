@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from database import redis_client, key_access_token_blocklist
+from database import key_access_token_blocklist, redis_client
 
 load_dotenv()
 
@@ -33,7 +33,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def _now_utc():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def create_access_token(user_id: int) -> tuple[str, str]:

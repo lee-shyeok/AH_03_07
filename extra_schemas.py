@@ -1,6 +1,8 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, field_validator, model_validator
+from datetime import UTC, datetime
+from typing import Any
+
+from pydantic import BaseModel, field_validator
+
 from extra_models import FeedbackTargetTypeEnum
 
 # 허용 metric_type
@@ -14,8 +16,8 @@ VALID_SHARE_CATEGORIES = {"medical_records", "guides", "lab_results", "activity_
 class DrugReferenceResponse(BaseModel):
     id: int
     drug_name: str
-    ingredient: Optional[str] = None
-    manufacturer: Optional[str] = None
+    ingredient: str | None = None
+    manufacturer: str | None = None
     source: str
 
     class Config:
@@ -27,7 +29,7 @@ class DrugReferenceResponse(BaseModel):
 class ActivityThresholdUpsert(BaseModel):
     metric_type: str
     threshold_value: float
-    custom_message: Optional[str] = None
+    custom_message: str | None = None
     is_active: bool = True
 
     @field_validator("metric_type")
@@ -58,7 +60,7 @@ class ActivityThresholdResponse(BaseModel):
     id: int
     metric_type: str
     threshold_value: float
-    custom_message: Optional[str] = None
+    custom_message: str | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -71,9 +73,9 @@ class ActivityThresholdResponse(BaseModel):
 
 class FeedbackCreate(BaseModel):
     target_type: FeedbackTargetTypeEnum
-    target_id: Optional[int] = None
+    target_id: int | None = None
     score: int
-    comment: Optional[str] = None
+    comment: str | None = None
 
     @field_validator("score")
     @classmethod
@@ -93,9 +95,9 @@ class FeedbackCreate(BaseModel):
 class FeedbackResponse(BaseModel):
     id: int
     target_type: FeedbackTargetTypeEnum
-    target_id: Optional[int] = None
+    target_id: int | None = None
     score: int
-    comment: Optional[str] = None
+    comment: str | None = None
     created_at: datetime
 
     class Config:
@@ -113,7 +115,7 @@ PHONE_REGEX = re.compile(r'^01[0-9]-?\d{3,4}-?\d{4}$')
 class GuardianShareCreate(BaseModel):
     guardian_name: str
     guardian_contact: str
-    share_categories: List[str]
+    share_categories: list[str]
     expires_at: datetime
 
     @field_validator("guardian_name")
@@ -146,9 +148,8 @@ class GuardianShareCreate(BaseModel):
     @field_validator("expires_at")
     @classmethod
     def expires_future(cls, v):
-        from datetime import timezone
-        now = datetime.now(timezone.utc)
-        expires = v if v.tzinfo else v.replace(tzinfo=timezone.utc)
+        now = datetime.now(UTC)
+        expires = v if v.tzinfo else v.replace(tzinfo=UTC)
         if expires <= now:
             raise ValueError("만료일은 현재 시각 이후여야 합니다.")
         return v
@@ -158,7 +159,7 @@ class GuardianShareResponse(BaseModel):
     id: int
     guardian_name: str
     guardian_contact: str
-    share_categories: List[str]
+    share_categories: list[str]
     secure_link_token: str
     expires_at: datetime
     is_revoked: bool
@@ -187,6 +188,6 @@ class GuardianShareResponse(BaseModel):
 
 class GuardianViewResponse(BaseModel):
     guardian_name: str
-    share_categories: List[str]
-    content: Dict[str, Any]
+    share_categories: list[str]
+    content: dict[str, Any]
     expires_at: datetime

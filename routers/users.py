@@ -1,13 +1,13 @@
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from database import get_db, redis_client, key_refresh_token, key_access_token_blocklist
+from database import get_db, key_access_token_blocklist, key_refresh_token, redis_client
 from models import User
-from schemas import UserMeResponse, UpdateUserRequest, WithdrawalRequest
-from security import get_current_user_id, verify_password, hash_password, decode_token
+from schemas import UpdateUserRequest, UserMeResponse, WithdrawalRequest
+from security import decode_token, get_current_user_id, hash_password, verify_password
 
 router = APIRouter()
 
@@ -76,7 +76,7 @@ def withdraw(
 
     user = _get_user_or_404(user_id, db)
 
-    user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(UTC)
     user.is_active = False
     if data.withdrawal_reason:
         user.withdrawal_reason = data.withdrawal_reason

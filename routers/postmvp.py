@@ -17,8 +17,7 @@ Post-MVP 라우터
 """
 import json
 import os
-from datetime import date, datetime, timezone
-from typing import List, Optional
+from datetime import date, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -26,20 +25,35 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from postmvp_models import (
-    HealthMetric, DiarySymptomLog, DiaryMedicationLog,
-    ContentConversion, ContentTypeEnum, ContentStatusEnum, ContentSourceTypeEnum,
-    GameScore, UserBadge, UserPoints,
+    ContentConversion,
+    ContentStatusEnum,
+    ContentTypeEnum,
+    DiaryMedicationLog,
+    DiarySymptomLog,
+    GameScore,
+    HealthMetric,
     SafetyFilterLog,
+    UserBadge,
+    UserPoints,
 )
 from postmvp_schemas import (
-    HealthMetricCreate, HealthMetricResponse,
-    DiarySymptomLogCreate, DiarySymptomLogResponse,
-    DiaryMedicationLogCreate, DiaryMedicationLogResponse,
-    ScheduleResponse,
-    CardNewsCreateRequest, TTSCreateRequest, ContentConversionResponse,
-    GameScoreCreate, GameScoreResponse, UserBadgesResponse, BadgeInfo,
+    BADGE_THRESHOLDS,
+    POINTS_PER_SCORE,
+    BadgeInfo,
+    CardNewsCreateRequest,
+    ContentConversionResponse,
+    DiaryMedicationLogCreate,
+    DiaryMedicationLogResponse,
+    DiarySymptomLogCreate,
+    DiarySymptomLogResponse,
+    GameScoreCreate,
+    GameScoreResponse,
+    HealthMetricCreate,
+    HealthMetricResponse,
     SafetyFilterLogResponse,
-    POINTS_PER_SCORE, BADGE_THRESHOLDS,
+    ScheduleResponse,
+    TTSCreateRequest,
+    UserBadgesResponse,
 )
 from security import get_current_user_id
 
@@ -101,12 +115,12 @@ def create_health_metric(
     return metric
 
 
-@router.get("/health-metrics", response_model=List[HealthMetricResponse],
+@router.get("/health-metrics", response_model=list[HealthMetricResponse],
             summary="API-건강수치-002: 건강 수치 그래프 데이터")
 def list_health_metrics(
-    metric_type: Optional[str] = Query(None),
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
+    metric_type: str | None = Query(None),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(30, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),
@@ -203,11 +217,11 @@ def create_diary_symptom_log(
     return DiarySymptomLogResponse.from_orm(log)
 
 
-@router.get("/diary/symptom-logs", response_model=List[DiarySymptomLogResponse],
+@router.get("/diary/symptom-logs", response_model=list[DiarySymptomLogResponse],
             summary="API-일반-일기-002: 증상 일기 조회")
 def list_diary_symptom_logs(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),
@@ -345,8 +359,8 @@ def get_general_schedule(
     if date_to < date_from:
         raise HTTPException(status_code=400, detail="종료일은 시작일 이후여야 합니다.")
 
-    from notification_models import MedicationReminder
     from clinical_models import CareSchedule
+    from notification_models import MedicationReminder
 
     # 복약 알림 일정
     reminders = db.query(MedicationReminder).filter(
@@ -516,10 +530,10 @@ def create_tts(
     return content
 
 
-@router.get("/contents", response_model=List[ContentConversionResponse],
+@router.get("/contents", response_model=list[ContentConversionResponse],
             summary="API-콘텐츠-003: 변환 내역 조회")
 def list_contents(
-    content_type: Optional[str] = Query(None),
+    content_type: str | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),
@@ -615,12 +629,12 @@ def get_badges(
 # 관리자 안전 필터 로그
 # ══════════════════════════════════════════════════════════
 
-@router.get("/admin/safety-filter-logs", response_model=List[SafetyFilterLogResponse],
+@router.get("/admin/safety-filter-logs", response_model=list[SafetyFilterLogResponse],
             summary="API-관리자-001: 안전 필터 차단 이력 조회")
 def list_safety_filter_logs(
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
-    blocked_reason: Optional[str] = Query(None, max_length=200),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
+    blocked_reason: str | None = Query(None, max_length=200),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     user_id: int = Depends(get_current_user_id),

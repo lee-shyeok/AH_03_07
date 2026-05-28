@@ -2,13 +2,22 @@
 약품, 복약, 활성도, 증상체크, 위험신호, 자가면역, 검사 모델
 """
 import enum
+
 from sqlalchemy import (
-    Column, Integer, String, Text, Date, DateTime, Time,
-    ForeignKey, Enum, Boolean, Float, JSON, UniqueConstraint
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.sql import func
-from database import Base
 
+from database import Base
 
 # ── 약품 ──────────────────────────────────────────────────
 

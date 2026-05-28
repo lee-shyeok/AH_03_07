@@ -1,10 +1,10 @@
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, field_validator
 
-from ocr_models import DocumentTypeEnum, UploadStatusEnum, OcrJobStatusEnum
-
+from ocr_models import DocumentTypeEnum, OcrJobStatusEnum, UploadStatusEnum
 
 # ── 업로드 응답 ───────────────────────────────────────────
 # [수정 #10] 모델 PK는 id → 응답 필드도 id로 통일 (document_id 제거)
@@ -28,7 +28,7 @@ class MedicalDocumentBrief(BaseModel):
     original_filename: str
     upload_status: UploadStatusEnum
     is_user_confirmed: bool
-    file_size: Optional[int] = None
+    file_size: int | None = None
     created_at: datetime
 
     class Config:
@@ -36,7 +36,7 @@ class MedicalDocumentBrief(BaseModel):
 
 
 class MedicalDocumentListResponse(BaseModel):
-    items: List[MedicalDocumentBrief]
+    items: list[MedicalDocumentBrief]
     total: int
     page: int
     size: int
@@ -54,7 +54,7 @@ class MedicalDocumentDetail(BaseModel):
     download_url: str          # 인증 필요한 다운로드 엔드포인트 URL
     upload_status: UploadStatusEnum
     is_user_confirmed: bool
-    confirmed_data: Optional[Dict[str, Any]] = None
+    confirmed_data: dict[str, Any] | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -100,7 +100,7 @@ class OcrJobCreateResponse(BaseModel):
 
 
 class FieldConfidence(BaseModel):
-    value: Optional[str] = None
+    value: str | None = None
     confidence: float        # 0.0 ~ 1.0
     low_confidence: bool     # True면 프론트에서 노란색 하이라이트
 
@@ -109,12 +109,12 @@ class OcrJobResult(BaseModel):
     job_id: int
     document_id: int
     status: OcrJobStatusEnum
-    structured_data: Optional[Dict[str, Any]] = None
-    field_confidences: Optional[Dict[str, FieldConfidence]] = None
-    confidence_score: Optional[float] = None
-    error_message: Optional[str] = None
+    structured_data: dict[str, Any] | None = None
+    field_confidences: dict[str, FieldConfidence] | None = None
+    confidence_score: float | None = None
+    error_message: str | None = None
     created_at: datetime
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
     @classmethod
     def from_orm(cls, job) -> "OcrJobResult":
@@ -149,7 +149,7 @@ class OcrJobResult(BaseModel):
 # ── OCR 결과 확정 ─────────────────────────────────────────
 
 class ConfirmOcrRequest(BaseModel):
-    structured_data: Dict[str, Any]
+    structured_data: dict[str, Any]
     user_confirmed: bool
 
     @field_validator("user_confirmed")
@@ -164,5 +164,5 @@ class ConfirmOcrResponse(BaseModel):
     document_id: int
     upload_status: UploadStatusEnum
     is_user_confirmed: bool
-    confirmed_data: Optional[Dict[str, Any]] = None
+    confirmed_data: dict[str, Any] | None = None
     updated_at: datetime

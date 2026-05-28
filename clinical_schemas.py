@@ -1,22 +1,23 @@
 import json
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, field_validator, model_validator
-from clinical_models import (
-    RiskFlagStatusEnum, CareScheduleTypeEnum,
-)
 
+from pydantic import BaseModel, field_validator
+
+from clinical_models import (
+    CareScheduleTypeEnum,
+    RiskFlagStatusEnum,
+)
 
 # ── 약품 ──────────────────────────────────────────────────
 
 class UserMedicationCreate(BaseModel):
     drug_name_user_input: str
-    drug_reference_id: Optional[int] = None
-    dosage: Optional[str] = None
-    frequency: Optional[str] = None
-    duration_days: Optional[int] = None
+    drug_reference_id: int | None = None
+    dosage: str | None = None
+    frequency: str | None = None
+    duration_days: int | None = None
     is_autoimmune_drug: bool = False
-    memo: Optional[str] = None
+    memo: str | None = None
 
     @field_validator("drug_name_user_input")
     @classmethod
@@ -44,12 +45,12 @@ class UserMedicationCreate(BaseModel):
 
 
 class UserMedicationUpdate(BaseModel):
-    drug_name_user_input: Optional[str] = None
-    dosage: Optional[str] = None
-    frequency: Optional[str] = None
-    duration_days: Optional[int] = None
-    is_autoimmune_drug: Optional[bool] = None
-    memo: Optional[str] = None
+    drug_name_user_input: str | None = None
+    dosage: str | None = None
+    frequency: str | None = None
+    duration_days: int | None = None
+    is_autoimmune_drug: bool | None = None
+    memo: str | None = None
 
     @field_validator("drug_name_user_input")
     @classmethod
@@ -81,12 +82,12 @@ class UserMedicationUpdate(BaseModel):
 class UserMedicationResponse(BaseModel):
     id: int
     drug_name_user_input: str
-    drug_reference_id: Optional[int] = None
-    dosage: Optional[str] = None
-    frequency: Optional[str] = None
-    duration_days: Optional[int] = None
+    drug_reference_id: int | None = None
+    dosage: str | None = None
+    frequency: str | None = None
+    duration_days: int | None = None
     is_autoimmune_drug: bool
-    memo: Optional[str] = None
+    memo: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -104,9 +105,9 @@ class MedicationLogResponse(BaseModel):
     id: int
     medication_id: int
     scheduled_date: date
-    scheduled_time: Optional[str] = None
-    taken: Optional[bool] = None
-    taken_at: Optional[datetime] = None
+    scheduled_time: str | None = None
+    taken: bool | None = None
+    taken_at: datetime | None = None
     created_at: datetime
 
     class Config:
@@ -117,12 +118,12 @@ class MedicationLogResponse(BaseModel):
 
 class ActivityLogUpsert(BaseModel):
     log_date: date
-    pain_vas: Optional[int] = None
-    fatigue: Optional[int] = None
-    morning_stiffness_minutes: Optional[int] = None
-    joint_swelling_areas: Optional[List[str]] = None
-    daily_difficulty: Optional[int] = None
-    free_memo: Optional[str] = None
+    pain_vas: int | None = None
+    fatigue: int | None = None
+    morning_stiffness_minutes: int | None = None
+    joint_swelling_areas: list[str] | None = None
+    daily_difficulty: int | None = None
+    free_memo: str | None = None
 
     @field_validator("log_date")
     @classmethod
@@ -156,12 +157,12 @@ class ActivityLogUpsert(BaseModel):
 class ActivityLogResponse(BaseModel):
     id: int
     log_date: date
-    pain_vas: Optional[int] = None
-    fatigue: Optional[int] = None
-    morning_stiffness_minutes: Optional[int] = None
-    joint_swelling_areas: Optional[List[str]] = None
-    daily_difficulty: Optional[int] = None
-    free_memo: Optional[str] = None
+    pain_vas: int | None = None
+    fatigue: int | None = None
+    morning_stiffness_minutes: int | None = None
+    joint_swelling_areas: list[str] | None = None
+    daily_difficulty: int | None = None
+    free_memo: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -197,7 +198,7 @@ SAFETY_NOTICE_SYMPTOMS = {
 }
 
 class SymptomCheckCreate(BaseModel):
-    checked_symptoms: List[str]
+    checked_symptoms: list[str]
 
     @field_validator("checked_symptoms")
     @classmethod
@@ -214,7 +215,7 @@ class SymptomCheckCreate(BaseModel):
 
 class SymptomCheckResponse(BaseModel):
     id: int
-    checked_symptoms: List[str]
+    checked_symptoms: list[str]
     safety_notice_required: bool
     created_at: datetime
 
@@ -249,12 +250,12 @@ class RiskFlagUpdateRequest(BaseModel):
 class RiskFlagResponse(BaseModel):
     id: int
     source_type: str
-    source_id: Optional[int] = None
+    source_id: int | None = None
     flag_type: str
     message: str
     consultation_recommended: bool
     status: RiskFlagStatusEnum
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -265,9 +266,9 @@ class RiskFlagResponse(BaseModel):
 # ── 자가면역 프로필 ───────────────────────────────────────
 
 class AutoimmuneProfileUpdate(BaseModel):
-    risk_factors: Optional[List[str]] = None
-    pregnancy_status: Optional[str] = None
-    vaccination_history: Optional[List[str]] = None
+    risk_factors: list[str] | None = None
+    pregnancy_status: str | None = None
+    vaccination_history: list[str] | None = None
 
     @field_validator("pregnancy_status")
     @classmethod
@@ -287,9 +288,9 @@ class AutoimmuneProfileUpdate(BaseModel):
 
 
 class AutoimmuneProfileResponse(BaseModel):
-    risk_factors: Optional[List[str]] = None
-    pregnancy_status: Optional[str] = None
-    vaccination_history: Optional[List[str]] = None
+    risk_factors: list[str] | None = None
+    pregnancy_status: str | None = None
+    vaccination_history: list[str] | None = None
     updated_at: datetime
 
     @classmethod
@@ -318,7 +319,7 @@ class CareScheduleCreate(BaseModel):
     title: str
     scheduled_date: date
     reminder_days_before: int = 1
-    memo: Optional[str] = None
+    memo: str | None = None
 
     @field_validator("title")
     @classmethod
@@ -346,11 +347,11 @@ class CareScheduleCreate(BaseModel):
 
 
 class CareScheduleUpdate(BaseModel):
-    schedule_type: Optional[CareScheduleTypeEnum] = None
-    title: Optional[str] = None
-    scheduled_date: Optional[date] = None
-    reminder_days_before: Optional[int] = None
-    memo: Optional[str] = None
+    schedule_type: CareScheduleTypeEnum | None = None
+    title: str | None = None
+    scheduled_date: date | None = None
+    reminder_days_before: int | None = None
+    memo: str | None = None
 
     @field_validator("title")
     @classmethod
@@ -385,7 +386,7 @@ class CareScheduleResponse(BaseModel):
     title: str
     scheduled_date: date
     reminder_days_before: int
-    memo: Optional[str] = None
+    memo: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -399,10 +400,10 @@ class LabResultCreate(BaseModel):
     test_date: date
     test_type: str
     user_recorded_value: str
-    reference_range: Optional[str] = None
-    unit: Optional[str] = None
-    document_id: Optional[int] = None
-    memo: Optional[str] = None
+    reference_range: str | None = None
+    unit: str | None = None
+    document_id: int | None = None
+    memo: str | None = None
 
     @field_validator("test_date")
     @classmethod
@@ -444,10 +445,10 @@ class LabResultResponse(BaseModel):
     test_date: date
     test_type: str
     user_recorded_value: str
-    reference_range: Optional[str] = None
-    unit: Optional[str] = None
-    document_id: Optional[int] = None
-    memo: Optional[str] = None
+    reference_range: str | None = None
+    unit: str | None = None
+    document_id: int | None = None
+    memo: str | None = None
     created_at: datetime
     updated_at: datetime
 

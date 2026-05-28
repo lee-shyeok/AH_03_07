@@ -2,13 +2,11 @@
 안내문(자가면역 포함) + 출처 + 섹션 + 생성 작업 + 약품 인식 + 리포트 모델
 """
 import enum
-from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, Date,
-    ForeignKey, Enum, Boolean, Float
-)
-from sqlalchemy.sql import func
-from database import Base
 
+from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
+
+from database import Base
 
 # ── 안내문 생성 작업 ──────────────────────────────────────
 

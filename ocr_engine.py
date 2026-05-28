@@ -11,10 +11,10 @@ import base64
 import io
 import json
 import os
-from pathlib import Path
-from typing import Any, Dict, Tuple
-from urllib.error import HTTPError, URLError
 import urllib.request
+from pathlib import Path
+from typing import Any
+from urllib.error import HTTPError, URLError
 
 from dotenv import load_dotenv
 
@@ -26,7 +26,7 @@ LOW_CONFIDENCE_THRESHOLD = 0.75  # 이 미만이면 프론트에서 노란색 �
 _OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
 # 지원 확장자 → MIME 타입
-_MIME_MAP: Dict[str, str] = {
+_MIME_MAP: dict[str, str] = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
@@ -34,7 +34,7 @@ _MIME_MAP: Dict[str, str] = {
 
 # ── 문서 유형별 추출 프롬프트 ─────────────────────────────
 
-_PROMPTS: Dict[str, str] = {
+_PROMPTS: dict[str, str] = {
     "prescription": """\
 이 이미지는 병원 처방전입니다. 아래 항목을 JSON으로 추출하세요.
 반드시 아래 형식만 출력하고 다른 텍스트는 절대 출력하지 마세요.
@@ -177,7 +177,7 @@ _PROMPTS: Dict[str, str] = {
 
 # ── 파일 → base64 변환 ────────────────────────────────────
 
-def _file_to_base64(file_path: str) -> Tuple[str, str]:
+def _file_to_base64(file_path: str) -> tuple[str, str]:
     """
     파일을 base64로 변환. (base64_str, mime_type) 반환.
     PDF는 첫 페이지를 PNG로 변환.
@@ -267,7 +267,7 @@ def _call_openai_vision(image_b64: str, mime_type: str, prompt: str) -> str:
 
 # ── GPT 응답 파싱 ─────────────────────────────────────────
 
-def _parse_response(raw_response: str) -> Tuple[Dict[str, Any], Dict[str, Any], float]:
+def _parse_response(raw_response: str) -> tuple[dict[str, Any], dict[str, Any], float]:
     """
     GPT 응답에서 JSON 파싱.
     [수정 #11] JSONDecodeError 발생 시 명확한 예외 메시지로 변환
@@ -283,15 +283,15 @@ def _parse_response(raw_response: str) -> Tuple[Dict[str, Any], Dict[str, Any], 
         text = "\n".join(inner).strip()
 
     try:
-        data: Dict[str, Any] = json.loads(text)
+        data: dict[str, Any] = json.loads(text)
     except json.JSONDecodeError as e:
         raise ValueError(f"OCR 엔진 응답이 유효한 JSON이 아닙니다: {e}") from e
 
     # _confidences 분리
-    raw_confidences: Dict[str, float] = data.pop("_confidences", {})
+    raw_confidences: dict[str, float] = data.pop("_confidences", {})
 
     # field_confidences 구조로 변환
-    field_confidences: Dict[str, Any] = {}
+    field_confidences: dict[str, Any] = {}
     for key, val in raw_confidences.items():
         try:
             conf = float(val)
@@ -314,7 +314,7 @@ def _parse_response(raw_response: str) -> Tuple[Dict[str, Any], Dict[str, Any], 
 
 # ── 메인 진입점 ───────────────────────────────────────────
 
-def run_ocr(file_path: str, document_type: str) -> Tuple[str, Dict, Dict, float]:
+def run_ocr(file_path: str, document_type: str) -> tuple[str, dict, dict, float]:
     """
     OCR 실행.
     [수정 #3] API 키 없으면 즉시 RuntimeError (Mock 자동 전환 없음)
@@ -337,7 +337,7 @@ def run_ocr(file_path: str, document_type: str) -> Tuple[str, Dict, Dict, float]
 # ── Mock (테스트 전용 — 직접 호출만 허용) ────────────────
 # 운영 코드에서 import하여 사용 금지. 테스트 코드에서만 패치용으로 사용.
 
-def _mock_result_for_test(document_type: str) -> Tuple[str, Dict, Dict, float]:
+def _mock_result_for_test(document_type: str) -> tuple[str, dict, dict, float]:
     raw = f"[MOCK OCR] document_type={document_type}"
     if document_type == "prescription":
         data = {

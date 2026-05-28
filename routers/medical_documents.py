@@ -15,9 +15,8 @@ import json
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -27,9 +26,13 @@ from database import get_db
 from ocr_engine import run_ocr
 from ocr_models import DocumentTypeEnum, MedicalDocument, OcrJob, OcrJobStatusEnum, UploadStatusEnum
 from ocr_schemas import (
-    ConfirmOcrRequest, ConfirmOcrResponse,
-    MedicalDocumentDetail, MedicalDocumentListResponse, MedicalDocumentUploadResponse,
-    OcrJobCreateResponse, OcrJobResult,
+    ConfirmOcrRequest,
+    ConfirmOcrResponse,
+    MedicalDocumentDetail,
+    MedicalDocumentListResponse,
+    MedicalDocumentUploadResponse,
+    OcrJobCreateResponse,
+    OcrJobResult,
 )
 from security import get_current_user_id
 
@@ -120,7 +123,7 @@ def _run_ocr_background(job_id: int, file_path: str, document_type: str) -> None
             return
 
         job.status = OcrJobStatusEnum.processing
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         db.commit()
 
         try:
@@ -134,7 +137,7 @@ def _run_ocr_background(job_id: int, file_path: str, document_type: str) -> None
             job.status = OcrJobStatusEnum.failed
             job.error_message = str(e)[:500]
         finally:
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             db.commit()
     finally:
         db.close()
@@ -195,7 +198,7 @@ async def upload_medical_document(
     # DB ID 확정 후 실제 파일 저장
     try:
         file_path, stored_filename = _save_file(content, doc.id, safe_original)
-    except OSError as e:
+    except OSError:
         # [수정 #12] 파일 저장 실패 시 DB 레코드 롤백
         db.delete(doc)
         db.commit()
@@ -217,7 +220,7 @@ async def upload_medical_document(
     summary="REQ-OCR-005: 의료문서 목록 조회",
 )
 def list_medical_documents(
-    document_type: Optional[DocumentTypeEnum] = None,
+    document_type: DocumentTypeEnum | None = None,
     page: int = 1,
     size: int = 10,
     user_id: int = Depends(get_current_user_id),
@@ -423,6 +426,6 @@ def delete_medical_document(
 ):
     """Soft Delete. 물리 파일 삭제는 배치 처리로 분리."""
     doc = _get_doc_or_404(doc_id, user_id, db)
-    doc.deleted_at = datetime.now(timezone.utc)
+    doc.deleted_at = datetime.now(UTC)
     doc.upload_status = UploadStatusEnum.deleted
     db.commit()

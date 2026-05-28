@@ -1,28 +1,44 @@
+import logging
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import SQLAlchemyError
-from dotenv import load_dotenv
-import logging
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 load_dotenv('envs/.local.env')
 logging.basicConfig(level=logging.DEBUG)
 
-from routers import auth, social_auth, users, medical_documents, medical_records, guides, chats, notifications, dashboard, consent_mode_disease, clinical, extra, guide_v2, postmvp
+from chat_models import Base as ChatBase
+from clinical_models import Base as ClinicalBase
+from consent_mode_disease_models import Base as ConsentModeBase
 from database import engine
 from extra_models import Base as ExtraBase
-from models import Base as UserBase
-from ocr_models import Base as OcrBase
-from medical_record_models import Base as MedicalRecordBase
 from guide_models import Base as GuideBase
-from chat_models import Base as ChatBase
-from notification_models import Base as NotificationBase
-from consent_mode_disease_models import Base as ConsentModeBase
-from clinical_models import Base as ClinicalBase
 from guide_v2_models import Base as GuideV2Base
+from medical_record_models import Base as MedicalRecordBase
+from models import Base as UserBase
+from notification_models import Base as NotificationBase
+from ocr_models import Base as OcrBase
 from postmvp_models import Base as PostMvpBase
+from routers import (
+    auth,
+    chats,
+    clinical,
+    consent_mode_disease,
+    dashboard,
+    extra,
+    guide_v2,
+    guides,
+    medical_documents,
+    medical_records,
+    notifications,
+    postmvp,
+    social_auth,
+    users,
+)
 from routers.ocr import router as ocr_router
 
 PostMvpBase.metadata.create_all(bind=engine)

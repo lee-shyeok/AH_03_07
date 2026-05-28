@@ -5,29 +5,45 @@ import secrets
 import string
 
 from dotenv import load_dotenv
+
 load_dotenv('envs/.local.env')
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from database import (
-    get_db, redis_client,
-    key_email_verify_code, key_email_token,
-    key_refresh_token, key_access_token_blocklist,
-    key_login_fail, key_login_lock,
-    key_verify_code_fail, key_verify_code_lock,
+    get_db,
+    key_access_token_blocklist,
     key_email_send_rate,
+    key_email_token,
+    key_email_verify_code,
+    key_login_fail,
+    key_login_lock,
+    key_refresh_token,
+    key_verify_code_fail,
+    key_verify_code_lock,
+    redis_client,
 )
 from models import User
 from schemas import (
-    EmailVerifySendRequest, EmailVerifyConfirmRequest, EmailVerifyResponse,
-    LoginRequest, LoginResponse, SignupRequest, SignupResponse,
-    TokenRefreshRequest, TokenRefreshResponse, UserBrief,
+    EmailVerifyConfirmRequest,
+    EmailVerifyResponse,
+    EmailVerifySendRequest,
+    LoginRequest,
+    LoginResponse,
+    SignupRequest,
+    SignupResponse,
+    TokenRefreshRequest,
+    TokenRefreshResponse,
+    UserBrief,
 )
 from security import (
-    hash_password, verify_password,
-    create_access_token, create_refresh_token,
-    decode_token, get_current_user_id,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user_id,
+    hash_password,
+    verify_password,
 )
 
 EMAIL_VERIFY_CODE_EXPIRE  = int(os.getenv("EMAIL_VERIFY_CODE_EXPIRE_SECONDS", 300))
@@ -259,8 +275,9 @@ def token_refresh(body: TokenRefreshRequest):
 
 @router.post("/logout", status_code=204, summary="REQ-USER-005: 로그아웃")
 def logout(request: Request, user_id: int = Depends(get_current_user_id)):
-    from jose import JWTError
     import time
+
+    from jose import JWTError
 
     redis_client.delete(key_refresh_token(user_id))
 

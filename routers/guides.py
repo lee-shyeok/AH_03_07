@@ -9,19 +9,22 @@
   POST   /v1/guides/{guide_id}/feedback   피드백 등록/수정
   GET    /v1/guides/{guide_id}/feedback   피드백 조회
 """
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db, redis_client
-from guide_engine import generate_guide, DISCLAIMER
+from guide_engine import DISCLAIMER, generate_guide
 from guide_models import Guide, GuideFeedback, GuideStatusEnum
 from guide_schemas import (
-    GuideCreateRequest, GuideRegenerateRequest,
-    GuideBrief, GuideDetail, GuideListResponse,
-    GuideFeedbackRequest, GuideFeedbackResponse,
+    GuideBrief,
+    GuideCreateRequest,
+    GuideDetail,
+    GuideFeedbackRequest,
+    GuideFeedbackResponse,
+    GuideListResponse,
+    GuideRegenerateRequest,
 )
 from medical_record_models import MedicalRecord, Medication
 from models import User
@@ -96,7 +99,7 @@ def _build_detail(guide: Guide, diagnosis: str) -> GuideDetail:
 
 def _check_regen_limit(user_id: int) -> None:
     """재생성 일일 횟수 제한 확인 (5회/일)."""
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     key = _REGEN_LIMIT_KEY.format(user_id=user_id, date=today)
 
     pipe = redis_client.pipeline()
@@ -155,9 +158,9 @@ def _run_guide_generation(
             record.has_guide = True
             record.guide_needs_update = False
 
-        except Exception as e:
+        except Exception:
             # 생성 실패 시 가이드 삭제 처리
-            guide.deleted_at = datetime.now(timezone.utc)
+            guide.deleted_at = datetime.now(UTC)
 
         db.commit()
     finally:

@@ -1,8 +1,8 @@
 from datetime import date, datetime
-from typing import List, Optional
-from pydantic import BaseModel, field_validator
-from consent_mode_disease_models import ConsentTypeEnum, UserModeEnum
 
+from pydantic import BaseModel, field_validator
+
+from consent_mode_disease_models import ConsentTypeEnum, UserModeEnum
 
 # ── 동의 이력 ─────────────────────────────────────────────
 
@@ -26,8 +26,8 @@ class ConsentResponse(BaseModel):
     consent_type: ConsentTypeEnum
     agreed: bool
     version: str
-    agreed_at: Optional[datetime] = None
-    revoked_at: Optional[datetime] = None
+    agreed_at: datetime | None = None
+    revoked_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -54,9 +54,9 @@ class UserModeResponse(BaseModel):
 
 class UserDiseaseCreate(BaseModel):
     disease_name: str
-    disease_code: Optional[str] = None
-    diagnosis_date: Optional[date] = None
-    memo: Optional[str] = None
+    disease_code: str | None = None
+    diagnosis_date: date | None = None
+    memo: str | None = None
 
     @field_validator("disease_name")
     @classmethod
@@ -94,10 +94,10 @@ class UserDiseaseCreate(BaseModel):
 
 
 class UserDiseaseUpdate(BaseModel):
-    disease_name: Optional[str] = None
-    disease_code: Optional[str] = None
-    diagnosis_date: Optional[date] = None
-    memo: Optional[str] = None
+    disease_name: str | None = None
+    disease_code: str | None = None
+    diagnosis_date: date | None = None
+    memo: str | None = None
 
     @field_validator("disease_name")
     @classmethod
@@ -139,9 +139,9 @@ class UserDiseaseUpdate(BaseModel):
 class UserDiseaseResponse(BaseModel):
     id: int
     disease_name: str
-    disease_code: Optional[str] = None
-    diagnosis_date: Optional[date] = None
-    memo: Optional[str] = None
+    disease_code: str | None = None
+    diagnosis_date: date | None = None
+    memo: str | None = None
     created_at: datetime
     updated_at: datetime
 

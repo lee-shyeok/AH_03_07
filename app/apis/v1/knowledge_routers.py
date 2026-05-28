@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue
 
+from ai_worker.tasks.embedding import embed_document_task
 from app.core import config
 from app.core.logger import default_logger as logger
 from app.dependencies.pdf_validator import validate_pdf_upload
@@ -13,7 +14,6 @@ from app.dependencies.security import get_request_user
 from app.dtos.knowledge import KnowledgeDocumentResponse, KnowledgeDocumentUploadResponse
 from app.models.knowledge import DocumentStatus, KnowledgeDocument
 from app.models.users import User
-from ai_worker.tasks.embedding import embed_document_task
 
 knowledge_router = APIRouter(prefix="/admin/knowledge-base", tags=["knowledge-base"])
 

@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, field_validator
 
 # ── 가이드 생성 요청 ──────────────────────────────────────
 
@@ -14,7 +13,7 @@ class GuideCreateRequest(BaseModel):
 VALID_REGEN_REASONS = {"내용이 부족함", "이해하기 어려움", "기타"}
 
 class GuideRegenerateRequest(BaseModel):
-    reason: Optional[str] = None
+    reason: str | None = None
 
     @field_validator("reason")
     @classmethod
@@ -44,12 +43,12 @@ class GuideDetail(BaseModel):
     diagnosis: str
     status: str
     version: int
-    medication_guide: Optional[str] = None
-    lifestyle_guide: Optional[str] = None
-    precautions: Optional[str] = None
-    recommended_checkups: Optional[str] = None
+    medication_guide: str | None = None
+    lifestyle_guide: str | None = None
+    precautions: str | None = None
+    recommended_checkups: str | None = None
     disclaimer: str          # 면책 문구 — 항상 포함
-    regeneration_reason: Optional[str] = None
+    regeneration_reason: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -67,7 +66,7 @@ class GuideFeedbackRequest(BaseModel):
     accuracy: int
     clarity: int
     usefulness: int
-    comment: Optional[str] = None
+    comment: str | None = None
 
     @field_validator("accuracy", "clarity", "usefulness")
     @classmethod
@@ -90,7 +89,7 @@ class GuideFeedbackResponse(BaseModel):
     accuracy: int
     clarity: int
     usefulness: int
-    comment: Optional[str] = None
+    comment: str | None = None
     created_at: datetime
     updated_at: datetime
 

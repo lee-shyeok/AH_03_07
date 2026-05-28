@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import date, datetime
-from typing import List, Optional
+
 from pydantic import BaseModel, field_validator, model_validator
 
 VALID_WEEKDAYS = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
@@ -13,12 +13,12 @@ VALID_CHANNELS = {"app", "email", "kakao"}
 
 class MedicationReminderCreate(BaseModel):
     drug_name: str
-    medication_id: Optional[int] = None
-    remind_times: List[str]
+    medication_id: int | None = None
+    remind_times: list[str]
     start_date: date
-    end_date: Optional[date] = None
-    weekdays: List[str]
-    channels: List[str]
+    end_date: date | None = None
+    weekdays: list[str]
+    channels: list[str]
 
     @field_validator("drug_name")
     @classmethod
@@ -77,13 +77,13 @@ class MedicationReminderCreate(BaseModel):
 
 
 class MedicationReminderUpdate(BaseModel):
-    drug_name: Optional[str] = None
-    remind_times: Optional[List[str]] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    weekdays: Optional[List[str]] = None
-    channels: Optional[List[str]] = None
-    is_active: Optional[bool] = None
+    drug_name: str | None = None
+    remind_times: list[str] | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    weekdays: list[str] | None = None
+    channels: list[str] | None = None
+    is_active: bool | None = None
 
     @field_validator("drug_name")
     @classmethod
@@ -147,12 +147,12 @@ class MedicationReminderUpdate(BaseModel):
 class MedicationReminderResponse(BaseModel):
     id: int
     drug_name: str
-    medication_id: Optional[int] = None
-    remind_times: List[str]
+    medication_id: int | None = None
+    remind_times: list[str]
     start_date: date
-    end_date: Optional[date] = None
-    weekdays: List[str]
-    channels: List[str]
+    end_date: date | None = None
+    weekdays: list[str]
+    channels: list[str]
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -183,7 +183,7 @@ class MedicationReminderResponse(BaseModel):
 
 
 class MedicationReminderListResponse(BaseModel):
-    items: List[MedicationReminderResponse]
+    items: list[MedicationReminderResponse]
     total: int
 
 
@@ -194,9 +194,9 @@ class NotificationResponse(BaseModel):
     notification_type: str
     title: str
     message: str
-    backlink: Optional[str] = None
+    backlink: str | None = None
     is_read: bool
-    read_at: Optional[datetime] = None
+    read_at: datetime | None = None
     created_at: datetime
 
     class Config:
@@ -204,7 +204,7 @@ class NotificationResponse(BaseModel):
 
 
 class NotificationListResponse(BaseModel):
-    items: List[NotificationResponse]
+    items: list[NotificationResponse]
     total: int
     page: int
     size: int
@@ -214,12 +214,12 @@ class NotificationListResponse(BaseModel):
 # ── 알림 설정 ─────────────────────────────────────────────
 
 class NotificationSettingUpdate(BaseModel):
-    medication_enabled: Optional[bool] = None
-    guide_enabled: Optional[bool] = None
-    marketing_enabled: Optional[bool] = None
-    app_enabled: Optional[bool] = None
-    email_enabled: Optional[bool] = None
-    kakao_enabled: Optional[bool] = None
+    medication_enabled: bool | None = None
+    guide_enabled: bool | None = None
+    marketing_enabled: bool | None = None
+    app_enabled: bool | None = None
+    email_enabled: bool | None = None
+    kakao_enabled: bool | None = None
 
 
 class NotificationSettingResponse(BaseModel):

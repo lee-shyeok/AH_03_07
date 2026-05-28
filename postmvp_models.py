@@ -7,13 +7,11 @@ Post-MVP 모델
 - 관리자 안전 필터 로그
 """
 import enum
-from sqlalchemy import (
-    Column, Integer, String, Text, Date, DateTime,
-    ForeignKey, Enum, Boolean, Float, UniqueConstraint
-)
-from sqlalchemy.sql import func
-from database import Base
 
+from sqlalchemy import Boolean, Column, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.sql import func
+
+from database import Base
 
 # ── 건강수치 ─────────────────────────────────────────────
 

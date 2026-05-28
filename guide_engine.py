@@ -5,9 +5,9 @@ GPT-4o mini 기반 가이드 생성 엔진
 """
 import json
 import os
-from typing import Any, Dict
-from urllib.error import HTTPError, URLError
 import urllib.request
+from typing import Any
+from urllib.error import HTTPError, URLError
 
 from dotenv import load_dotenv
 
@@ -94,7 +94,7 @@ def _call_openai(messages: list, temperature: float = 0.3) -> str:
     return result["choices"][0]["message"]["content"].strip()
 
 
-def _parse_json_response(raw: str) -> Dict[str, Any]:
+def _parse_json_response(raw: str) -> dict[str, Any]:
     """GPT 응답 JSON 파싱. 코드 펜스 제거 후 파싱."""
     text = raw.strip()
     if text.startswith("```"):
@@ -131,7 +131,7 @@ def generate_guide(
     memo: str,
     chronic_diseases: str,
     allergy_info: str,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     가이드 생성 메인 함수.
     Returns: {medication_guide, lifestyle_guide, precautions, recommended_checkups}

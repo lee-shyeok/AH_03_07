@@ -1,9 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from sqlalchemy.orm import Session
-from database import get_db
-from utils.clova_ocr import recognize_image
 import uuid
 from datetime import datetime
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
+
+from utils.clova_ocr import recognize_image
 
 router = APIRouter(prefix="/v1", tags=["OCR"])
 

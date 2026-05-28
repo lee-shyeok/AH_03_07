@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, field_validator
 
 # ── 세션 ─────────────────────────────────────────────────
 
@@ -10,7 +9,7 @@ class ChatSessionResponse(BaseModel):
     is_active: bool
     created_at: datetime
     last_activity_at: datetime
-    ended_at: Optional[datetime] = None
+    ended_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -19,13 +18,13 @@ class ChatSessionResponse(BaseModel):
 class ChatSessionListItem(BaseModel):
     id: int
     is_active: bool
-    first_message: Optional[str] = None   # 첫 질문 (앞 50자)
+    first_message: str | None = None   # 첫 질문 (앞 50자)
     message_count: int
     created_at: datetime
 
 
 class ChatSessionListResponse(BaseModel):
-    items: List[ChatSessionListItem]
+    items: list[ChatSessionListItem]
     total: int
     page: int
     size: int
@@ -60,7 +59,7 @@ class ChatMessageResponse(BaseModel):
 
 class ChatHistoryResponse(BaseModel):
     session_id: int
-    messages: List[ChatMessageResponse]
+    messages: list[ChatMessageResponse]
     total: int
     page: int
     size: int
@@ -70,7 +69,7 @@ class ChatHistoryResponse(BaseModel):
 
 class ChatFeedbackRequest(BaseModel):
     is_positive: bool
-    comment: Optional[str] = None
+    comment: str | None = None
 
     @field_validator("comment")
     @classmethod
@@ -84,7 +83,7 @@ class ChatFeedbackResponse(BaseModel):
     id: int
     message_id: int
     is_positive: bool
-    comment: Optional[str] = None
+    comment: str | None = None
     created_at: datetime
 
     class Config:

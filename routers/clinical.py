@@ -19,26 +19,42 @@
   POST/GET             /v1/lab-results               검사 결과
 """
 import json
-from datetime import date, datetime, timezone
-from typing import List, Optional
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from clinical_models import (
-    UserMedication, MedicationLog, ActivityLog,
-    SymptomCheck, RiskFlag, RiskFlagStatusEnum,
-    AutoimmuneProfile, CareSchedule, LabResult,
+    ActivityLog,
+    AutoimmuneProfile,
+    CareSchedule,
+    LabResult,
+    MedicationLog,
+    RiskFlag,
+    RiskFlagStatusEnum,
+    SymptomCheck,
+    UserMedication,
 )
 from clinical_schemas import (
-    UserMedicationCreate, UserMedicationUpdate, UserMedicationResponse,
-    MedicationLogCheckRequest, MedicationLogResponse,
-    ActivityLogUpsert, ActivityLogResponse,
-    SymptomCheckCreate, SymptomCheckResponse, SAFETY_NOTICE_SYMPTOMS,
-    RiskFlagUpdateRequest, RiskFlagResponse,
-    AutoimmuneProfileUpdate, AutoimmuneProfileResponse,
-    CareScheduleCreate, CareScheduleUpdate, CareScheduleResponse,
-    LabResultCreate, LabResultResponse,
+    SAFETY_NOTICE_SYMPTOMS,
+    ActivityLogResponse,
+    ActivityLogUpsert,
+    AutoimmuneProfileResponse,
+    AutoimmuneProfileUpdate,
+    CareScheduleCreate,
+    CareScheduleResponse,
+    CareScheduleUpdate,
+    LabResultCreate,
+    LabResultResponse,
+    MedicationLogCheckRequest,
+    MedicationLogResponse,
+    RiskFlagResponse,
+    RiskFlagUpdateRequest,
+    SymptomCheckCreate,
+    SymptomCheckResponse,
+    UserMedicationCreate,
+    UserMedicationResponse,
+    UserMedicationUpdate,
 )
 from database import get_db
 from security import get_current_user_id
@@ -101,10 +117,10 @@ def create_medication(
     return med
 
 
-@router.get("/medications", response_model=List[UserMedicationResponse],
+@router.get("/medications", response_model=list[UserMedicationResponse],
             summary="API-약품-002: 내 약품 목록")
 def list_medications(
-    is_autoimmune: Optional[bool] = Query(None),
+    is_autoimmune: bool | None = Query(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -155,7 +171,7 @@ def delete_medication(
     db: Session = Depends(get_db),
 ):
     med = _get_medication_or_404(med_id, user_id, db)
-    med.deleted_at = datetime.now(timezone.utc)
+    med.deleted_at = datetime.now(UTC)
     db.commit()
 
 
@@ -163,11 +179,11 @@ def delete_medication(
 # 복약 이력
 # ══════════════════════════════════════════════════════════
 
-@router.get("/medication-logs", response_model=List[MedicationLogResponse],
+@router.get("/medication-logs", response_model=list[MedicationLogResponse],
             summary="API-복약-001: 복약 이력 조회")
 def list_medication_logs(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -194,7 +210,7 @@ def check_medication_log(
     if not log:
         raise HTTPException(status_code=404, detail="복약 기록을 찾을 수 없습니다.")
     log.taken = data.taken
-    log.taken_at = datetime.now(timezone.utc) if data.taken else None
+    log.taken_at = datetime.now(UTC) if data.taken else None
     try:
         db.commit()
     except Exception:
@@ -260,11 +276,11 @@ def upsert_activity_log(
     return ActivityLogResponse.from_orm(log)
 
 
-@router.get("/activity-logs", response_model=List[ActivityLogResponse],
+@router.get("/activity-logs", response_model=list[ActivityLogResponse],
             summary="API-활성도-002: 활성도 기록 조회")
 def list_activity_logs(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -320,11 +336,11 @@ def create_symptom_check(
     return SymptomCheckResponse.from_orm(check)
 
 
-@router.get("/symptom-checks", response_model=List[SymptomCheckResponse],
+@router.get("/symptom-checks", response_model=list[SymptomCheckResponse],
             summary="API-증상-002: 증상 체크 이력 조회")
 def list_symptom_checks(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),
@@ -346,11 +362,11 @@ def list_symptom_checks(
 # 위험 신호
 # ══════════════════════════════════════════════════════════
 
-@router.get("/risk-flags", response_model=List[RiskFlagResponse],
+@router.get("/risk-flags", response_model=list[RiskFlagResponse],
             summary="API-위험-001: 위험 신호 목록")
 def list_risk_flags(
-    status: Optional[RiskFlagStatusEnum] = Query(None),
-    source_type: Optional[str] = Query(None, max_length=50),
+    status: RiskFlagStatusEnum | None = Query(None),
+    source_type: str | None = Query(None, max_length=50),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),
@@ -398,7 +414,7 @@ def update_risk_flag(
 
     flag.status = data.status
     if data.status == RiskFlagStatusEnum.resolved:
-        flag.resolved_at = datetime.now(timezone.utc)
+        flag.resolved_at = datetime.now(UTC)
 
     try:
         db.commit()
@@ -508,12 +524,12 @@ def create_care_schedule(
     return schedule
 
 
-@router.get("/care-schedules", response_model=List[CareScheduleResponse],
+@router.get("/care-schedules", response_model=list[CareScheduleResponse],
             summary="API-자가면역-004: 일정 목록 조회")
 def list_care_schedules(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
-    schedule_type: Optional[str] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    schedule_type: str | None = Query(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -566,7 +582,7 @@ def delete_care_schedule(
     db: Session = Depends(get_db),
 ):
     schedule = _get_schedule_or_404(sid, user_id, db)
-    schedule.deleted_at = datetime.now(timezone.utc)
+    schedule.deleted_at = datetime.now(UTC)
     db.commit()
 
 
@@ -620,11 +636,11 @@ def create_lab_result(
     return result
 
 
-@router.get("/lab-results", response_model=List[LabResultResponse],
+@router.get("/lab-results", response_model=list[LabResultResponse],
             summary="API-검사-002: 검사 결과 목록")
 def list_lab_results(
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
     user_id: int = Depends(get_current_user_id),

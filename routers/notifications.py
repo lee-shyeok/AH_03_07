@@ -2,21 +2,26 @@
 알림 라우터  REQ-NOTI-001, REQ-NOTI-004 ~ REQ-NOTI-006
 """
 import json
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
 from notification_models import (
-    MedicationReminder, Notification, NotificationSetting,
+    MedicationReminder,
+    Notification,
+    NotificationSetting,
 )
 from notification_schemas import (
-    MedicationReminderCreate, MedicationReminderUpdate,
-    MedicationReminderResponse, MedicationReminderListResponse,
-    NotificationResponse, NotificationListResponse,
-    NotificationSettingUpdate, NotificationSettingResponse,
+    MedicationReminderCreate,
+    MedicationReminderListResponse,
+    MedicationReminderResponse,
+    MedicationReminderUpdate,
+    NotificationListResponse,
+    NotificationResponse,
+    NotificationSettingResponse,
+    NotificationSettingUpdate,
 )
 from security import get_current_user_id
 
@@ -71,7 +76,7 @@ def create_reminder(
         )
 
     if data.medication_id is not None:
-        from medical_record_models import Medication, MedicalRecord
+        from medical_record_models import MedicalRecord, Medication
         med = (
             db.query(Medication)
             .join(MedicalRecord, Medication.record_id == MedicalRecord.id)
@@ -111,7 +116,7 @@ def create_reminder(
     summary="REQ-NOTI-001: 복약 알림 목록 조회",
 )
 def list_reminders(
-    is_active: Optional[bool] = Query(None),
+    is_active: bool | None = Query(None),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -182,7 +187,7 @@ def delete_reminder(
     db: Session = Depends(get_db),
 ):
     reminder = _get_reminder_or_404(reminder_id, user_id, db)
-    reminder.deleted_at = datetime.now(timezone.utc)
+    reminder.deleted_at = datetime.now(UTC)
     reminder.is_active = False
     db.commit()
 
@@ -195,7 +200,7 @@ def delete_reminder(
 def list_notifications(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=MAX_PAGE_SIZE),
-    tab: Optional[str] = Query("all", pattern="^(all|unread|read)$"),
+    tab: str | None = Query("all", pattern="^(all|unread|read)$"),
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -238,7 +243,7 @@ def read_all_notifications(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db.query(Notification).filter(
         Notification.user_id == user_id,
         Notification.is_read == False,
@@ -266,7 +271,7 @@ def read_notification(
 
     if not notification.is_read:
         notification.is_read = True
-        notification.read_at = datetime.now(timezone.utc)
+        notification.read_at = datetime.now(UTC)
         db.commit()
         db.refresh(notification)
 

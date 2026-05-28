@@ -1,12 +1,15 @@
 import json
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, field_validator
-from guide_v2_models import (
-    GuideJobStatusEnum, GuideTypeEnum, GuideTriggerTypeEnum,
-    GuideSectionTypeEnum, ReportStatusEnum,
-)
+from typing import Any
 
+from pydantic import BaseModel, field_validator
+
+from guide_v2_models import (
+    GuideJobStatusEnum,
+    GuideSectionTypeEnum,
+    GuideTriggerTypeEnum,
+    ReportStatusEnum,
+)
 
 # ── 안내문 생성 작업 ──────────────────────────────────────
 
@@ -17,9 +20,9 @@ class GuideGenerateRequest(BaseModel):
 class GuideGenerationJobResponse(BaseModel):
     job_id: int
     status: GuideJobStatusEnum
-    guide_id: Optional[int] = None
-    blocked_reason: Optional[str] = None
-    error_message: Optional[str] = None
+    guide_id: int | None = None
+    blocked_reason: str | None = None
+    error_message: str | None = None
     created_at: datetime
 
     class Config:
@@ -41,11 +44,11 @@ class GuideGenerationJobResponse(BaseModel):
 
 class GuideSourceResponse(BaseModel):
     id: int
-    source_org: Optional[str] = None
-    source_title: Optional[str] = None
-    source_url: Optional[str] = None
-    source_page: Optional[str] = None
-    used_for_section: Optional[str] = None
+    source_org: str | None = None
+    source_title: str | None = None
+    source_url: str | None = None
+    source_page: str | None = None
+    used_for_section: str | None = None
     citation_order: int
 
     class Config:
@@ -57,7 +60,7 @@ class GuideSourceResponse(BaseModel):
 class GuideSectionResponse(BaseModel):
     id: int
     section_type: GuideSectionTypeEnum
-    section_title: Optional[str] = None
+    section_title: str | None = None
     section_content: str
     display_order: int
 
@@ -72,7 +75,7 @@ class PrescriptionBrief(BaseModel):
     original_filename: str
     upload_status: str
     is_user_confirmed: bool
-    confirmed_data: Optional[Dict[str, Any]] = None
+    confirmed_data: dict[str, Any] | None = None
     created_at: datetime
 
     @classmethod
@@ -102,9 +105,9 @@ class PillCandidate(BaseModel):
 
 class PillRecognitionResponse(BaseModel):
     id: int
-    candidates: List[PillCandidate]
+    candidates: list[PillCandidate]
     user_confirm_required: bool = True
-    confirmed_drug_name: Optional[str] = None
+    confirmed_drug_name: str | None = None
     user_confirmed: bool
     created_at: datetime
 
@@ -143,8 +146,8 @@ class ReportResponse(BaseModel):
     id: int
     visit_date: date
     status: ReportStatusEnum
-    content: Optional[str] = None
-    error_message: Optional[str] = None
+    content: str | None = None
+    error_message: str | None = None
     created_at: datetime
     updated_at: datetime
 

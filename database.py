@@ -1,9 +1,10 @@
+import os
+
+import redis
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
-import redis
-import os
 
 load_dotenv('envs/.local.env')
 load_dotenv('envs/.local.env')
