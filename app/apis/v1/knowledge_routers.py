@@ -57,7 +57,9 @@ async def upload_knowledge_document(
     doc.file_path = str(file_path)
     await doc.save(update_fields=["file_path", "updated_at"])
 
-    logger.info(f'{{"event": "kb_upload_received", "doc_id": {doc.id}, "title": "{title}", "size_bytes": {len(content)}}}')
+    logger.info(
+        f'{{"event": "kb_upload_received", "doc_id": {doc.id}, "title": "{title}", "size_bytes": {len(content)}}}'
+    )
     embed_document_task.delay(doc.id)
 
     return KnowledgeDocumentUploadResponse(document_id=doc.id, title=doc.title, status=doc.status)
@@ -95,9 +97,7 @@ async def delete_knowledge_document(
         qdrant = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT)
         await qdrant.delete(
             collection_name="medical_kb",
-            points_selector=Filter(
-                must=[FieldCondition(key="document_id", match=MatchValue(value=doc_id))]
-            ),
+            points_selector=Filter(must=[FieldCondition(key="document_id", match=MatchValue(value=doc_id))]),
         )
         logger.info(json.dumps({"event": "kb_qdrant_delete", "doc_id": doc_id}))
     except Exception as exc:
@@ -121,9 +121,7 @@ async def retry_knowledge_document(
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="문서를 찾을 수 없습니다.")
     if doc.status != DocumentStatus.FAILED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="현재 상태에서 재처리할 수 없습니다."
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="현재 상태에서 재처리할 수 없습니다.")
 
     doc.status = DocumentStatus.PENDING
     doc.error_message = None

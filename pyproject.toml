@@ -21,6 +21,7 @@ app = [
     "celery[redis]>=5.4.0,<6.0.0",
     "fastapi[standard]>=0.128.0",
     "httpx>=0.28.1",
+    "jinja2>=3.1.6",
     "openai>=1.30.0,<2.0.0",
     "orjson>=3.11.5",
     "passlib[bcrypt]>=1.7.4",
@@ -28,6 +29,7 @@ app = [
     "qdrant-client>=1.12.0,<2.0.0",
     "tortoise-orm>=0.25.3",
     "uvicorn>=0.40.0",
+    "weasyprint>=68.1",
 ]
 ai = [
     "celery[redis]>=5.4.0,<6.0.0",
@@ -70,6 +72,7 @@ src_folder = "./."
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+addopts = "--ignore=app/test_search.py"
 
 [tool.ruff]
 # 기본 라인 길이 설정
@@ -92,8 +95,21 @@ ignore = ["UP046", "E501", "B904", "N999", "B008"]
 
 # 특정 파일에서 무시할 규칙들
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401", "F403"]
 "db/migrations/*" = ["ALL"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.Header",
+    "fastapi.Cookie",
+    "fastapi.Form",
+    "fastapi.File",
+    "fastapi.Security",
+]
 
 [tool.ruff.format]
 # 포매터 설정

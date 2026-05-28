@@ -60,7 +60,9 @@ async def search_knowledge(query: str, top_k: int = 5) -> list[KnowledgeChunk]:
         for h in hits
     ]
     duration_ms = int((time.monotonic() - start) * 1000)
-    logger.info(json.dumps({"event": "kb_search_miss", "query_hash": query_hash, "top_k": top_k, "duration_ms": duration_ms}))
+    logger.info(
+        json.dumps({"event": "kb_search_miss", "query_hash": query_hash, "top_k": top_k, "duration_ms": duration_ms})
+    )
 
     try:
         await redis_client.setex(cache_key, _CACHE_TTL, json.dumps([asdict(c) for c in chunks]))

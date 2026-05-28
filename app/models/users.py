@@ -8,6 +8,11 @@ class Gender(StrEnum):
     FEMALE = "FEMALE"
 
 
+class UserMode(StrEnum):
+    GENERAL = "GENERAL"
+    AUTOIMMUNE = "AUTOIMMUNE"
+
+
 class User(models.Model):
     id = fields.BigIntField(primary_key=True)
     email = fields.CharField(max_length=40)
@@ -16,6 +21,7 @@ class User(models.Model):
     gender = fields.CharEnumField(enum_type=Gender)
     birthday = fields.DateField()
     phone_number = fields.CharField(max_length=11)
+    mode = fields.CharEnumField(enum_type=UserMode, default=UserMode.GENERAL, max_length=16)
     is_active = fields.BooleanField(default=True)
     is_admin = fields.BooleanField(default=False)
     last_login = fields.DatetimeField(null=True)

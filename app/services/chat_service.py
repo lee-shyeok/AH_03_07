@@ -90,10 +90,14 @@ async def chat_with_rag(message: str) -> dict:
         for c in relevant_chunks
     ]
 
-    logger.info(json.dumps({
-        "event": "chat_response",
-        "chunk_count": len(relevant_chunks),
-        "is_general_info": is_general_info,
-    }))
+    logger.info(
+        json.dumps(
+            {
+                "event": "chat_response",
+                "chunk_count": len(relevant_chunks),
+                "is_general_info": is_general_info,
+            }
+        )
+    )
 
     return {"answer": answer, "is_general_info": is_general_info, "sources": sources}

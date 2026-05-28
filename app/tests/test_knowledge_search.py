@@ -80,9 +80,7 @@ async def test_search_knowledge_cache_miss_calls_qdrant():
         mock_redis_module.from_url.return_value = mock_redis
 
         mock_openai = mock_openai_cls.return_value
-        mock_openai.embeddings.create = AsyncMock(
-            return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
-        )
+        mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)]))
 
         mock_qdrant = mock_qdrant_cls.return_value
         mock_qdrant.search = AsyncMock(return_value=[fake_point])
@@ -120,9 +118,7 @@ async def test_search_knowledge_redis_failure_falls_back_to_qdrant():
         mock_redis_module.from_url.return_value = mock_redis
 
         mock_openai = mock_openai_cls.return_value
-        mock_openai.embeddings.create = AsyncMock(
-            return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
-        )
+        mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)]))
         mock_qdrant = mock_qdrant_cls.return_value
         mock_qdrant.search = AsyncMock(return_value=[fake_point])
 

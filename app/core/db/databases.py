@@ -8,6 +8,17 @@ TORTOISE_APP_MODELS = [
     "aerich.models",
     "app.models.users",
     "app.models.knowledge",
+    "app.models.health_guide",
+    "app.models.user_disease",
+    "app.models.audit_log",
+    "app.models.user_risk_profile",
+    "app.models.user_medication",
+    "app.models.disease_activity_log",
+    "app.models.symptom_check_log",
+    "app.models.activity_alert_setting",
+    "app.models.medical_schedule",
+    "app.models.lab_result",
+    "app.models.lupus_skin_log",
 ]
 
 TORTOISE_ORM = {
