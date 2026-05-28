@@ -11,6 +11,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("CLOVA_OCR_SECRET_KEY")
 API_URL = os.getenv("CLOVA_OCR_API_URL")
 
+
 async def recognize_image(image_bytes: bytes, format: str = "jpg") -> str:
     encoded = base64.b64encode(image_bytes).decode("utf-8")
 
@@ -24,7 +25,7 @@ async def recognize_image(image_bytes: bytes, format: str = "jpg") -> str:
                 "name": "ocr_image",
                 "data": encoded,
             }
-        ]
+        ],
     }
 
     async with httpx.AsyncClient() as client:
@@ -35,7 +36,7 @@ async def recognize_image(image_bytes: bytes, format: str = "jpg") -> str:
                 "X-OCR-SECRET": SECRET_KEY,
             },
             json=payload,
-            timeout=30.0
+            timeout=30.0,
         )
 
     response.raise_for_status()

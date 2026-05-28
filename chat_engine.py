@@ -4,6 +4,7 @@
 - 가드레일 (응급/자살/진단/처방 요청 차단)
 - 사용자 프로필 + 최근 30일 가이드 시스템 프롬프트 포함
 """
+
 import json
 import os
 from collections.abc import AsyncGenerator
@@ -16,8 +17,18 @@ _OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
 # 가드레일 키워드
 _EMERGENCY_KEYWORDS = [
-    "가슴 통증", "흉통", "호흡 곤란", "호흡곤란", "숨쉬기 힘들", "숨이 안쉬",
-    "심장마비", "뇌졸중", "의식 잃", "응급", "쓰러질 것 같", "쓰러졌",
+    "가슴 통증",
+    "흉통",
+    "호흡 곤란",
+    "호흡곤란",
+    "숨쉬기 힘들",
+    "숨이 안쉬",
+    "심장마비",
+    "뇌졸중",
+    "의식 잃",
+    "응급",
+    "쓰러질 것 같",
+    "쓰러졌",
 ]
 _SUICIDE_KEYWORDS = ["자살", "자해", "죽고 싶", "죽고싶", "살기 싫", "살기싫"]
 _DIAGNOSIS_KEYWORDS = ["진단해줘", "진단해 줘", "내 병이 뭐야", "병명이 뭐야", "무슨 병이야"]
@@ -35,10 +46,7 @@ _DIAGNOSIS_RESPONSE = (
     "진단은 의사만이 할 수 있습니다. 증상이 걱정되신다면 가까운 의원이나 "
     "병원을 방문하여 전문의 진료를 받아보시길 권장합니다."
 )
-_PRESCRIPTION_RESPONSE = (
-    "약 처방은 의사와 약사만이 할 수 있습니다. "
-    "복약 관련 궁금한 점은 담당 약사에게 문의해주세요."
-)
+_PRESCRIPTION_RESPONSE = "약 처방은 의사와 약사만이 할 수 있습니다. 복약 관련 궁금한 점은 담당 약사에게 문의해주세요."
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 당신은 의료 정보를 친절하고 쉽게 안내하는 헬스케어 도우미입니다.
@@ -88,8 +96,7 @@ def build_system_prompt(
 ) -> str:
     if recent_guides:
         guide_lines = [
-            f"- [{g.get('visit_date', '')}] {g.get('diagnosis', '')}: "
-            f"{g.get('medication_guide', '')[:100]}"
+            f"- [{g.get('visit_date', '')}] {g.get('diagnosis', '')}: {g.get('medication_guide', '')[:100]}"
             for g in recent_guides[:3]
         ]
         guides_str = "\n".join(guide_lines)

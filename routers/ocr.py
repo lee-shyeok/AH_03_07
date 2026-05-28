@@ -14,18 +14,19 @@ ocr_jobs = {}
 # 지원 document_type
 ALLOWED_TYPES = ["prescription", "medical_record", "pill_bag", "lab_result", "health_checkup", "other"]
 
+
 # ── 1. 의료문서 업로드 ─────────────────────────────────────
 @router.post("/medical-documents", status_code=201)
-async def upload_medical_document(
-    file: UploadFile = File(...),
-    document_type: str = "other"
-):
+async def upload_medical_document(file: UploadFile = File(...), document_type: str = "other"):
     if document_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=422, detail={
-            "code": "UNSUPPORTED_DOCUMENT_TYPE",
-            "message": "지원하지 않는 문서 유형입니다.",
-            "details": {"allowed": ALLOWED_TYPES}
-        })
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "UNSUPPORTED_DOCUMENT_TYPE",
+                "message": "지원하지 않는 문서 유형입니다.",
+                "details": {"allowed": ALLOWED_TYPES},
+            },
+        )
 
     document_id = str(uuid.uuid4())
     image_bytes = await file.read()
@@ -45,7 +46,7 @@ async def upload_medical_document(
         "document_id": document_id,
         "document_type": document_type,
         "upload_status": "uploaded",
-        "uploaded_at": documents[document_id]["uploaded_at"]
+        "uploaded_at": documents[document_id]["uploaded_at"],
     }
 
 
@@ -111,8 +112,4 @@ async def confirm_ocr_result(document_id: str, body: dict):
     documents[document_id]["structured_data"] = body.get("structured_data")
     documents[document_id]["confirmed_at"] = datetime.utcnow().isoformat()
 
-    return {
-        "document_id": document_id,
-        "user_confirmed": True,
-        "confirmed_at": documents[document_id]["confirmed_at"]
-    }
+    return {"document_id": document_id, "user_confirmed": True, "confirmed_at": documents[document_id]["confirmed_at"]}

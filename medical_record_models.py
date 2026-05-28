@@ -6,6 +6,7 @@ from database import Base
 
 class MedicalRecord(Base):
     """진료 기록"""
+
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -32,15 +33,16 @@ class MedicalRecord(Base):
 
 class Medication(Base):
     """처방 약품 (진료기록 1:N)"""
+
     __tablename__ = "medications"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     record_id = Column(Integer, ForeignKey("medical_records.id"), nullable=False, index=True)
 
     drug_name = Column(String(200), nullable=False)
-    dosage = Column(String(100), nullable=True)       # 복용량 (예: 1정)
-    frequency = Column(String(100), nullable=True)    # 복용 횟수 (예: 1일 3회)
-    duration_days = Column(Integer, nullable=True)    # 복용 일수
-    timing = Column(String(100), nullable=True)       # 복용 시점 (예: 식후 30분)
+    dosage = Column(String(100), nullable=True)  # 복용량 (예: 1정)
+    frequency = Column(String(100), nullable=True)  # 복용 횟수 (예: 1일 3회)
+    duration_days = Column(Integer, nullable=True)  # 복용 일수
+    timing = Column(String(100), nullable=True)  # 복용 시점 (예: 식후 30분)
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

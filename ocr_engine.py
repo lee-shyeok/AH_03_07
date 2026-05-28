@@ -7,6 +7,7 @@ OCR 엔진 — GPT-4o mini Vision API 기반
   → 운영환경에서 키 빠짐 → Mock 데이터 DB 저장 사고 방지
   → 키 없으면 즉시 RuntimeError (서버 시작 시 또는 첫 호출 시 명확히 실패)
 """
+
 import base64
 import io
 import json
@@ -177,6 +178,7 @@ _PROMPTS: dict[str, str] = {
 
 # ── 파일 → base64 변환 ────────────────────────────────────
 
+
 def _file_to_base64(file_path: str) -> tuple[str, str]:
     """
     파일을 base64로 변환. (base64_str, mime_type) 반환.
@@ -196,14 +198,14 @@ def _file_to_base64(file_path: str) -> tuple[str, str]:
         # PDF → 첫 페이지 PNG 변환
         try:
             from pdf2image import convert_from_path
+
             images = convert_from_path(file_path, first_page=1, last_page=1, dpi=200)
             buf = io.BytesIO()
             images[0].save(buf, format="PNG")
             return base64.b64encode(buf.getvalue()).decode("utf-8"), "image/png"
         except ImportError:
             raise RuntimeError(
-                "PDF 처리를 위해 pdf2image와 poppler가 필요합니다.\n"
-                "pip install pdf2image  /  apt install poppler-utils"
+                "PDF 처리를 위해 pdf2image와 poppler가 필요합니다.\npip install pdf2image  /  apt install poppler-utils"
             )
     else:
         raise ValueError(f"지원하지 않는 파일 형식입니다. (매직바이트: {header[:4].hex()})")
@@ -214,30 +216,33 @@ def _file_to_base64(file_path: str) -> tuple[str, str]:
 
 # ── OpenAI Vision API 호출 ────────────────────────────────
 
+
 def _call_openai_vision(image_b64: str, mime_type: str, prompt: str) -> str:
     """
     GPT-4o mini Vision API 호출.
     [수정 #8] HTTPError / URLError / 타임아웃 모두 명시적으로 처리
     """
-    body = json.dumps({
-        "model": "gpt-4o-mini",
-        "max_tokens": 1500,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{mime_type};base64,{image_b64}",
-                            "detail": "high",
+    body = json.dumps(
+        {
+            "model": "gpt-4o-mini",
+            "max_tokens": 1500,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime_type};base64,{image_b64}",
+                                "detail": "high",
+                            },
                         },
-                    },
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ],
-    }).encode("utf-8")
+                        {"type": "text", "text": prompt},
+                    ],
+                }
+            ],
+        }
+    ).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.openai.com/v1/chat/completions",
@@ -266,6 +271,7 @@ def _call_openai_vision(image_b64: str, mime_type: str, prompt: str) -> str:
 
 
 # ── GPT 응답 파싱 ─────────────────────────────────────────
+
 
 def _parse_response(raw_response: str) -> tuple[dict[str, Any], dict[str, Any], float]:
     """
@@ -304,15 +310,13 @@ def _parse_response(raw_response: str) -> tuple[dict[str, Any], dict[str, Any], 
             "low_confidence": conf < LOW_CONFIDENCE_THRESHOLD,
         }
 
-    overall = (
-        sum(float(v) for v in raw_confidences.values()) / len(raw_confidences)
-        if raw_confidences else 0.5
-    )
+    overall = sum(float(v) for v in raw_confidences.values()) / len(raw_confidences) if raw_confidences else 0.5
 
     return data, field_confidences, round(max(0.0, min(1.0, overall)), 3)
 
 
 # ── 메인 진입점 ───────────────────────────────────────────
+
 
 def run_ocr(file_path: str, document_type: str) -> tuple[str, dict, dict, float]:
     """
@@ -321,10 +325,7 @@ def run_ocr(file_path: str, document_type: str) -> tuple[str, dict, dict, float]
     Returns: (raw_text, structured_data, field_confidences, overall_confidence)
     """
     if not _OPENAI_API_KEY:
-        raise RuntimeError(
-            "OPENAI_API_KEY 환경변수가 설정되지 않았습니다. "
-            ".env 파일에 OPENAI_API_KEY를 추가해주세요."
-        )
+        raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다. .env 파일에 OPENAI_API_KEY를 추가해주세요.")
 
     prompt = _PROMPTS.get(document_type, _PROMPTS["other"])
     image_b64, mime_type = _file_to_base64(file_path)
@@ -337,6 +338,7 @@ def run_ocr(file_path: str, document_type: str) -> tuple[str, dict, dict, float]
 # ── Mock (테스트 전용 — 직접 호출만 허용) ────────────────
 # 운영 코드에서 import하여 사용 금지. 테스트 코드에서만 패치용으로 사용.
 
+
 def _mock_result_for_test(document_type: str) -> tuple[str, dict, dict, float]:
     raw = f"[MOCK OCR] document_type={document_type}"
     if document_type == "prescription":
@@ -346,23 +348,28 @@ def _mock_result_for_test(document_type: str) -> tuple[str, dict, dict, float]:
             "visit_date": "2025-01-15",
             "diagnosis": "고혈압",
             "medications": [
-                {"drug_name": "암로디핀정 5mg", "dosage": "1정",
-                 "frequency": "1일 1회", "duration_days": 30, "timing": "아침 식후"},
+                {
+                    "drug_name": "암로디핀정 5mg",
+                    "dosage": "1정",
+                    "frequency": "1일 1회",
+                    "duration_days": 30,
+                    "timing": "아침 식후",
+                },
             ],
             "next_visit_date": None,
         }
         confs = {
-            "hospital_name":   {"value": "서울대학교병원", "confidence": 0.97, "low_confidence": False},
-            "doctor_name":     {"value": "홍길동",         "confidence": 0.92, "low_confidence": False},
-            "visit_date":      {"value": "2025-01-15",     "confidence": 0.99, "low_confidence": False},
-            "diagnosis":       {"value": "고혈압",          "confidence": 0.88, "low_confidence": False},
-            "medications":     {"value": None,             "confidence": 0.85, "low_confidence": False},
-            "next_visit_date": {"value": None,             "confidence": 0.70, "low_confidence": True},
+            "hospital_name": {"value": "서울대학교병원", "confidence": 0.97, "low_confidence": False},
+            "doctor_name": {"value": "홍길동", "confidence": 0.92, "low_confidence": False},
+            "visit_date": {"value": "2025-01-15", "confidence": 0.99, "low_confidence": False},
+            "diagnosis": {"value": "고혈압", "confidence": 0.88, "low_confidence": False},
+            "medications": {"value": None, "confidence": 0.85, "low_confidence": False},
+            "next_visit_date": {"value": None, "confidence": 0.70, "low_confidence": True},
         }
         return raw, data, confs, 0.90
     data = {"raw_text": raw, "summary": f"{document_type} Mock 결과입니다."}
     confs = {
-        "raw_text": {"value": raw,  "confidence": 0.70, "low_confidence": True},
-        "summary":  {"value": None, "confidence": 0.70, "low_confidence": True},
+        "raw_text": {"value": raw, "confidence": 0.70, "low_confidence": True},
+        "summary": {"value": None, "confidence": 0.70, "low_confidence": True},
     }
     return raw, data, confs, 0.70

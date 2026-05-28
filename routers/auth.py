@@ -6,7 +6,7 @@ import string
 
 from dotenv import load_dotenv
 
-load_dotenv('envs/.local.env')
+load_dotenv("envs/.local.env")
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -46,15 +46,15 @@ from security import (
     verify_password,
 )
 
-EMAIL_VERIFY_CODE_EXPIRE  = int(os.getenv("EMAIL_VERIFY_CODE_EXPIRE_SECONDS", 300))
-EMAIL_TOKEN_EXPIRE        = int(os.getenv("EMAIL_TOKEN_EXPIRE_SECONDS", 1800))
+EMAIL_VERIFY_CODE_EXPIRE = int(os.getenv("EMAIL_VERIFY_CODE_EXPIRE_SECONDS", 300))
+EMAIL_TOKEN_EXPIRE = int(os.getenv("EMAIL_TOKEN_EXPIRE_SECONDS", 1800))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 14))
-LOGIN_FAIL_MAX            = int(os.getenv("LOGIN_FAIL_MAX", 5))
-LOGIN_LOCK_SECONDS        = int(os.getenv("LOGIN_LOCK_SECONDS", 600))
+LOGIN_FAIL_MAX = int(os.getenv("LOGIN_FAIL_MAX", 5))
+LOGIN_LOCK_SECONDS = int(os.getenv("LOGIN_LOCK_SECONDS", 600))
 
-VERIFY_FAIL_MAX     = 5
+VERIFY_FAIL_MAX = 5
 VERIFY_LOCK_SECONDS = 300
-EMAIL_SEND_RATE_MAX    = 5
+EMAIL_SEND_RATE_MAX = 5
 EMAIL_SEND_RATE_WINDOW = 300
 
 _DUMMY_HASH = "$2b$12$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234"
@@ -64,6 +64,7 @@ router = APIRouter()
 
 
 # ── 이메일 인증코드 발송 ──────────────────────────────────
+
 
 @router.post("/email-verify/send", summary="REQ-USER-002: 인증코드 발송")
 def send_email_verify_code(body: EmailVerifySendRequest):
@@ -76,29 +77,25 @@ def send_email_verify_code(body: EmailVerifySendRequest):
     send_count = results[0]
 
     if send_count > EMAIL_SEND_RATE_MAX:
-        raise HTTPException(
-            status_code=429,
-            detail="인증코드 발송 횟수를 초과했습니다. 잠시 후 다시 시도해주세요."
-        )
+        raise HTTPException(status_code=429, detail="인증코드 발송 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.")
 
     code = "".join(secrets.choice(string.digits) for _ in range(6))
     redis_client.setex(key_email_verify_code(email), EMAIL_VERIFY_CODE_EXPIRE, code)
 
     try:
         from utils.email import send_verification_email
+
         send_verification_email(email, code)
     except Exception as e:
         print(f"이메일 발송 실패: {e}")
         redis_client.delete(key_email_verify_code(email))
-        raise HTTPException(
-            status_code=503,
-            detail="이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요."
-        )
+        raise HTTPException(status_code=503, detail="이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.")
 
     return {"message": "인증코드가 발송되었습니다."}
 
 
 # ── 이메일 인증코드 확인 ──────────────────────────────────
+
 
 @router.post("/email-verify/confirm", response_model=EmailVerifyResponse, summary="REQ-USER-002: 인증코드 확인")
 def confirm_email_verify_code(body: EmailVerifyConfirmRequest):
@@ -106,10 +103,7 @@ def confirm_email_verify_code(body: EmailVerifyConfirmRequest):
 
     if redis_client.exists(key_verify_code_lock(email)):
         ttl = redis_client.ttl(key_verify_code_lock(email))
-        raise HTTPException(
-            status_code=429,
-            detail=f"인증 시도가 너무 많습니다. {ttl}초 후 다시 시도해주세요."
-        )
+        raise HTTPException(status_code=429, detail=f"인증 시도가 너무 많습니다. {ttl}초 후 다시 시도해주세요.")
 
     saved = redis_client.get(key_email_verify_code(email))
     if not saved:
@@ -123,7 +117,9 @@ def confirm_email_verify_code(body: EmailVerifyConfirmRequest):
             redis_client.setex(key_verify_code_lock(email), VERIFY_LOCK_SECONDS, "1")
             redis_client.delete(key_verify_code_fail(email))
             redis_client.delete(key_email_verify_code(email))
-            raise HTTPException(status_code=429, detail="인증 시도 횟수를 초과했습니다. 인증코드를 다시 발급받아주세요.")
+            raise HTTPException(
+                status_code=429, detail="인증 시도 횟수를 초과했습니다. 인증코드를 다시 발급받아주세요."
+            )
 
         raise HTTPException(status_code=400, detail="인증코드가 올바르지 않습니다.")
 
@@ -137,6 +133,7 @@ def confirm_email_verify_code(body: EmailVerifyConfirmRequest):
 
 
 # ── 회원가입 ──────────────────────────────────────────────
+
 
 @router.post("/signup", response_model=SignupResponse, status_code=201, summary="REQ-USER-001: 회원가입")
 def signup(data: SignupRequest, db: Session = Depends(get_db)):
@@ -183,6 +180,7 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
 
 # ── 로그인 ────────────────────────────────────────────────
 
+
 @router.post("/login", response_model=LoginResponse, summary="REQ-USER-003: 로그인")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     email = str(data.email)
@@ -192,11 +190,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.email == email, User.deleted_at.is_(None)).first()
 
-    password_ok = (
-        verify_password(data.password, user.password)
-        if user
-        else verify_password(data.password, _DUMMY_HASH)
-    )
+    password_ok = verify_password(data.password, user.password) if user else verify_password(data.password, _DUMMY_HASH)
 
     if not user or not password_ok:
         pipe = redis_client.pipeline()
@@ -229,6 +223,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 
 # ── 토큰 갱신 ────────────────────────────────────────────
+
 
 @router.post("/token/refresh", response_model=TokenRefreshResponse, summary="REQ-USER-004: 토큰 갱신")
 def token_refresh(body: TokenRefreshRequest):
@@ -272,6 +267,7 @@ def token_refresh(body: TokenRefreshRequest):
 
 
 # ── 로그아웃 ──────────────────────────────────────────────
+
 
 @router.post("/logout", status_code=204, summary="REQ-USER-005: 로그아웃")
 def logout(request: Request, user_id: int = Depends(get_current_user_id)):

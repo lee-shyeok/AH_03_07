@@ -18,6 +18,7 @@
 
   POST/GET             /v1/lab-results               검사 결과
 """
+
 import json
 from datetime import UTC, date, datetime
 
@@ -71,31 +72,40 @@ MAX_PAGE_SIZE = 50
 # 약품 CRUD
 # ══════════════════════════════════════════════════════════
 
+
 def _get_medication_or_404(mid: int, user_id: int, db: Session) -> UserMedication:
-    m = db.query(UserMedication).filter(
-        UserMedication.id == mid,
-        UserMedication.user_id == user_id,
-        UserMedication.deleted_at.is_(None),
-    ).first()
+    m = (
+        db.query(UserMedication)
+        .filter(
+            UserMedication.id == mid,
+            UserMedication.user_id == user_id,
+            UserMedication.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not m:
         raise HTTPException(status_code=404, detail="약품을 찾을 수 없습니다.")
     return m
 
 
-@router.post("/medications", response_model=UserMedicationResponse, status_code=201,
-             summary="API-약품-001: 복용 약품 등록")
+@router.post(
+    "/medications", response_model=UserMedicationResponse, status_code=201, summary="API-약품-001: 복용 약품 등록"
+)
 def create_medication(
     data: UserMedicationCreate,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    count = db.query(UserMedication).filter(
-        UserMedication.user_id == user_id,
-        UserMedication.deleted_at.is_(None),
-    ).count()
+    count = (
+        db.query(UserMedication)
+        .filter(
+            UserMedication.user_id == user_id,
+            UserMedication.deleted_at.is_(None),
+        )
+        .count()
+    )
     if count >= MAX_MEDICATIONS:
-        raise HTTPException(status_code=400,
-            detail=f"약품은 최대 {MAX_MEDICATIONS}개까지 등록할 수 있습니다.")
+        raise HTTPException(status_code=400, detail=f"약품은 최대 {MAX_MEDICATIONS}개까지 등록할 수 있습니다.")
 
     med = UserMedication(
         user_id=user_id,
@@ -117,8 +127,7 @@ def create_medication(
     return med
 
 
-@router.get("/medications", response_model=list[UserMedicationResponse],
-            summary="API-약품-002: 내 약품 목록")
+@router.get("/medications", response_model=list[UserMedicationResponse], summary="API-약품-002: 내 약품 목록")
 def list_medications(
     is_autoimmune: bool | None = Query(None),
     user_id: int = Depends(get_current_user_id),
@@ -133,8 +142,7 @@ def list_medications(
     return q.order_by(UserMedication.created_at.desc()).all()
 
 
-@router.put("/medications/{med_id}", response_model=UserMedicationResponse,
-            summary="API-약품-003: 약품 정보 수정")
+@router.put("/medications/{med_id}", response_model=UserMedicationResponse, summary="API-약품-003: 약품 정보 수정")
 def update_medication(
     med_id: int,
     data: UserMedicationUpdate,
@@ -163,8 +171,7 @@ def update_medication(
     return med
 
 
-@router.delete("/medications/{med_id}", status_code=204,
-               summary="API-약품-004: 약품 삭제")
+@router.delete("/medications/{med_id}", status_code=204, summary="API-약품-004: 약품 삭제")
 def delete_medication(
     med_id: int,
     user_id: int = Depends(get_current_user_id),
@@ -179,8 +186,8 @@ def delete_medication(
 # 복약 이력
 # ══════════════════════════════════════════════════════════
 
-@router.get("/medication-logs", response_model=list[MedicationLogResponse],
-            summary="API-복약-001: 복약 이력 조회")
+
+@router.get("/medication-logs", response_model=list[MedicationLogResponse], summary="API-복약-001: 복약 이력 조회")
 def list_medication_logs(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -195,18 +202,21 @@ def list_medication_logs(
     return q.order_by(MedicationLog.scheduled_date.desc()).limit(500).all()
 
 
-@router.put("/medication-logs/{log_id}/check", response_model=MedicationLogResponse,
-            summary="API-복약-002: 복약 체크")
+@router.put("/medication-logs/{log_id}/check", response_model=MedicationLogResponse, summary="API-복약-002: 복약 체크")
 def check_medication_log(
     log_id: int,
     data: MedicationLogCheckRequest,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    log = db.query(MedicationLog).filter(
-        MedicationLog.id == log_id,
-        MedicationLog.user_id == user_id,
-    ).first()
+    log = (
+        db.query(MedicationLog)
+        .filter(
+            MedicationLog.id == log_id,
+            MedicationLog.user_id == user_id,
+        )
+        .first()
+    )
     if not log:
         raise HTTPException(status_code=404, detail="복약 기록을 찾을 수 없습니다.")
     log.taken = data.taken
@@ -224,21 +234,26 @@ def check_medication_log(
 # 활성도 일지
 # ══════════════════════════════════════════════════════════
 
-@router.post("/activity-logs", response_model=ActivityLogResponse,
-             summary="API-활성도-001: 활성도 기록 (upsert)")
+
+@router.post("/activity-logs", response_model=ActivityLogResponse, summary="API-활성도-001: 활성도 기록 (upsert)")
 def upsert_activity_log(
     data: ActivityLogUpsert,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """일자당 1건. 이미 있으면 업데이트."""
-    existing = db.query(ActivityLog).filter(
-        ActivityLog.user_id == user_id,
-        ActivityLog.log_date == data.log_date,
-    ).first()
+    existing = (
+        db.query(ActivityLog)
+        .filter(
+            ActivityLog.user_id == user_id,
+            ActivityLog.log_date == data.log_date,
+        )
+        .first()
+    )
 
-    areas_json = json.dumps(data.joint_swelling_areas, ensure_ascii=False) \
-        if data.joint_swelling_areas is not None else None
+    areas_json = (
+        json.dumps(data.joint_swelling_areas, ensure_ascii=False) if data.joint_swelling_areas is not None else None
+    )
 
     if existing:
         if data.pain_vas is not None:
@@ -276,8 +291,7 @@ def upsert_activity_log(
     return ActivityLogResponse.from_orm(log)
 
 
-@router.get("/activity-logs", response_model=list[ActivityLogResponse],
-            summary="API-활성도-002: 활성도 기록 조회")
+@router.get("/activity-logs", response_model=list[ActivityLogResponse], summary="API-활성도-002: 활성도 기록 조회")
 def list_activity_logs(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -297,17 +311,17 @@ def list_activity_logs(
 # 증상 체크
 # ══════════════════════════════════════════════════════════
 
-@router.post("/symptom-checks", response_model=SymptomCheckResponse, status_code=201,
-             summary="API-증상-001: 위험 증상 자가체크")
+
+@router.post(
+    "/symptom-checks", response_model=SymptomCheckResponse, status_code=201, summary="API-증상-001: 위험 증상 자가체크"
+)
 def create_symptom_check(
     data: SymptomCheckCreate,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     # 안전 고지 필요 여부 판단
-    safety_required = any(
-        s in SAFETY_NOTICE_SYMPTOMS for s in data.checked_symptoms
-    )
+    safety_required = any(s in SAFETY_NOTICE_SYMPTOMS for s in data.checked_symptoms)
 
     check = SymptomCheck(
         user_id=user_id,
@@ -336,8 +350,7 @@ def create_symptom_check(
     return SymptomCheckResponse.from_orm(check)
 
 
-@router.get("/symptom-checks", response_model=list[SymptomCheckResponse],
-            summary="API-증상-002: 증상 체크 이력 조회")
+@router.get("/symptom-checks", response_model=list[SymptomCheckResponse], summary="API-증상-002: 증상 체크 이력 조회")
 def list_symptom_checks(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -348,13 +361,10 @@ def list_symptom_checks(
 ):
     q = db.query(SymptomCheck).filter(SymptomCheck.user_id == user_id)
     if date_from:
-        q = q.filter(SymptomCheck.created_at >= datetime(
-            date_from.year, date_from.month, date_from.day))
+        q = q.filter(SymptomCheck.created_at >= datetime(date_from.year, date_from.month, date_from.day))
     if date_to:
-        q = q.filter(SymptomCheck.created_at <= datetime(
-            date_to.year, date_to.month, date_to.day, 23, 59, 59))
-    checks = q.order_by(SymptomCheck.created_at.desc())\
-        .offset((page - 1) * size).limit(size).all()
+        q = q.filter(SymptomCheck.created_at <= datetime(date_to.year, date_to.month, date_to.day, 23, 59, 59))
+    checks = q.order_by(SymptomCheck.created_at.desc()).offset((page - 1) * size).limit(size).all()
     return [SymptomCheckResponse.from_orm(c) for c in checks]
 
 
@@ -362,8 +372,8 @@ def list_symptom_checks(
 # 위험 신호
 # ══════════════════════════════════════════════════════════
 
-@router.get("/risk-flags", response_model=list[RiskFlagResponse],
-            summary="API-위험-001: 위험 신호 목록")
+
+@router.get("/risk-flags", response_model=list[RiskFlagResponse], summary="API-위험-001: 위험 신호 목록")
 def list_risk_flags(
     status: RiskFlagStatusEnum | None = Query(None),
     source_type: str | None = Query(None, max_length=50),
@@ -377,38 +387,43 @@ def list_risk_flags(
         q = q.filter(RiskFlag.status == status)
     if source_type:
         q = q.filter(RiskFlag.source_type == source_type)
-    return q.order_by(RiskFlag.created_at.desc())\
-        .offset((page - 1) * size).limit(size).all()
+    return q.order_by(RiskFlag.created_at.desc()).offset((page - 1) * size).limit(size).all()
 
 
-@router.get("/risk-flags/{flag_id}", response_model=RiskFlagResponse,
-            summary="API-위험-002: 위험 신호 상세")
+@router.get("/risk-flags/{flag_id}", response_model=RiskFlagResponse, summary="API-위험-002: 위험 신호 상세")
 def get_risk_flag(
     flag_id: int,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    flag = db.query(RiskFlag).filter(
-        RiskFlag.id == flag_id,
-        RiskFlag.user_id == user_id,
-    ).first()
+    flag = (
+        db.query(RiskFlag)
+        .filter(
+            RiskFlag.id == flag_id,
+            RiskFlag.user_id == user_id,
+        )
+        .first()
+    )
     if not flag:
         raise HTTPException(status_code=404, detail="위험 신호를 찾을 수 없습니다.")
     return flag
 
 
-@router.patch("/risk-flags/{flag_id}", response_model=RiskFlagResponse,
-              summary="API-위험-003: 위험 신호 처리")
+@router.patch("/risk-flags/{flag_id}", response_model=RiskFlagResponse, summary="API-위험-003: 위험 신호 처리")
 def update_risk_flag(
     flag_id: int,
     data: RiskFlagUpdateRequest,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    flag = db.query(RiskFlag).filter(
-        RiskFlag.id == flag_id,
-        RiskFlag.user_id == user_id,
-    ).first()
+    flag = (
+        db.query(RiskFlag)
+        .filter(
+            RiskFlag.id == flag_id,
+            RiskFlag.user_id == user_id,
+        )
+        .first()
+    )
     if not flag:
         raise HTTPException(status_code=404, detail="위험 신호를 찾을 수 없습니다.")
 
@@ -429,10 +444,9 @@ def update_risk_flag(
 # 자가면역 프로필
 # ══════════════════════════════════════════════════════════
 
+
 def _get_or_create_autoimmune_profile(user_id: int, db: Session) -> AutoimmuneProfile:
-    profile = db.query(AutoimmuneProfile).filter(
-        AutoimmuneProfile.user_id == user_id
-    ).first()
+    profile = db.query(AutoimmuneProfile).filter(AutoimmuneProfile.user_id == user_id).first()
     if not profile:
         profile = AutoimmuneProfile(user_id=user_id)
         db.add(profile)
@@ -441,8 +455,9 @@ def _get_or_create_autoimmune_profile(user_id: int, db: Session) -> AutoimmunePr
     return profile
 
 
-@router.get("/autoimmune/profile", response_model=AutoimmuneProfileResponse,
-            summary="API-자가면역-001: 위험요인 프로필 조회")
+@router.get(
+    "/autoimmune/profile", response_model=AutoimmuneProfileResponse, summary="API-자가면역-001: 위험요인 프로필 조회"
+)
 def get_autoimmune_profile(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -451,8 +466,9 @@ def get_autoimmune_profile(
     return AutoimmuneProfileResponse.from_orm(profile)
 
 
-@router.put("/autoimmune/profile", response_model=AutoimmuneProfileResponse,
-            summary="API-자가면역-002: 위험요인 프로필 수정")
+@router.put(
+    "/autoimmune/profile", response_model=AutoimmuneProfileResponse, summary="API-자가면역-002: 위험요인 프로필 수정"
+)
 def update_autoimmune_profile(
     data: AutoimmuneProfileUpdate,
     user_id: int = Depends(get_current_user_id),
@@ -480,31 +496,40 @@ def update_autoimmune_profile(
 # 진료 일정
 # ══════════════════════════════════════════════════════════
 
+
 def _get_schedule_or_404(sid: int, user_id: int, db: Session) -> CareSchedule:
-    s = db.query(CareSchedule).filter(
-        CareSchedule.id == sid,
-        CareSchedule.user_id == user_id,
-        CareSchedule.deleted_at.is_(None),
-    ).first()
+    s = (
+        db.query(CareSchedule)
+        .filter(
+            CareSchedule.id == sid,
+            CareSchedule.user_id == user_id,
+            CareSchedule.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not s:
         raise HTTPException(status_code=404, detail="일정을 찾을 수 없습니다.")
     return s
 
 
-@router.post("/care-schedules", response_model=CareScheduleResponse, status_code=201,
-             summary="API-자가면역-003: 일정 등록")
+@router.post(
+    "/care-schedules", response_model=CareScheduleResponse, status_code=201, summary="API-자가면역-003: 일정 등록"
+)
 def create_care_schedule(
     data: CareScheduleCreate,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    count = db.query(CareSchedule).filter(
-        CareSchedule.user_id == user_id,
-        CareSchedule.deleted_at.is_(None),
-    ).count()
+    count = (
+        db.query(CareSchedule)
+        .filter(
+            CareSchedule.user_id == user_id,
+            CareSchedule.deleted_at.is_(None),
+        )
+        .count()
+    )
     if count >= MAX_CARE_SCHEDULES:
-        raise HTTPException(status_code=400,
-            detail=f"일정은 최대 {MAX_CARE_SCHEDULES}개까지 등록할 수 있습니다.")
+        raise HTTPException(status_code=400, detail=f"일정은 최대 {MAX_CARE_SCHEDULES}개까지 등록할 수 있습니다.")
 
     schedule = CareSchedule(
         user_id=user_id,
@@ -524,8 +549,7 @@ def create_care_schedule(
     return schedule
 
 
-@router.get("/care-schedules", response_model=list[CareScheduleResponse],
-            summary="API-자가면역-004: 일정 목록 조회")
+@router.get("/care-schedules", response_model=list[CareScheduleResponse], summary="API-자가면역-004: 일정 목록 조회")
 def list_care_schedules(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -546,8 +570,7 @@ def list_care_schedules(
     return q.order_by(CareSchedule.scheduled_date.asc()).all()
 
 
-@router.put("/care-schedules/{sid}", response_model=CareScheduleResponse,
-            summary="API-자가면역-005: 일정 수정")
+@router.put("/care-schedules/{sid}", response_model=CareScheduleResponse, summary="API-자가면역-005: 일정 수정")
 def update_care_schedule(
     sid: int,
     data: CareScheduleUpdate,
@@ -574,8 +597,7 @@ def update_care_schedule(
     return schedule
 
 
-@router.delete("/care-schedules/{sid}", status_code=204,
-               summary="API-자가면역-006: 일정 삭제")
+@router.delete("/care-schedules/{sid}", status_code=204, summary="API-자가면역-006: 일정 삭제")
 def delete_care_schedule(
     sid: int,
     user_id: int = Depends(get_current_user_id),
@@ -590,8 +612,8 @@ def delete_care_schedule(
 # 검사 결과
 # ══════════════════════════════════════════════════════════
 
-@router.post("/lab-results", response_model=LabResultResponse, status_code=201,
-             summary="API-검사-001: 검사 결과 기록")
+
+@router.post("/lab-results", response_model=LabResultResponse, status_code=201, summary="API-검사-001: 검사 결과 기록")
 def create_lab_result(
     data: LabResultCreate,
     user_id: int = Depends(get_current_user_id),
@@ -600,21 +622,29 @@ def create_lab_result(
     # document_id 소유권 검증
     if data.document_id is not None:
         from ocr_models import MedicalDocument
-        doc = db.query(MedicalDocument).filter(
-            MedicalDocument.id == data.document_id,
-            MedicalDocument.user_id == user_id,
-            MedicalDocument.deleted_at.is_(None),
-        ).first()
+
+        doc = (
+            db.query(MedicalDocument)
+            .filter(
+                MedicalDocument.id == data.document_id,
+                MedicalDocument.user_id == user_id,
+                MedicalDocument.deleted_at.is_(None),
+            )
+            .first()
+        )
         if not doc:
             raise HTTPException(status_code=404, detail="연결할 문서를 찾을 수 없습니다.")
 
-    count = db.query(LabResult).filter(
-        LabResult.user_id == user_id,
-        LabResult.deleted_at.is_(None),
-    ).count()
+    count = (
+        db.query(LabResult)
+        .filter(
+            LabResult.user_id == user_id,
+            LabResult.deleted_at.is_(None),
+        )
+        .count()
+    )
     if count >= MAX_LAB_RESULTS:
-        raise HTTPException(status_code=400,
-            detail=f"검사 결과는 최대 {MAX_LAB_RESULTS}개까지 등록할 수 있습니다.")
+        raise HTTPException(status_code=400, detail=f"검사 결과는 최대 {MAX_LAB_RESULTS}개까지 등록할 수 있습니다.")
 
     result = LabResult(
         user_id=user_id,
@@ -636,8 +666,7 @@ def create_lab_result(
     return result
 
 
-@router.get("/lab-results", response_model=list[LabResultResponse],
-            summary="API-검사-002: 검사 결과 목록")
+@router.get("/lab-results", response_model=list[LabResultResponse], summary="API-검사-002: 검사 결과 목록")
 def list_lab_results(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -654,5 +683,4 @@ def list_lab_results(
         q = q.filter(LabResult.test_date >= date_from)
     if date_to:
         q = q.filter(LabResult.test_date <= date_to)
-    return q.order_by(LabResult.test_date.desc())\
-        .offset((page - 1) * size).limit(size).all()
+    return q.order_by(LabResult.test_date.desc()).offset((page - 1) * size).limit(size).all()

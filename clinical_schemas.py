@@ -10,6 +10,7 @@ from clinical_models import (
 
 # ── 약품 ──────────────────────────────────────────────────
 
+
 class UserMedicationCreate(BaseModel):
     drug_name_user_input: str
     drug_reference_id: int | None = None
@@ -97,6 +98,7 @@ class UserMedicationResponse(BaseModel):
 
 # ── 복약 이력 ─────────────────────────────────────────────
 
+
 class MedicationLogCheckRequest(BaseModel):
     taken: bool
 
@@ -115,6 +117,7 @@ class MedicationLogResponse(BaseModel):
 
 
 # ── 활성도 일지 ───────────────────────────────────────────
+
 
 class ActivityLogUpsert(BaseModel):
     log_date: date
@@ -193,9 +196,15 @@ class ActivityLogResponse(BaseModel):
 
 # 안전 체크 트리거 증상 키워드
 SAFETY_NOTICE_SYMPTOMS = {
-    "고열", "호흡곤란", "흉통", "실신", "의식저하",
-    "심한 관절 부종", "갑작스러운 시야 저하",
+    "고열",
+    "호흡곤란",
+    "흉통",
+    "실신",
+    "의식저하",
+    "심한 관절 부종",
+    "갑작스러운 시야 저하",
 }
+
 
 class SymptomCheckCreate(BaseModel):
     checked_symptoms: list[str]
@@ -236,6 +245,7 @@ class SymptomCheckResponse(BaseModel):
 
 # ── 위험 신호 ─────────────────────────────────────────────
 
+
 class RiskFlagUpdateRequest(BaseModel):
     status: RiskFlagStatusEnum
 
@@ -264,6 +274,7 @@ class RiskFlagResponse(BaseModel):
 
 
 # ── 자가면역 프로필 ───────────────────────────────────────
+
 
 class AutoimmuneProfileUpdate(BaseModel):
     risk_factors: list[str] | None = None
@@ -313,6 +324,7 @@ class AutoimmuneProfileResponse(BaseModel):
 
 
 # ── 진료 일정 ─────────────────────────────────────────────
+
 
 class CareScheduleCreate(BaseModel):
     schedule_type: CareScheduleTypeEnum
@@ -395,6 +407,7 @@ class CareScheduleResponse(BaseModel):
 
 
 # ── 검사 결과 ─────────────────────────────────────────────
+
 
 class LabResultCreate(BaseModel):
     test_date: date

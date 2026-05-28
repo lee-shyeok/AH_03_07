@@ -11,6 +11,7 @@
   DELETE /v1/guardians/shares/{id}             보호자 공유 철회
   GET    /v1/guardians/view/{token}             보호자 의료정보 열람
 """
+
 import json
 import secrets
 from datetime import UTC, datetime
@@ -48,6 +49,7 @@ MAX_GUARDIAN_SHARES = 3  # 최대 보호자 3명
 # 약품 기준정보 조회 (API-약품-007)
 # ══════════════════════════════════════════════════════════
 
+
 @router.get(
     "/drug-references",
     response_model=list[DrugReferenceResponse],
@@ -65,15 +67,20 @@ def search_drug_references(
     약품 추천 X — 사용자 입력 약품 확인·일반 정보 조회 용도.
     출처: 식약처 의약품안전나라
     """
-    results = db.query(DrugReference).filter(
-        DrugReference.drug_name.ilike(f"%{query}%")
-    ).offset((page - 1) * size).limit(size).all()
+    results = (
+        db.query(DrugReference)
+        .filter(DrugReference.drug_name.ilike(f"%{query}%"))
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
     return results
 
 
 # ══════════════════════════════════════════════════════════
 # 활성도 임계 알림 (API-활성도-003/004)
 # ══════════════════════════════════════════════════════════
+
 
 @router.get(
     "/activity-logs/thresholds",
@@ -88,9 +95,14 @@ def get_thresholds(
     사용자가 직접 설정한 활성도 알림 기준값을 반환합니다.
     앱 자동 판정 X — 의료법 §27 회피.
     """
-    return db.query(ActivityThreshold).filter(
-        ActivityThreshold.user_id == user_id,
-    ).order_by(ActivityThreshold.metric_type).all()
+    return (
+        db.query(ActivityThreshold)
+        .filter(
+            ActivityThreshold.user_id == user_id,
+        )
+        .order_by(ActivityThreshold.metric_type)
+        .all()
+    )
 
 
 @router.put(
@@ -104,10 +116,14 @@ def upsert_threshold(
     db: Session = Depends(get_db),
 ):
     """metric_type당 1개. 이미 있으면 업데이트."""
-    existing = db.query(ActivityThreshold).filter(
-        ActivityThreshold.user_id == user_id,
-        ActivityThreshold.metric_type == data.metric_type,
-    ).first()
+    existing = (
+        db.query(ActivityThreshold)
+        .filter(
+            ActivityThreshold.user_id == user_id,
+            ActivityThreshold.metric_type == data.metric_type,
+        )
+        .first()
+    )
 
     if existing:
         existing.threshold_value = data.threshold_value
@@ -136,6 +152,7 @@ def upsert_threshold(
 # ══════════════════════════════════════════════════════════
 # 피드백 (API-피드백-001)
 # ══════════════════════════════════════════════════════════
+
 
 @router.post(
     "/feedback",
@@ -173,11 +190,16 @@ def create_feedback(
 # 보호자 공유 (API-보호자-001~004)
 # ══════════════════════════════════════════════════════════
 
+
 def _get_share_or_404(share_id: int, user_id: int, db: Session) -> GuardianShare:
-    share = db.query(GuardianShare).filter(
-        GuardianShare.id == share_id,
-        GuardianShare.user_id == user_id,
-    ).first()
+    share = (
+        db.query(GuardianShare)
+        .filter(
+            GuardianShare.id == share_id,
+            GuardianShare.user_id == user_id,
+        )
+        .first()
+    )
     if not share:
         raise HTTPException(status_code=404, detail="보호자 공유를 찾을 수 없습니다.")
     return share
@@ -200,15 +222,16 @@ def create_guardian_share(
     보안 링크 토큰은 64바이트 URL-safe 난수로 생성.
     """
     # 활성 공유 최대 3개 제한
-    active_count = db.query(GuardianShare).filter(
-        GuardianShare.user_id == user_id,
-        GuardianShare.is_revoked == False,
-    ).count()
-    if active_count >= MAX_GUARDIAN_SHARES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"보호자 공유는 최대 {MAX_GUARDIAN_SHARES}명까지 가능합니다."
+    active_count = (
+        db.query(GuardianShare)
+        .filter(
+            GuardianShare.user_id == user_id,
+            GuardianShare.is_revoked == False,
         )
+        .count()
+    )
+    if active_count >= MAX_GUARDIAN_SHARES:
+        raise HTTPException(status_code=400, detail=f"보호자 공유는 최대 {MAX_GUARDIAN_SHARES}명까지 가능합니다.")
 
     # 암호학적으로 안전한 토큰 생성
     token = secrets.token_urlsafe(64)
@@ -240,9 +263,14 @@ def list_guardian_shares(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    shares = db.query(GuardianShare).filter(
-        GuardianShare.user_id == user_id,
-    ).order_by(GuardianShare.created_at.desc()).all()
+    shares = (
+        db.query(GuardianShare)
+        .filter(
+            GuardianShare.user_id == user_id,
+        )
+        .order_by(GuardianShare.created_at.desc())
+        .all()
+    )
     return [GuardianShareResponse.from_orm(s) for s in shares]
 
 
@@ -282,9 +310,13 @@ def view_guardian_share(
     if len(token) > 200:
         raise HTTPException(status_code=404, detail="유효하지 않은 링크입니다.")
 
-    share = db.query(GuardianShare).filter(
-        GuardianShare.secure_link_token == token,
-    ).first()
+    share = (
+        db.query(GuardianShare)
+        .filter(
+            GuardianShare.secure_link_token == token,
+        )
+        .first()
+    )
 
     if not share:
         raise HTTPException(status_code=404, detail="유효하지 않은 링크입니다.")
@@ -330,10 +362,16 @@ def _build_shared_content(user_id: int, categories: list, db: Session) -> dict:
     content = {}
 
     if "medical_records" in categories:
-        records = db.query(MedicalRecord).filter(
-            MedicalRecord.user_id == user_id,
-            MedicalRecord.deleted_at.is_(None),
-        ).order_by(MedicalRecord.visit_date.desc()).limit(10).all()
+        records = (
+            db.query(MedicalRecord)
+            .filter(
+                MedicalRecord.user_id == user_id,
+                MedicalRecord.deleted_at.is_(None),
+            )
+            .order_by(MedicalRecord.visit_date.desc())
+            .limit(10)
+            .all()
+        )
         content["medical_records"] = [
             {
                 "visit_date": str(r.visit_date),
@@ -344,11 +382,17 @@ def _build_shared_content(user_id: int, categories: list, db: Session) -> dict:
         ]
 
     if "guides" in categories:
-        guides = db.query(Guide).filter(
-            Guide.user_id == user_id,
-            Guide.deleted_at.is_(None),
-            Guide.status == GuideStatusEnum.active,
-        ).order_by(Guide.created_at.desc()).limit(5).all()
+        guides = (
+            db.query(Guide)
+            .filter(
+                Guide.user_id == user_id,
+                Guide.deleted_at.is_(None),
+                Guide.status == GuideStatusEnum.active,
+            )
+            .order_by(Guide.created_at.desc())
+            .limit(5)
+            .all()
+        )
         content["guides"] = [
             {
                 "medication_guide": g.medication_guide,

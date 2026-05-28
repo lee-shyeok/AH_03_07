@@ -19,6 +19,7 @@
   GET    /v1/reports/{id}                  리포트 조회
   POST   /v1/reports/{id}/share            리포트 공유
 """
+
 import json
 import os
 import re
@@ -72,12 +73,17 @@ REPORT_SHARE_EXPIRE_HOURS = 72
 
 # ── 헬퍼 ──────────────────────────────────────────────────
 
+
 def _get_guide_or_404(guide_id: int, user_id: int, db: Session) -> Guide:
-    guide = db.query(Guide).filter(
-        Guide.id == guide_id,
-        Guide.user_id == user_id,
-        Guide.deleted_at.is_(None),
-    ).first()
+    guide = (
+        db.query(Guide)
+        .filter(
+            Guide.id == guide_id,
+            Guide.user_id == user_id,
+            Guide.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not guide:
         raise HTTPException(status_code=404, detail="안내문을 찾을 수 없습니다.")
     return guide
@@ -100,6 +106,7 @@ def _sanitize_filename(name: str) -> str:
 
 # ── 안내문 생성 작업 ──────────────────────────────────────
 
+
 def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
     """백그라운드 안내문 생성."""
     from database import SessionLocal
@@ -117,10 +124,16 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
         db.commit()
 
         # 최근 진료기록 조회
-        records = db.query(MedicalRecord).filter(
-            MedicalRecord.user_id == user_id,
-            MedicalRecord.deleted_at.is_(None),
-        ).order_by(MedicalRecord.visit_date.desc()).limit(1).all()
+        records = (
+            db.query(MedicalRecord)
+            .filter(
+                MedicalRecord.user_id == user_id,
+                MedicalRecord.deleted_at.is_(None),
+            )
+            .order_by(MedicalRecord.visit_date.desc())
+            .limit(1)
+            .all()
+        )
 
         if not records:
             job.status = GuideJobStatusEnum.failed
@@ -133,9 +146,8 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
         user = db.query(User).filter(User.id == user_id).first()
 
         from medical_record_models import Medication
-        medications = db.query(Medication).filter(
-            Medication.record_id == record.id
-        ).all()
+
+        medications = db.query(Medication).filter(Medication.record_id == record.id).all()
 
         try:
             result = generate_guide(
@@ -172,13 +184,15 @@ def _run_guide_generation_v2(job_id: int, user_id: int) -> None:
             ]
             for stype, stitle, scontent, order in sections:
                 if scontent:
-                    db.add(GuideSection(
-                        guide_id=guide.id,
-                        section_type=stype,
-                        section_title=stitle,
-                        section_content=scontent,
-                        display_order=order,
-                    ))
+                    db.add(
+                        GuideSection(
+                            guide_id=guide.id,
+                            section_type=stype,
+                            section_title=stitle,
+                            section_content=scontent,
+                            display_order=order,
+                        )
+                    )
 
             job.status = GuideJobStatusEnum.completed
             job.guide_id = guide.id
@@ -212,22 +226,33 @@ def generate_guide_request(
     안전 필터 통과 후에만 안내문이 생성됩니다.
     """
     # 이미 처리 중인 작업 중복 방지
-    existing = db.query(GuideGenerationJob).filter(
-        GuideGenerationJob.user_id == user_id,
-        GuideGenerationJob.status.in_([
-            GuideJobStatusEnum.pending,
-            GuideJobStatusEnum.processing,
-        ]),
-    ).first()
+    existing = (
+        db.query(GuideGenerationJob)
+        .filter(
+            GuideGenerationJob.user_id == user_id,
+            GuideGenerationJob.status.in_(
+                [
+                    GuideJobStatusEnum.pending,
+                    GuideJobStatusEnum.processing,
+                ]
+            ),
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(status_code=409, detail="이미 처리 중인 안내문 생성 작업이 있습니다.")
 
     # 활성 위험 신호 확인 (high_risk_gate)
     from clinical_models import RiskFlag, RiskFlagStatusEnum
-    active_risk = db.query(RiskFlag).filter(
-        RiskFlag.user_id == user_id,
-        RiskFlag.status == RiskFlagStatusEnum.active,
-    ).first()
+
+    active_risk = (
+        db.query(RiskFlag)
+        .filter(
+            RiskFlag.user_id == user_id,
+            RiskFlag.status == RiskFlagStatusEnum.active,
+        )
+        .first()
+    )
 
     job = GuideGenerationJob(
         user_id=user_id,
@@ -263,10 +288,14 @@ def get_guide_generation_job(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    job = db.query(GuideGenerationJob).filter(
-        GuideGenerationJob.id == job_id,
-        GuideGenerationJob.user_id == user_id,
-    ).first()
+    job = (
+        db.query(GuideGenerationJob)
+        .filter(
+            GuideGenerationJob.id == job_id,
+            GuideGenerationJob.user_id == user_id,
+        )
+        .first()
+    )
     if not job:
         raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다.")
     return GuideGenerationJobResponse.from_orm(job)
@@ -283,9 +312,14 @@ def get_guide_sources(
     db: Session = Depends(get_db),
 ):
     _get_guide_or_404(guide_id, user_id, db)
-    return db.query(GuideSource).filter(
-        GuideSource.guide_id == guide_id,
-    ).order_by(GuideSource.citation_order).all()
+    return (
+        db.query(GuideSource)
+        .filter(
+            GuideSource.guide_id == guide_id,
+        )
+        .order_by(GuideSource.citation_order)
+        .all()
+    )
 
 
 @router.get(
@@ -299,12 +333,18 @@ def get_guide_sections(
     db: Session = Depends(get_db),
 ):
     _get_guide_or_404(guide_id, user_id, db)
-    return db.query(GuideSection).filter(
-        GuideSection.guide_id == guide_id,
-    ).order_by(GuideSection.display_order).all()
+    return (
+        db.query(GuideSection)
+        .filter(
+            GuideSection.guide_id == guide_id,
+        )
+        .order_by(GuideSection.display_order)
+        .all()
+    )
 
 
 # ── 처방전 편의 API ───────────────────────────────────────
+
 
 @router.get(
     "/prescriptions",
@@ -318,12 +358,18 @@ def list_prescriptions(
     db: Session = Depends(get_db),
 ):
     """의료문서 중 prescription 타입만 필터링하는 편의 API."""
-    docs = db.query(MedicalDocument).filter(
-        MedicalDocument.user_id == user_id,
-        MedicalDocument.document_type == DocumentTypeEnum.prescription,
-        MedicalDocument.deleted_at.is_(None),
-    ).order_by(MedicalDocument.created_at.desc())\
-     .offset((page - 1) * size).limit(size).all()
+    docs = (
+        db.query(MedicalDocument)
+        .filter(
+            MedicalDocument.user_id == user_id,
+            MedicalDocument.document_type == DocumentTypeEnum.prescription,
+            MedicalDocument.deleted_at.is_(None),
+        )
+        .order_by(MedicalDocument.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
     return [PrescriptionBrief.from_orm(d) for d in docs]
 
 
@@ -337,18 +383,23 @@ def get_prescription(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    doc = db.query(MedicalDocument).filter(
-        MedicalDocument.id == doc_id,
-        MedicalDocument.user_id == user_id,
-        MedicalDocument.document_type == DocumentTypeEnum.prescription,
-        MedicalDocument.deleted_at.is_(None),
-    ).first()
+    doc = (
+        db.query(MedicalDocument)
+        .filter(
+            MedicalDocument.id == doc_id,
+            MedicalDocument.user_id == user_id,
+            MedicalDocument.document_type == DocumentTypeEnum.prescription,
+            MedicalDocument.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not doc:
         raise HTTPException(status_code=404, detail="처방전을 찾을 수 없습니다.")
     return PrescriptionBrief.from_orm(doc)
 
 
 # ── 약품 이미지 인식 ──────────────────────────────────────
+
 
 @router.post(
     "/pills/recognize",
@@ -422,15 +473,22 @@ def list_pill_recognitions(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    recognitions = db.query(PillRecognition).filter(
-        PillRecognition.user_id == user_id,
-        PillRecognition.deleted_at.is_(None),
-    ).order_by(PillRecognition.created_at.desc())\
-     .offset((page - 1) * size).limit(size).all()
+    recognitions = (
+        db.query(PillRecognition)
+        .filter(
+            PillRecognition.user_id == user_id,
+            PillRecognition.deleted_at.is_(None),
+        )
+        .order_by(PillRecognition.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+        .all()
+    )
     return [PillRecognitionResponse.from_orm(r) for r in recognitions]
 
 
 # ── 리포트 ────────────────────────────────────────────────
+
 
 def _run_report_generation(report_id: int, user_id: int) -> None:
     """백그라운드 리포트 생성."""
@@ -447,10 +505,16 @@ def _run_report_generation(report_id: int, user_id: int) -> None:
         db.commit()
 
         user = db.query(User).filter(User.id == user_id).first()
-        records = db.query(MedicalRecord).filter(
-            MedicalRecord.user_id == user_id,
-            MedicalRecord.deleted_at.is_(None),
-        ).order_by(MedicalRecord.visit_date.desc()).limit(3).all()
+        records = (
+            db.query(MedicalRecord)
+            .filter(
+                MedicalRecord.user_id == user_id,
+                MedicalRecord.deleted_at.is_(None),
+            )
+            .order_by(MedicalRecord.visit_date.desc())
+            .limit(3)
+            .all()
+        )
 
         try:
             # 진료 전 요약 생성 (GPT 기반)
@@ -461,27 +525,30 @@ def _run_report_generation(report_id: int, user_id: int) -> None:
             if not _OPENAI_API_KEY:
                 raise RuntimeError("OPENAI_API_KEY가 설정되지 않았습니다.")
 
-            record_summary = "\n".join([
-                f"- {r.visit_date} {r.hospital_name or ''}: {r.diagnosis}"
-                for r in records
-            ]) or "진료 기록 없음"
+            record_summary = (
+                "\n".join([f"- {r.visit_date} {r.hospital_name or ''}: {r.diagnosis}" for r in records])
+                or "진료 기록 없음"
+            )
 
             prompt = f"""다음 환자 정보를 바탕으로 진료 전 1페이지 요약을 작성해주세요.
 진료 예정일: {report.visit_date}
 최근 진료 기록:
 {record_summary}
-만성질환: {user.chronic_diseases if user else '없음'}
-알레르기: {user.allergy_info if user else '없음'}
+만성질환: {user.chronic_diseases if user else "없음"}
+알레르기: {user.allergy_info if user else "없음"}
 
 간결하고 의료진이 빠르게 파악할 수 있도록 작성하세요.
 본 요약은 참고용이며 의료진의 판단을 대체하지 않습니다."""
 
             import json as _json
-            body = _json.dumps({
-                "model": "gpt-4o-mini",
-                "max_tokens": 800,
-                "messages": [{"role": "user", "content": prompt}],
-            }).encode("utf-8")
+
+            body = _json.dumps(
+                {
+                    "model": "gpt-4o-mini",
+                    "max_tokens": 800,
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+            ).encode("utf-8")
 
             req = urllib.request.Request(
                 "https://api.openai.com/v1/chat/completions",
@@ -546,10 +613,14 @@ def get_report(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    report = db.query(Report).filter(
-        Report.id == report_id,
-        Report.user_id == user_id,
-    ).first()
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id,
+            Report.user_id == user_id,
+        )
+        .first()
+    )
     if not report:
         raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
     return report
@@ -567,10 +638,14 @@ def share_report(
     db: Session = Depends(get_db),
 ):
     """보안 링크 토큰을 생성하여 의료진과 공유합니다."""
-    report = db.query(Report).filter(
-        Report.id == report_id,
-        Report.user_id == user_id,
-    ).first()
+    report = (
+        db.query(Report)
+        .filter(
+            Report.id == report_id,
+            Report.user_id == user_id,
+        )
+        .first()
+    )
     if not report:
         raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
 

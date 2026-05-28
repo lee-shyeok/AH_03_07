@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-load_dotenv('envs/.local.env')
+load_dotenv("envs/.local.env")
 logging.basicConfig(level=logging.DEBUG)
 
 from chat_models import Base as ChatBase
@@ -75,7 +75,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     for error in exc.errors():
         err = {}
         for k, v in error.items():
-            if k == 'ctx':
+            if k == "ctx":
                 err[k] = {ck: str(cv) for ck, cv in v.items()}
             elif isinstance(v, (str, int, float, bool)):
                 err[k] = v
@@ -90,6 +90,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     import traceback
+
     traceback.print_exc()
     return JSONResponse(status_code=500, content={"detail": "데이터베이스 오류가 발생했습니다."})
 
@@ -99,6 +100,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, StarletteHTTPException):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     import traceback
+
     traceback.print_exc()
     return JSONResponse(status_code=500, content={"detail": "서버 오류가 발생했습니다."})
 

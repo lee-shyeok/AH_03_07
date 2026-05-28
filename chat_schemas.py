@@ -4,6 +4,7 @@ from pydantic import BaseModel, field_validator
 
 # ── 세션 ─────────────────────────────────────────────────
 
+
 class ChatSessionResponse(BaseModel):
     id: int
     is_active: bool
@@ -18,7 +19,7 @@ class ChatSessionResponse(BaseModel):
 class ChatSessionListItem(BaseModel):
     id: int
     is_active: bool
-    first_message: str | None = None   # 첫 질문 (앞 50자)
+    first_message: str | None = None  # 첫 질문 (앞 50자)
     message_count: int
     created_at: datetime
 
@@ -31,6 +32,7 @@ class ChatSessionListResponse(BaseModel):
 
 
 # ── 메시지 ────────────────────────────────────────────────
+
 
 class ChatMessageRequest(BaseModel):
     content: str
@@ -66,6 +68,7 @@ class ChatHistoryResponse(BaseModel):
 
 
 # ── 피드백 ────────────────────────────────────────────────
+
 
 class ChatFeedbackRequest(BaseModel):
     is_positive: bool

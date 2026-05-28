@@ -1,6 +1,7 @@
 """
 안내문(자가면역 포함) + 출처 + 섹션 + 생성 작업 + 약품 인식 + 리포트 모델
 """
+
 import enum
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, Integer, String, Text
@@ -9,6 +10,7 @@ from sqlalchemy.sql import func
 from database import Base
 
 # ── 안내문 생성 작업 ──────────────────────────────────────
+
 
 class GuideJobStatusEnum(str, enum.Enum):
     pending = "pending"
@@ -31,6 +33,7 @@ class GuideTriggerTypeEnum(str, enum.Enum):
 
 class GuideGenerationJob(Base):
     """안내문 생성 비동기 작업 (API-안내문-001/002)"""
+
     __tablename__ = "guide_generation_jobs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -53,8 +56,10 @@ class GuideGenerationJob(Base):
 
 # ── 안내문 출처 ───────────────────────────────────────────
 
+
 class GuideSource(Base):
     """안내문 출처 (API-안내문-005) — 근거 추적성 보장"""
+
     __tablename__ = "guide_sources"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,6 +77,7 @@ class GuideSource(Base):
 
 # ── 안내문 섹션 ───────────────────────────────────────────
 
+
 class GuideSectionTypeEnum(str, enum.Enum):
     medication = "medication"
     lifestyle = "lifestyle"
@@ -82,6 +88,7 @@ class GuideSectionTypeEnum(str, enum.Enum):
 
 class GuideSection(Base):
     """안내문 섹션 (API-안내문-006)"""
+
     __tablename__ = "guide_sections"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -97,16 +104,18 @@ class GuideSection(Base):
 
 # ── 약품 이미지 인식 ──────────────────────────────────────
 
+
 class PillRecognition(Base):
     """약품 이미지 인식 이력 (API-약품-005/006)"""
+
     __tablename__ = "pill_recognitions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
-    image_path = Column(String(500), nullable=False)       # 저장된 이미지 경로
+    image_path = Column(String(500), nullable=False)  # 저장된 이미지 경로
     stored_filename = Column(String(100), nullable=False)  # UUID 기반 파일명
-    candidates = Column(Text, nullable=True)               # JSON: [{drug_name, confidence}]
+    candidates = Column(Text, nullable=True)  # JSON: [{drug_name, confidence}]
     confirmed_drug_name = Column(String(200), nullable=True)  # 사용자 확정 약품명
     user_confirmed = Column(Boolean, default=False, nullable=False)
 
@@ -115,6 +124,7 @@ class PillRecognition(Base):
 
 
 # ── 리포트 ────────────────────────────────────────────────
+
 
 class ReportStatusEnum(str, enum.Enum):
     pending = "pending"
@@ -125,6 +135,7 @@ class ReportStatusEnum(str, enum.Enum):
 
 class Report(Base):
     """진료 전 요약 리포트 (API-리포트-001~003)"""
+
     __tablename__ = "reports"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -132,7 +143,7 @@ class Report(Base):
 
     visit_date = Column(Date, nullable=False)
     status = Column(Enum(ReportStatusEnum), default=ReportStatusEnum.pending, nullable=False)
-    content = Column(Text, nullable=True)           # 생성된 리포트 내용
+    content = Column(Text, nullable=True)  # 생성된 리포트 내용
     error_message = Column(String(500), nullable=True)
 
     # 공유 링크

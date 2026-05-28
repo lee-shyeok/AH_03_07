@@ -11,6 +11,7 @@ OCR / 의료문서 라우터  REQ-OCR-001 ~ REQ-OCR-005
   GET    /v1/ocr-jobs/{job_id}                  OCR 작업 상태/결과 조회
   PUT    /v1/medical-documents/{id}/confirm     OCR 결과 확정
 """
+
 import json
 import os
 import re
@@ -47,12 +48,13 @@ _MAGIC_BYTES = {
     b"\xff\xd8\xff": "image/jpeg",  # 3바이트로 체크
 }
 _ALLOWED_PDF_MAGIC = b"%PDF"
-MAX_FILE_SIZE = 10 * 1024 * 1024   # 10MB
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 # [수정 #9] 페이지당 최대 항목 수 제한
 MAX_PAGE_SIZE = 50
 
 
 # ── 내부 헬퍼 ─────────────────────────────────────────────
+
 
 def _sanitize_filename(name: str) -> str:
     """
@@ -83,11 +85,15 @@ def _verify_magic_bytes(data: bytes) -> str:
 
 
 def _get_doc_or_404(doc_id: int, user_id: int, db: Session) -> MedicalDocument:
-    doc = db.query(MedicalDocument).filter(
-        MedicalDocument.id == doc_id,
-        MedicalDocument.user_id == user_id,
-        MedicalDocument.deleted_at.is_(None),
-    ).first()
+    doc = (
+        db.query(MedicalDocument)
+        .filter(
+            MedicalDocument.id == doc_id,
+            MedicalDocument.user_id == user_id,
+            MedicalDocument.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not doc:
         raise HTTPException(status_code=404, detail="문서를 찾을 수 없습니다.")
     return doc
@@ -111,6 +117,7 @@ def _save_file(content: bytes, doc_id: int, original_name: str) -> tuple[str, st
 
 
 # ── OCR 백그라운드 작업 ───────────────────────────────────
+
 
 def _run_ocr_background(job_id: int, file_path: str, document_type: str) -> None:
     """BackgroundTasks로 실행되는 OCR 처리 함수."""
@@ -144,6 +151,7 @@ def _run_ocr_background(job_id: int, file_path: str, document_type: str) -> None
 
 
 # ── 1. 파일 업로드 ────────────────────────────────────────
+
 
 @router.post(
     "/medical-documents",
@@ -185,7 +193,7 @@ async def upload_medical_document(
     doc = MedicalDocument(
         user_id=user_id,
         document_type=document_type,
-        file_path="pending",        # 아래에서 실제 경로로 교체
+        file_path="pending",  # 아래에서 실제 경로로 교체
         original_filename=safe_original,
         stored_filename="pending",  # 아래에서 교체
         mime_type=verified_mime,
@@ -214,6 +222,7 @@ async def upload_medical_document(
 
 # ── 2. 목록 조회 ──────────────────────────────────────────
 
+
 @router.get(
     "/medical-documents",
     response_model=MedicalDocumentListResponse,
@@ -240,16 +249,12 @@ def list_medical_documents(
         query = query.filter(MedicalDocument.document_type == document_type)
 
     total = query.count()
-    items = (
-        query.order_by(MedicalDocument.created_at.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-        .all()
-    )
+    items = query.order_by(MedicalDocument.created_at.desc()).offset((page - 1) * size).limit(size).all()
     return MedicalDocumentListResponse(items=items, total=total, page=page, size=size)
 
 
 # ── 3. 상세 조회 ──────────────────────────────────────────
+
 
 @router.get(
     "/medical-documents/{doc_id}",
@@ -268,6 +273,7 @@ def get_medical_document(
 
 
 # ── 4. 파일 다운로드 (인증 필요) ─────────────────────────
+
 
 @router.get(
     "/medical-documents/{doc_id}/download",
@@ -289,12 +295,13 @@ def download_medical_document(
 
     return FileResponse(
         path=str(file_path),
-        filename=doc.original_filename,   # 다운로드 시 표시될 파일명
+        filename=doc.original_filename,  # 다운로드 시 표시될 파일명
         media_type=doc.mime_type or "application/octet-stream",
     )
 
 
 # ── 5. OCR 작업 시작 ──────────────────────────────────────
+
 
 @router.post(
     "/medical-documents/{doc_id}/ocr-jobs",
@@ -315,10 +322,14 @@ def start_ocr_job(
     doc = _get_doc_or_404(doc_id, user_id, db)
 
     # 이미 진행 중인 작업 중복 방지
-    existing = db.query(OcrJob).filter(
-        OcrJob.document_id == doc_id,
-        OcrJob.status.in_([OcrJobStatusEnum.pending, OcrJobStatusEnum.processing]),
-    ).first()
+    existing = (
+        db.query(OcrJob)
+        .filter(
+            OcrJob.document_id == doc_id,
+            OcrJob.status.in_([OcrJobStatusEnum.pending, OcrJobStatusEnum.processing]),
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(status_code=409, detail="이미 처리 중인 OCR 작업이 있습니다.")
 
@@ -343,6 +354,7 @@ def start_ocr_job(
 
 # ── 6. OCR 결과 조회 (폴링) ───────────────────────────────
 
+
 @router.get(
     "/ocr-jobs/{job_id}",
     response_model=OcrJobResult,
@@ -353,16 +365,21 @@ def get_ocr_job(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    job = db.query(OcrJob).filter(
-        OcrJob.id == job_id,
-        OcrJob.user_id == user_id,
-    ).first()
+    job = (
+        db.query(OcrJob)
+        .filter(
+            OcrJob.id == job_id,
+            OcrJob.user_id == user_id,
+        )
+        .first()
+    )
     if not job:
         raise HTTPException(status_code=404, detail="OCR 작업을 찾을 수 없습니다.")
     return OcrJobResult.from_orm(job)
 
 
 # ── 7. OCR 결과 확정 ─────────────────────────────────────
+
 
 @router.put(
     "/medical-documents/{doc_id}/confirm",
@@ -413,6 +430,7 @@ def confirm_ocr_result(
 
 
 # ── 8. 문서 삭제 ──────────────────────────────────────────
+
 
 @router.delete(
     "/medical-documents/{doc_id}",

@@ -4,6 +4,7 @@ from pydantic import BaseModel, field_validator
 
 # ── 약품 ─────────────────────────────────────────────────
 
+
 class MedicationCreate(BaseModel):
     drug_name: str
     dosage: str | None = None
@@ -43,6 +44,7 @@ class MedicationResponse(BaseModel):
 
 # ── 진료기록 생성 ─────────────────────────────────────────
 
+
 class MedicalRecordCreate(BaseModel):
     visit_date: date
     hospital_name: str | None = None
@@ -55,6 +57,7 @@ class MedicalRecordCreate(BaseModel):
     @classmethod
     def visit_date_not_future(cls, v):
         from datetime import date as date_type
+
         if v > date_type.today():
             raise ValueError("진료일자는 오늘 이후 날짜를 입력할 수 없습니다.")
         return v
@@ -98,6 +101,7 @@ class MedicalRecordCreate(BaseModel):
 
 # ── 진료기록 수정 ─────────────────────────────────────────
 
+
 class MedicalRecordUpdate(BaseModel):
     visit_date: date | None = None
     hospital_name: str | None = None
@@ -109,6 +113,7 @@ class MedicalRecordUpdate(BaseModel):
     @classmethod
     def visit_date_not_future(cls, v):
         from datetime import date as date_type
+
         if v is not None and v > date_type.today():
             raise ValueError("진료일자는 오늘 이후 날짜를 입력할 수 없습니다.")
         return v
@@ -154,6 +159,7 @@ class MedicalRecordUpdate(BaseModel):
 
 
 # ── 응답 ─────────────────────────────────────────────────
+
 
 class MedicalRecordBrief(BaseModel):
     id: int

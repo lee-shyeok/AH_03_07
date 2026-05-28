@@ -8,6 +8,7 @@ from database import Base
 
 class ChatSession(Base):
     """챗봇 세션 — 마지막 활동 후 30분 경과 시 자동 종료"""
+
     __tablename__ = "chat_sessions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,6 +28,7 @@ class MessageRoleEnum(str, enum.Enum):
 
 class ChatMessage(Base):
     """챗봇 메시지"""
+
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -41,13 +43,14 @@ class ChatMessage(Base):
 
 class ChatFeedback(Base):
     """챗봇 응답 평가 (👍/👎)"""
+
     __tablename__ = "chat_feedbacks"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     message_id = Column(Integer, ForeignKey("chat_messages.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
-    is_positive = Column(Boolean, nullable=False)   # True=👍, False=👎
+    is_positive = Column(Boolean, nullable=False)  # True=👍, False=👎
     comment = Column(String(500), nullable=True)
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

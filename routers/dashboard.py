@@ -4,6 +4,7 @@
 엔드포인트:
   GET /v1/dashboard   대시보드 데이터 일괄 조회
 """
+
 import json
 from datetime import UTC, date, datetime
 
@@ -24,12 +25,14 @@ router = APIRouter()
 
 # ── 헬퍼 ──────────────────────────────────────────────────
 
+
 def _get_weekday_str(d: date) -> str:
     """date → 요일 문자열 (mon~sun)"""
     return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][d.weekday()]
 
 
 # ── 응답 스키마 ───────────────────────────────────────────
+
 
 class DashboardGuideBrief(BaseModel):
     id: int
@@ -57,13 +60,14 @@ class DashboardOcrJob(BaseModel):
 
 class DashboardResponse(BaseModel):
     recent_guides: list[DashboardGuideBrief]
-    today_medication_reminders_total: int      # 오늘 알림 총 횟수
+    today_medication_reminders_total: int  # 오늘 알림 총 횟수
     today_medication_reminders_remaining: int  # 현재 시각 이후 남은 횟수
     recent_records: list[DashboardRecordBrief]
     pending_ocr_jobs: list[DashboardOcrJob]
 
 
 # ── 엔드포인트 ────────────────────────────────────────────
+
 
 @router.get(
     "/dashboard",
@@ -112,12 +116,16 @@ def get_dashboard(
     ]
 
     # ── 2. 오늘의 복약 알림 ───────────────────────────────
-    reminders = db.query(MedicationReminder).filter(
-        MedicationReminder.user_id == user_id,
-        MedicationReminder.is_active == True,
-        MedicationReminder.deleted_at.is_(None),
-        MedicationReminder.start_date <= today,
-    ).all()
+    reminders = (
+        db.query(MedicationReminder)
+        .filter(
+            MedicationReminder.user_id == user_id,
+            MedicationReminder.is_active == True,
+            MedicationReminder.deleted_at.is_(None),
+            MedicationReminder.start_date <= today,
+        )
+        .all()
+    )
 
     today_total = 0
     today_remaining = 0

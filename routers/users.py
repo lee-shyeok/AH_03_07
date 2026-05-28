@@ -21,12 +21,14 @@ def _get_user_or_404(user_id: int, db: Session) -> User:
 
 # ── 내 정보 조회 ──────────────────────────────────────────
 
+
 @router.get("/me", response_model=UserMeResponse, summary="REQ-USER-006: 내 정보 조회")
 def get_me(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     return _get_user_or_404(user_id, db)
 
 
 # ── 내 정보 수정 ──────────────────────────────────────────
+
 
 @router.patch("/me", response_model=UserMeResponse, summary="REQ-USER-007: 내 정보 수정")
 def update_me(
@@ -59,6 +61,7 @@ def update_me(
 
 
 # ── 회원탈퇴 ──────────────────────────────────────────────
+
 
 @router.delete("/me", status_code=204, summary="REQ-USER-008: 회원탈퇴")
 def withdraw(

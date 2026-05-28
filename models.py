@@ -19,7 +19,7 @@ class User(Base):
 
     # 기본 정보 (REQ-USER-001)
     email = Column(String(100), unique=True, index=True, nullable=False)
-    password = Column(String(200), nullable=False)          # bcrypt 해시
+    password = Column(String(200), nullable=False)  # bcrypt 해시
     name = Column(String(100), nullable=False)
     birth_date = Column(Date, nullable=True)
     gender = Column(Enum(GenderEnum), nullable=True)
@@ -27,8 +27,8 @@ class User(Base):
     profile_image_url = Column(String(500), nullable=True)
 
     # 의료 정보 (REQ-USER-007)
-    chronic_diseases = Column(Text, nullable=True)          # JSON 배열 문자열
-    allergy_info = Column(Text, nullable=True)              # 자유 입력
+    chronic_diseases = Column(Text, nullable=True)  # JSON 배열 문자열
+    allergy_info = Column(Text, nullable=True)  # 자유 입력
 
     # 이메일 인증 (REQ-USER-002)
     is_email_verified = Column(Boolean, default=False, nullable=False)
@@ -44,8 +44,8 @@ class User(Base):
     # 탈퇴 Soft Delete (REQ-USER-008)
     deleted_at = Column(DateTime, nullable=True)
     # 소셜 로그인
-    social_provider = Column(String(20), nullable=True)   # "google", "kakao", "naver"
-    social_id = Column(String(200), nullable=True)        # 소셜 고유 ID
+    social_provider = Column(String(20), nullable=True)  # "google", "kakao", "naver"
+    social_id = Column(String(200), nullable=True)  # 소셜 고유 ID
     withdrawal_reason = Column(String(500), nullable=True)
 
     # 타임스탬프

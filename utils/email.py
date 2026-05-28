@@ -6,15 +6,15 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 
-load_dotenv('envs/.local.env')
+load_dotenv("envs/.local.env")
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST     = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT     = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER     = os.getenv("SMTP_USER", "")
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_FROM    = os.getenv("EMAIL_FROM", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "")
 
 if not all([SMTP_USER, SMTP_PASSWORD, EMAIL_FROM]):
     logger.warning("SMTP 환경변수가 설정되지 않았습니다.")
@@ -38,7 +38,7 @@ def send_verification_email(to: str, code: str) -> None:
 
     message = MIMEMultipart("alternative")
     message["From"] = EMAIL_FROM
-    message["To"]   = to
+    message["To"] = to
     message["Subject"] = subject
     message.attach(MIMEText(body, "html", "utf-8"))
 

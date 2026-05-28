@@ -1,6 +1,7 @@
 """
 진료기록 라우터  REQ-MEDI-001 ~ REQ-MEDI-005
 """
+
 from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,11 +28,15 @@ MAX_FILTER_LEN = 100
 
 
 def _get_record_or_404(record_id: int, user_id: int, db: Session) -> MedicalRecord:
-    record = db.query(MedicalRecord).filter(
-        MedicalRecord.id == record_id,
-        MedicalRecord.user_id == user_id,
-        MedicalRecord.deleted_at.is_(None),
-    ).first()
+    record = (
+        db.query(MedicalRecord)
+        .filter(
+            MedicalRecord.id == record_id,
+            MedicalRecord.user_id == user_id,
+            MedicalRecord.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not record:
         raise HTTPException(status_code=404, detail="진료 기록을 찾을 수 없습니다.")
     return record
@@ -65,11 +70,15 @@ def create_medical_record(
     db: Session = Depends(get_db),
 ):
     if data.document_id is not None:
-        doc = db.query(MedicalDocument).filter(
-            MedicalDocument.id == data.document_id,
-            MedicalDocument.user_id == user_id,
-            MedicalDocument.deleted_at.is_(None),
-        ).first()
+        doc = (
+            db.query(MedicalDocument)
+            .filter(
+                MedicalDocument.id == data.document_id,
+                MedicalDocument.user_id == user_id,
+                MedicalDocument.deleted_at.is_(None),
+            )
+            .first()
+        )
         if not doc:
             raise HTTPException(status_code=404, detail="연결할 문서를 찾을 수 없습니다.")
 
@@ -186,9 +195,7 @@ def get_medical_record(
     db: Session = Depends(get_db),
 ):
     record = _get_record_or_404(record_id, user_id, db)
-    medications = db.query(Medication).filter(
-        Medication.record_id == record_id
-    ).all()
+    medications = db.query(Medication).filter(Medication.record_id == record_id).all()
     return _build_detail(record, medications)
 
 
@@ -217,14 +224,16 @@ def update_medical_record(
     if data.medications is not None:
         db.query(Medication).filter(Medication.record_id == record_id).delete()
         for med in data.medications:
-            db.add(Medication(
-                record_id=record_id,
-                drug_name=med.drug_name,
-                dosage=med.dosage,
-                frequency=med.frequency,
-                duration_days=med.duration_days,
-                timing=med.timing,
-            ))
+            db.add(
+                Medication(
+                    record_id=record_id,
+                    drug_name=med.drug_name,
+                    dosage=med.dosage,
+                    frequency=med.frequency,
+                    duration_days=med.duration_days,
+                    timing=med.timing,
+                )
+            )
         if record.has_guide:
             record.guide_needs_update = True
 
@@ -235,9 +244,7 @@ def update_medical_record(
         raise HTTPException(status_code=500, detail="진료 기록 수정에 실패했습니다.")
 
     db.refresh(record)
-    medications = db.query(Medication).filter(
-        Medication.record_id == record_id
-    ).all()
+    medications = db.query(Medication).filter(Medication.record_id == record_id).all()
     return _build_detail(record, medications)
 
 

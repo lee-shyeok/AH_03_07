@@ -6,15 +6,15 @@ from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from models import GenderEnum
 
 # [수정 6] \S{8,} — 공백 문자 차단
-PASSWORD_REGEX = re.compile(
-    r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?])\S{8,}$'
-)
-PHONE_REGEX = re.compile(r'^01[0-9]-?\d{3,4}-?\d{4}$')
+PASSWORD_REGEX = re.compile(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?])\S{8,}$')
+PHONE_REGEX = re.compile(r"^01[0-9]-?\d{3,4}-?\d{4}$")
 
 # ── 이메일 인증 ───────────────────────────────────────────
 
+
 class EmailVerifySendRequest(BaseModel):
     email: EmailStr
+
 
 class EmailVerifyConfirmRequest(BaseModel):
     email: EmailStr
@@ -27,11 +27,14 @@ class EmailVerifyConfirmRequest(BaseModel):
             raise ValueError("인증코드는 6자리 숫자여야 합니다.")
         return v
 
+
 class EmailVerifyResponse(BaseModel):
     email_token: str
     message: str = "이메일 인증이 완료되었습니다."
 
+
 # ── 회원가입 ──────────────────────────────────────────────
+
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -81,39 +84,50 @@ class SignupRequest(BaseModel):
             raise ValueError("필수 약관에 모두 동의해야 합니다.")
         return self
 
+
 class SignupResponse(BaseModel):
     user_id: int
     access_token: str
     refresh_token: str
 
+
 # ── 로그인 ────────────────────────────────────────────────
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+
 class UserBrief(BaseModel):
     id: int
     email: str
     name: str
+
     class Config:
         from_attributes = True
+
 
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     user: UserBrief
 
+
 # ── 토큰 갱신 ─────────────────────────────────────────────
+
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
+
 
 class TokenRefreshResponse(BaseModel):
     access_token: str
     refresh_token: str
 
+
 # ── 내 정보 ───────────────────────────────────────────────
+
 
 class UserMeResponse(BaseModel):
     id: int
@@ -126,8 +140,10 @@ class UserMeResponse(BaseModel):
     chronic_diseases: str | None = None
     allergy_info: str | None = None
     created_at: datetime
+
     class Config:
         from_attributes = True
+
 
 class UpdateUserRequest(BaseModel):
     name: str | None = None
@@ -194,7 +210,9 @@ class UpdateUserRequest(BaseModel):
                 raise ValueError("비밀번호는 영문+숫자+특수문자 조합 8자 이상이어야 합니다.")
         return self
 
+
 # ── 회원탈퇴 ──────────────────────────────────────────────
+
 
 class WithdrawalRequest(BaseModel):
     withdrawal_reason: str | None = None

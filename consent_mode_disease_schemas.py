@@ -6,6 +6,7 @@ from consent_mode_disease_models import ConsentTypeEnum, UserModeEnum
 
 # ── 동의 이력 ─────────────────────────────────────────────
 
+
 class ConsentUpsertRequest(BaseModel):
     consent_type: ConsentTypeEnum
     agreed: bool
@@ -37,6 +38,7 @@ class ConsentResponse(BaseModel):
 
 # ── 모드 관리 ─────────────────────────────────────────────
 
+
 class UserModeUpdate(BaseModel):
     mode: UserModeEnum
 
@@ -51,6 +53,7 @@ class UserModeResponse(BaseModel):
 
 
 # ── 질환 관리 ─────────────────────────────────────────────
+
 
 class UserDiseaseCreate(BaseModel):
     disease_name: str

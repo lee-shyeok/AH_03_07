@@ -3,6 +3,7 @@ GPT-4o mini 기반 가이드 생성 엔진
 - 진료기록 + 약품 정보 + 사용자 프로필을 컨텍스트로 가이드 생성
 - OPENAI_API_KEY 없으면 RuntimeError (Mock 자동 전환 없음)
 """
+
 import json
 import os
 import urllib.request
@@ -16,8 +17,7 @@ load_dotenv()
 _OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
 DISCLAIMER = (
-    "본 가이드는 의료 전문가의 진단을 대체하지 않습니다. "
-    "증상이 지속되거나 악화되면 반드시 의사 또는 약사와 상담하세요."
+    "본 가이드는 의료 전문가의 진단을 대체하지 않습니다. 증상이 지속되거나 악화되면 반드시 의사 또는 약사와 상담하세요."
 )
 
 _SYSTEM_PROMPT = """\
@@ -57,16 +57,16 @@ _USER_PROMPT_TEMPLATE = """\
 def _call_openai(messages: list, temperature: float = 0.3) -> str:
     """OpenAI Chat API 호출. 실패 시 명확한 예외 발생."""
     if not _OPENAI_API_KEY:
-        raise RuntimeError(
-            "OPENAI_API_KEY 환경변수가 설정되지 않았습니다."
-        )
+        raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
 
-    body = json.dumps({
-        "model": "gpt-4o-mini",
-        "max_tokens": 1500,
-        "temperature": temperature,
-        "messages": messages,
-    }).encode("utf-8")
+    body = json.dumps(
+        {
+            "model": "gpt-4o-mini",
+            "max_tokens": 1500,
+            "temperature": temperature,
+            "messages": messages,
+        }
+    ).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.openai.com/v1/chat/completions",

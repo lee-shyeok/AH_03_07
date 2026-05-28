@@ -7,25 +7,25 @@ from database import Base
 
 
 class DocumentTypeEnum(str, enum.Enum):
-    prescription = "prescription"       # 처방전
-    medical_record = "medical_record"   # 진료기록
-    pill_bag = "pill_bag"               # 약봉투
-    lab_result = "lab_result"           # 검사결과지
+    prescription = "prescription"  # 처방전
+    medical_record = "medical_record"  # 진료기록
+    pill_bag = "pill_bag"  # 약봉투
+    lab_result = "lab_result"  # 검사결과지
     health_checkup = "health_checkup"  # 건강검진
-    other = "other"                     # 기타
+    other = "other"  # 기타
 
 
 class UploadStatusEnum(str, enum.Enum):
-    uploaded = "uploaded"    # 업로드 완료, OCR 미시작
+    uploaded = "uploaded"  # 업로드 완료, OCR 미시작
     confirmed = "confirmed"  # 사용자 확정 완료
-    deleted = "deleted"      # 삭제됨
+    deleted = "deleted"  # 삭제됨
 
 
 class OcrJobStatusEnum(str, enum.Enum):
-    pending = "pending"        # 대기 중
+    pending = "pending"  # 대기 중
     processing = "processing"  # 처리 중
-    completed = "completed"    # 완료
-    failed = "failed"          # 실패
+    completed = "completed"  # 완료
+    failed = "failed"  # 실패
 
 
 class MedicalDocument(Base):
@@ -43,7 +43,7 @@ class MedicalDocument(Base):
     # [보안] UUID 기반 내부 파일명 — 파일 다운로드 토큰으로만 사용
     stored_filename = Column(String(100), nullable=False)
 
-    file_size = Column(Integer, nullable=True)   # bytes
+    file_size = Column(Integer, nullable=True)  # bytes
     mime_type = Column(String(100), nullable=True)
 
     upload_status = Column(Enum(UploadStatusEnum), default=UploadStatusEnum.uploaded, nullable=False)
@@ -68,7 +68,7 @@ class OcrJob(Base):
 
     # OCR 결과
     raw_text = Column(Text, nullable=True)
-    structured_data = Column(Text, nullable=True)   # JSON
+    structured_data = Column(Text, nullable=True)  # JSON
     confidence_score = Column(Float, nullable=True)  # 0.0 ~ 1.0
     field_confidences = Column(Text, nullable=True)  # JSON
 

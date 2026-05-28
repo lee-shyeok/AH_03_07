@@ -11,6 +11,7 @@ VALID_CHANNELS = {"app", "email", "kakao"}
 
 # ── 복약 알림 설정 ─────────────────────────────────────────
 
+
 class MedicationReminderCreate(BaseModel):
     drug_name: str
     medication_id: int | None = None
@@ -189,6 +190,7 @@ class MedicationReminderListResponse(BaseModel):
 
 # ── 알림 목록 ─────────────────────────────────────────────
 
+
 class NotificationResponse(BaseModel):
     id: int
     notification_type: str
@@ -212,6 +214,7 @@ class NotificationListResponse(BaseModel):
 
 
 # ── 알림 설정 ─────────────────────────────────────────────
+
 
 class NotificationSettingUpdate(BaseModel):
     medication_enabled: bool | None = None

@@ -1,6 +1,7 @@
 """
 알림 라우터  REQ-NOTI-001, REQ-NOTI-004 ~ REQ-NOTI-006
 """
+
 import json
 from datetime import UTC, datetime
 
@@ -32,20 +33,22 @@ MAX_REMINDERS_PER_USER = 50
 
 
 def _get_reminder_or_404(reminder_id: int, user_id: int, db: Session) -> MedicationReminder:
-    reminder = db.query(MedicationReminder).filter(
-        MedicationReminder.id == reminder_id,
-        MedicationReminder.user_id == user_id,
-        MedicationReminder.deleted_at.is_(None),
-    ).first()
+    reminder = (
+        db.query(MedicationReminder)
+        .filter(
+            MedicationReminder.id == reminder_id,
+            MedicationReminder.user_id == user_id,
+            MedicationReminder.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not reminder:
         raise HTTPException(status_code=404, detail="복약 알림을 찾을 수 없습니다.")
     return reminder
 
 
 def _get_or_create_setting(user_id: int, db: Session) -> NotificationSetting:
-    setting = db.query(NotificationSetting).filter(
-        NotificationSetting.user_id == user_id
-    ).first()
+    setting = db.query(NotificationSetting).filter(NotificationSetting.user_id == user_id).first()
     if not setting:
         setting = NotificationSetting(user_id=user_id)
         db.add(setting)
@@ -65,18 +68,22 @@ def create_reminder(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    count = db.query(MedicationReminder).filter(
-        MedicationReminder.user_id == user_id,
-        MedicationReminder.deleted_at.is_(None),
-    ).count()
+    count = (
+        db.query(MedicationReminder)
+        .filter(
+            MedicationReminder.user_id == user_id,
+            MedicationReminder.deleted_at.is_(None),
+        )
+        .count()
+    )
     if count >= MAX_REMINDERS_PER_USER:
         raise HTTPException(
-            status_code=400,
-            detail=f"복약 알림은 최대 {MAX_REMINDERS_PER_USER}개까지 설정할 수 있습니다."
+            status_code=400, detail=f"복약 알림은 최대 {MAX_REMINDERS_PER_USER}개까지 설정할 수 있습니다."
         )
 
     if data.medication_id is not None:
         from medical_record_models import MedicalRecord, Medication
+
         med = (
             db.query(Medication)
             .join(MedicalRecord, Medication.record_id == MedicalRecord.id)
@@ -214,17 +221,16 @@ def list_notifications(
 
     total = query.count()
 
-    unread_count = db.query(Notification).filter(
-        Notification.user_id == user_id,
-        Notification.is_read == False,
-    ).count()
-
-    notifications = (
-        query.order_by(Notification.created_at.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-        .all()
+    unread_count = (
+        db.query(Notification)
+        .filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False,
+        )
+        .count()
     )
+
+    notifications = query.order_by(Notification.created_at.desc()).offset((page - 1) * size).limit(size).all()
 
     return NotificationListResponse(
         items=[NotificationResponse.model_validate(n) for n in notifications],
@@ -262,10 +268,14 @@ def read_notification(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    notification = db.query(Notification).filter(
-        Notification.id == notification_id,
-        Notification.user_id == user_id,
-    ).first()
+    notification = (
+        db.query(Notification)
+        .filter(
+            Notification.id == notification_id,
+            Notification.user_id == user_id,
+        )
+        .first()
+    )
     if not notification:
         raise HTTPException(status_code=404, detail="알림을 찾을 수 없습니다.")
 

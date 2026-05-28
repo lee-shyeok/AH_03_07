@@ -15,6 +15,7 @@ Post-MVP 라우터
   GET       /v1/games/badges               뱃지·포인트
   GET       /v1/admin/safety-filter-logs   안전 필터 로그
 """
+
 import json
 import os
 from datetime import date, datetime
@@ -64,10 +65,7 @@ MAX_PAGE_SIZE = 50
 
 # 관리자 user_id 목록 (환경변수로 관리)
 _ADMIN_IDS_RAW = os.getenv("ADMIN_USER_IDS", "")
-ADMIN_USER_IDS: set = {
-    int(x.strip()) for x in _ADMIN_IDS_RAW.split(",")
-    if x.strip().isdigit()
-}
+ADMIN_USER_IDS: set = {int(x.strip()) for x in _ADMIN_IDS_RAW.split(",") if x.strip().isdigit()}
 
 
 def _require_admin(user_id: int) -> None:
@@ -79,8 +77,13 @@ def _require_admin(user_id: int) -> None:
 # 건강수치
 # ══════════════════════════════════════════════════════════
 
-@router.post("/health-metrics", response_model=HealthMetricResponse, status_code=201,
-             summary="API-건강수치-001: 건강 수치 수동 입력")
+
+@router.post(
+    "/health-metrics",
+    response_model=HealthMetricResponse,
+    status_code=201,
+    summary="API-건강수치-001: 건강 수치 수동 입력",
+)
 def create_health_metric(
     data: HealthMetricCreate,
     user_id: int = Depends(get_current_user_id),
@@ -90,12 +93,9 @@ def create_health_metric(
     혈압·혈당 등 건강 수치를 수동 입력합니다.
     자동 판정·정상/비정상 분류 X — 사용자 기록값 그대로 저장.
     """
-    count = db.query(HealthMetric).filter(
-        HealthMetric.user_id == user_id
-    ).count()
+    count = db.query(HealthMetric).filter(HealthMetric.user_id == user_id).count()
     if count >= MAX_HEALTH_METRICS:
-        raise HTTPException(status_code=400,
-            detail=f"건강 수치는 최대 {MAX_HEALTH_METRICS}개까지 기록할 수 있습니다.")
+        raise HTTPException(status_code=400, detail=f"건강 수치는 최대 {MAX_HEALTH_METRICS}개까지 기록할 수 있습니다.")
 
     metric = HealthMetric(
         user_id=user_id,
@@ -115,8 +115,9 @@ def create_health_metric(
     return metric
 
 
-@router.get("/health-metrics", response_model=list[HealthMetricResponse],
-            summary="API-건강수치-002: 건강 수치 그래프 데이터")
+@router.get(
+    "/health-metrics", response_model=list[HealthMetricResponse], summary="API-건강수치-002: 건강 수치 그래프 데이터"
+)
 def list_health_metrics(
     metric_type: str | None = Query(None),
     date_from: datetime | None = Query(None),
@@ -133,13 +134,13 @@ def list_health_metrics(
         q = q.filter(HealthMetric.measured_at >= date_from)
     if date_to:
         q = q.filter(HealthMetric.measured_at <= date_to)
-    return q.order_by(HealthMetric.measured_at.asc())\
-        .offset((page - 1) * size).limit(size).all()
+    return q.order_by(HealthMetric.measured_at.asc()).offset((page - 1) * size).limit(size).all()
 
 
 # ══════════════════════════════════════════════════════════
 # 주변 약국 조회 (외부 API 연동)
 # ══════════════════════════════════════════════════════════
+
 
 @router.get("/pharmacies/nearby", summary="API-약국-001: 주변 약국 정보 조회")
 def get_nearby_pharmacies(
@@ -166,8 +167,13 @@ def get_nearby_pharmacies(
 # 일반 모드 증상 일기
 # ══════════════════════════════════════════════════════════
 
-@router.post("/diary/symptom-logs", response_model=DiarySymptomLogResponse, status_code=201,
-             summary="API-일반-일기-001: 증상 일기 작성")
+
+@router.post(
+    "/diary/symptom-logs",
+    response_model=DiarySymptomLogResponse,
+    status_code=201,
+    summary="API-일반-일기-001: 증상 일기 작성",
+)
 def create_diary_symptom_log(
     data: DiarySymptomLogCreate,
     user_id: int = Depends(get_current_user_id),
@@ -177,15 +183,16 @@ def create_diary_symptom_log(
     일반 모드 증상 일기. 복약 기록과 완전 분리.
     일자당 1건 upsert.
     """
-    existing = db.query(DiarySymptomLog).filter(
-        DiarySymptomLog.user_id == user_id,
-        DiarySymptomLog.log_date == data.log_date,
-    ).first()
-
-    body_parts_json = (
-        json.dumps(data.body_parts, ensure_ascii=False)
-        if data.body_parts is not None else None
+    existing = (
+        db.query(DiarySymptomLog)
+        .filter(
+            DiarySymptomLog.user_id == user_id,
+            DiarySymptomLog.log_date == data.log_date,
+        )
+        .first()
     )
+
+    body_parts_json = json.dumps(data.body_parts, ensure_ascii=False) if data.body_parts is not None else None
 
     if existing:
         if data.overall_condition is not None:
@@ -217,8 +224,9 @@ def create_diary_symptom_log(
     return DiarySymptomLogResponse.from_orm(log)
 
 
-@router.get("/diary/symptom-logs", response_model=list[DiarySymptomLogResponse],
-            summary="API-일반-일기-002: 증상 일기 조회")
+@router.get(
+    "/diary/symptom-logs", response_model=list[DiarySymptomLogResponse], summary="API-일반-일기-002: 증상 일기 조회"
+)
 def list_diary_symptom_logs(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -233,8 +241,7 @@ def list_diary_symptom_logs(
         q = q.filter(DiarySymptomLog.log_date >= date_from)
     if date_to:
         q = q.filter(DiarySymptomLog.log_date <= date_to)
-    logs = q.order_by(DiarySymptomLog.log_date.asc())\
-        .offset((page - 1) * size).limit(size).all()
+    logs = q.order_by(DiarySymptomLog.log_date.asc()).offset((page - 1) * size).limit(size).all()
     return [DiarySymptomLogResponse.from_orm(l) for l in logs]
 
 
@@ -242,8 +249,13 @@ def list_diary_symptom_logs(
 # 일반 모드 복약 체크
 # ══════════════════════════════════════════════════════════
 
-@router.post("/diary/medication-logs", response_model=DiaryMedicationLogResponse,
-             status_code=201, summary="API-일반-일기-003: 복약 체크")
+
+@router.post(
+    "/diary/medication-logs",
+    response_model=DiaryMedicationLogResponse,
+    status_code=201,
+    summary="API-일반-일기-003: 복약 체크",
+)
 def create_diary_medication_log(
     data: DiaryMedicationLogCreate,
     user_id: int = Depends(get_current_user_id),
@@ -255,11 +267,16 @@ def create_diary_medication_log(
     """
     # medication_id 소유권 검증
     from clinical_models import UserMedication
-    med = db.query(UserMedication).filter(
-        UserMedication.id == data.medication_id,
-        UserMedication.user_id == user_id,
-        UserMedication.deleted_at.is_(None),
-    ).first()
+
+    med = (
+        db.query(UserMedication)
+        .filter(
+            UserMedication.id == data.medication_id,
+            UserMedication.user_id == user_id,
+            UserMedication.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not med:
         raise HTTPException(status_code=404, detail="약품을 찾을 수 없습니다.")
 
@@ -284,6 +301,7 @@ def create_diary_medication_log(
 # 진료용 PDF
 # ══════════════════════════════════════════════════════════
 
+
 @router.get("/diary/pdf", summary="API-일반-일기-004: 진료용 PDF 출력")
 def get_diary_pdf(
     date_from: date = Query(...),
@@ -299,18 +317,28 @@ def get_diary_pdf(
         raise HTTPException(status_code=400, detail="종료일은 시작일 이후여야 합니다.")
 
     # 증상 일기 조회
-    symptom_logs = db.query(DiarySymptomLog).filter(
-        DiarySymptomLog.user_id == user_id,
-        DiarySymptomLog.log_date >= date_from,
-        DiarySymptomLog.log_date <= date_to,
-    ).order_by(DiarySymptomLog.log_date.asc()).all()
+    symptom_logs = (
+        db.query(DiarySymptomLog)
+        .filter(
+            DiarySymptomLog.user_id == user_id,
+            DiarySymptomLog.log_date >= date_from,
+            DiarySymptomLog.log_date <= date_to,
+        )
+        .order_by(DiarySymptomLog.log_date.asc())
+        .all()
+    )
 
     # 복약 체크 조회
-    med_logs = db.query(DiaryMedicationLog).filter(
-        DiaryMedicationLog.user_id == user_id,
-        DiaryMedicationLog.log_date >= date_from,
-        DiaryMedicationLog.log_date <= date_to,
-    ).order_by(DiaryMedicationLog.log_date.asc()).all()
+    med_logs = (
+        db.query(DiaryMedicationLog)
+        .filter(
+            DiaryMedicationLog.user_id == user_id,
+            DiaryMedicationLog.log_date >= date_from,
+            DiaryMedicationLog.log_date <= date_to,
+        )
+        .order_by(DiaryMedicationLog.log_date.asc())
+        .all()
+    )
 
     # 텍스트 기반 PDF 내용 생성 (두 섹션 완전 분리)
     lines = [
@@ -344,8 +372,8 @@ def get_diary_pdf(
 # 통합 캘린더
 # ══════════════════════════════════════════════════════════
 
-@router.get("/general/schedule", response_model=ScheduleResponse,
-            summary="API-일정-001: 통합 캘린더 뷰")
+
+@router.get("/general/schedule", response_model=ScheduleResponse, summary="API-일정-001: 통합 캘린더 뷰")
 def get_general_schedule(
     date_from: date = Query(...),
     date_to: date = Query(...),
@@ -363,12 +391,16 @@ def get_general_schedule(
     from notification_models import MedicationReminder
 
     # 복약 알림 일정
-    reminders = db.query(MedicationReminder).filter(
-        MedicationReminder.user_id == user_id,
-        MedicationReminder.is_active == True,
-        MedicationReminder.deleted_at.is_(None),
-        MedicationReminder.start_date <= date_to,
-    ).all()
+    reminders = (
+        db.query(MedicationReminder)
+        .filter(
+            MedicationReminder.user_id == user_id,
+            MedicationReminder.is_active == True,
+            MedicationReminder.deleted_at.is_(None),
+            MedicationReminder.start_date <= date_to,
+        )
+        .all()
+    )
 
     med_items = []
     for r in reminders:
@@ -378,13 +410,15 @@ def get_general_schedule(
             times = json.loads(r.remind_times)
         except (json.JSONDecodeError, TypeError, ValueError):
             times = []
-        med_items.append({
-            "id": r.id,
-            "drug_name": r.drug_name,
-            "start_date": str(r.start_date),
-            "end_date": str(r.end_date) if r.end_date else None,
-            "remind_times": times if isinstance(times, list) else [],
-        })
+        med_items.append(
+            {
+                "id": r.id,
+                "drug_name": r.drug_name,
+                "start_date": str(r.start_date),
+                "end_date": str(r.end_date) if r.end_date else None,
+                "remind_times": times if isinstance(times, list) else [],
+            }
+        )
 
     # 처방 종료 예정일 — 복약 알림의 end_date 기준
     prescriptions_end = [
@@ -398,12 +432,17 @@ def get_general_schedule(
     ]
 
     # 진료·검사 일정
-    care_items = db.query(CareSchedule).filter(
-        CareSchedule.user_id == user_id,
-        CareSchedule.deleted_at.is_(None),
-        CareSchedule.scheduled_date >= date_from,
-        CareSchedule.scheduled_date <= date_to,
-    ).order_by(CareSchedule.scheduled_date.asc()).all()
+    care_items = (
+        db.query(CareSchedule)
+        .filter(
+            CareSchedule.user_id == user_id,
+            CareSchedule.deleted_at.is_(None),
+            CareSchedule.scheduled_date >= date_from,
+            CareSchedule.scheduled_date <= date_to,
+        )
+        .order_by(CareSchedule.scheduled_date.asc())
+        .all()
+    )
 
     return ScheduleResponse(
         medications=med_items,
@@ -425,14 +464,14 @@ def get_general_schedule(
 # 콘텐츠 변환
 # ══════════════════════════════════════════════════════════
 
+
 def _run_content_generation(content_id: int) -> None:
     """백그라운드 콘텐츠 생성 (카드뉴스/TTS)."""
     from database import SessionLocal
+
     db = SessionLocal()
     try:
-        content = db.query(ContentConversion).filter(
-            ContentConversion.id == content_id
-        ).first()
+        content = db.query(ContentConversion).filter(ContentConversion.id == content_id).first()
         if not content:
             return
         content.status = ContentStatusEnum.processing
@@ -447,25 +486,34 @@ def _run_content_generation(content_id: int) -> None:
         db.close()
 
 
-def _get_source_content(source_type: str, source_id: int,
-                         user_id: int, db: Session) -> str:
+def _get_source_content(source_type: str, source_id: int, user_id: int, db: Session) -> str:
     """소스 콘텐츠 조회 및 소유권 검증."""
     if source_type == "guide":
         from guide_models import Guide
-        guide = db.query(Guide).filter(
-            Guide.id == source_id,
-            Guide.user_id == user_id,
-            Guide.deleted_at.is_(None),
-        ).first()
+
+        guide = (
+            db.query(Guide)
+            .filter(
+                Guide.id == source_id,
+                Guide.user_id == user_id,
+                Guide.deleted_at.is_(None),
+            )
+            .first()
+        )
         if not guide:
             raise HTTPException(status_code=404, detail="안내문을 찾을 수 없습니다.")
         return guide.medication_guide or ""
     elif source_type == "report":
         from guide_v2_models import Report, ReportStatusEnum
-        report = db.query(Report).filter(
-            Report.id == source_id,
-            Report.user_id == user_id,
-        ).first()
+
+        report = (
+            db.query(Report)
+            .filter(
+                Report.id == source_id,
+                Report.user_id == user_id,
+            )
+            .first()
+        )
         if not report:
             raise HTTPException(status_code=404, detail="리포트를 찾을 수 없습니다.")
         if report.status != ReportStatusEnum.completed:
@@ -474,8 +522,12 @@ def _get_source_content(source_type: str, source_id: int,
     raise HTTPException(status_code=400, detail="지원하지 않는 소스 유형입니다.")
 
 
-@router.post("/contents/card-news", response_model=ContentConversionResponse,
-             status_code=202, summary="API-콘텐츠-001: 카드뉴스 생성")
+@router.post(
+    "/contents/card-news",
+    response_model=ContentConversionResponse,
+    status_code=202,
+    summary="API-콘텐츠-001: 카드뉴스 생성",
+)
 def create_card_news(
     data: CardNewsCreateRequest,
     background_tasks: BackgroundTasks,
@@ -502,8 +554,9 @@ def create_card_news(
     return content
 
 
-@router.post("/contents/tts", response_model=ContentConversionResponse,
-             status_code=202, summary="API-콘텐츠-002: TTS 음성 변환")
+@router.post(
+    "/contents/tts", response_model=ContentConversionResponse, status_code=202, summary="API-콘텐츠-002: TTS 음성 변환"
+)
 def create_tts(
     data: TTSCreateRequest,
     background_tasks: BackgroundTasks,
@@ -530,8 +583,7 @@ def create_tts(
     return content
 
 
-@router.get("/contents", response_model=list[ContentConversionResponse],
-            summary="API-콘텐츠-003: 변환 내역 조회")
+@router.get("/contents", response_model=list[ContentConversionResponse], summary="API-콘텐츠-003: 변환 내역 조회")
 def list_contents(
     content_type: str | None = Query(None),
     page: int = Query(1, ge=1),
@@ -542,13 +594,13 @@ def list_contents(
     q = db.query(ContentConversion).filter(ContentConversion.user_id == user_id)
     if content_type:
         q = q.filter(ContentConversion.content_type == content_type)
-    return q.order_by(ContentConversion.created_at.desc())\
-        .offset((page - 1) * size).limit(size).all()
+    return q.order_by(ContentConversion.created_at.desc()).offset((page - 1) * size).limit(size).all()
 
 
 # ══════════════════════════════════════════════════════════
 # 게임
 # ══════════════════════════════════════════════════════════
+
 
 def _get_or_create_user_points(user_id: int, db: Session) -> UserPoints:
     points = db.query(UserPoints).filter(UserPoints.user_id == user_id).first()
@@ -562,22 +614,19 @@ def _get_or_create_user_points(user_id: int, db: Session) -> UserPoints:
 
 def _award_badges(user_id: int, total_points: int, db: Session) -> None:
     """포인트 임계값에 따라 뱃지 자동 지급."""
-    existing_types = {
-        b.badge_type for b in db.query(UserBadge).filter(
-            UserBadge.user_id == user_id
-        ).all()
-    }
+    existing_types = {b.badge_type for b in db.query(UserBadge).filter(UserBadge.user_id == user_id).all()}
     for threshold, (badge_type, badge_name) in BADGE_THRESHOLDS.items():
         if total_points >= threshold and badge_type not in existing_types:
-            db.add(UserBadge(
-                user_id=user_id,
-                badge_type=badge_type,
-                badge_name=badge_name,
-            ))
+            db.add(
+                UserBadge(
+                    user_id=user_id,
+                    badge_type=badge_type,
+                    badge_name=badge_name,
+                )
+            )
 
 
-@router.post("/games/scores", response_model=GameScoreResponse, status_code=201,
-             summary="API-게임-001: 게임 점수 기록")
+@router.post("/games/scores", response_model=GameScoreResponse, status_code=201, summary="API-게임-001: 게임 점수 기록")
 def record_game_score(
     data: GameScoreCreate,
     user_id: int = Depends(get_current_user_id),
@@ -609,16 +658,13 @@ def record_game_score(
     return game_score
 
 
-@router.get("/games/badges", response_model=UserBadgesResponse,
-            summary="API-게임-002: 뱃지·포인트 조회")
+@router.get("/games/badges", response_model=UserBadgesResponse, summary="API-게임-002: 뱃지·포인트 조회")
 def get_badges(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     user_points = _get_or_create_user_points(user_id, db)
-    badges = db.query(UserBadge).filter(
-        UserBadge.user_id == user_id
-    ).order_by(UserBadge.earned_at.asc()).all()
+    badges = db.query(UserBadge).filter(UserBadge.user_id == user_id).order_by(UserBadge.earned_at.asc()).all()
     return UserBadgesResponse(
         total_points=user_points.total_points,
         badges=[BadgeInfo.model_validate(b) for b in badges],
@@ -629,8 +675,12 @@ def get_badges(
 # 관리자 안전 필터 로그
 # ══════════════════════════════════════════════════════════
 
-@router.get("/admin/safety-filter-logs", response_model=list[SafetyFilterLogResponse],
-            summary="API-관리자-001: 안전 필터 차단 이력 조회")
+
+@router.get(
+    "/admin/safety-filter-logs",
+    response_model=list[SafetyFilterLogResponse],
+    summary="API-관리자-001: 안전 필터 차단 이력 조회",
+)
 def list_safety_filter_logs(
     date_from: datetime | None = Query(None),
     date_to: datetime | None = Query(None),
@@ -651,5 +701,4 @@ def list_safety_filter_logs(
     if blocked_reason:
         q = q.filter(SafetyFilterLog.blocked_reason.ilike(f"%{blocked_reason}%"))
 
-    return q.order_by(SafetyFilterLog.created_at.desc())\
-        .offset((page - 1) * size).limit(size).all()
+    return q.order_by(SafetyFilterLog.created_at.desc()).offset((page - 1) * size).limit(size).all()

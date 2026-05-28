@@ -34,6 +34,7 @@ BADGE_THRESHOLDS = {
 
 # ── 건강수치 ─────────────────────────────────────────────
 
+
 class HealthMetricCreate(BaseModel):
     metric_type: HealthMetricTypeEnum
     user_recorded_value: float
@@ -88,6 +89,7 @@ class HealthMetricResponse(BaseModel):
 
 
 # ── 일반 모드 일기 ────────────────────────────────────────
+
 
 class DiarySymptomLogCreate(BaseModel):
     log_date: date
@@ -200,13 +202,15 @@ class DiaryMedicationLogResponse(BaseModel):
 
 # ── 일정 통합 캘린더 ──────────────────────────────────────
 
+
 class ScheduleResponse(BaseModel):
-    medications: list[dict[str, Any]]           # 복약 알림 일정
-    prescriptions_end: list[dict[str, Any]]     # 처방 종료 예정일
-    care_schedules: list[dict[str, Any]]        # 진료·검사 일정
+    medications: list[dict[str, Any]]  # 복약 알림 일정
+    prescriptions_end: list[dict[str, Any]]  # 처방 종료 예정일
+    care_schedules: list[dict[str, Any]]  # 진료·검사 일정
 
 
 # ── 콘텐츠 변환 ───────────────────────────────────────────
+
 
 class CardNewsCreateRequest(BaseModel):
     source_id: int
@@ -243,6 +247,7 @@ class ContentConversionResponse(BaseModel):
 
 
 # ── 게임 ──────────────────────────────────────────────────
+
 
 class GameScoreCreate(BaseModel):
     game_type: GameTypeEnum
@@ -284,6 +289,7 @@ class UserBadgesResponse(BaseModel):
 
 
 # ── 관리자 안전 필터 로그 ─────────────────────────────────
+
 
 class SafetyFilterLogResponse(BaseModel):
     id: int

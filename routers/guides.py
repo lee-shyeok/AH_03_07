@@ -9,6 +9,7 @@
   POST   /v1/guides/{guide_id}/feedback   피드백 등록/수정
   GET    /v1/guides/{guide_id}/feedback   피드백 조회
 """
+
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -39,23 +40,32 @@ _REGEN_LIMIT_KEY = "guide:regen:{user_id}:{date}"
 
 # ── 헬퍼 ──────────────────────────────────────────────────
 
+
 def _get_guide_or_404(guide_id: int, user_id: int, db: Session) -> Guide:
-    guide = db.query(Guide).filter(
-        Guide.id == guide_id,
-        Guide.user_id == user_id,
-        Guide.deleted_at.is_(None),
-    ).first()
+    guide = (
+        db.query(Guide)
+        .filter(
+            Guide.id == guide_id,
+            Guide.user_id == user_id,
+            Guide.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not guide:
         raise HTTPException(status_code=404, detail="가이드를 찾을 수 없습니다.")
     return guide
 
 
 def _get_record_or_404(record_id: int, user_id: int, db: Session) -> MedicalRecord:
-    record = db.query(MedicalRecord).filter(
-        MedicalRecord.id == record_id,
-        MedicalRecord.user_id == user_id,
-        MedicalRecord.deleted_at.is_(None),
-    ).first()
+    record = (
+        db.query(MedicalRecord)
+        .filter(
+            MedicalRecord.id == record_id,
+            MedicalRecord.user_id == user_id,
+            MedicalRecord.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not record:
         raise HTTPException(status_code=404, detail="진료 기록을 찾을 수 없습니다.")
     return record
@@ -109,10 +119,7 @@ def _check_regen_limit(user_id: int) -> None:
     count = results[0]
 
     if count > REGEN_DAILY_LIMIT:
-        raise HTTPException(
-            status_code=429,
-            detail=f"가이드 재생성은 하루 {REGEN_DAILY_LIMIT}회까지 가능합니다."
-        )
+        raise HTTPException(status_code=429, detail=f"가이드 재생성은 하루 {REGEN_DAILY_LIMIT}회까지 가능합니다.")
 
 
 def _run_guide_generation(
@@ -169,6 +176,7 @@ def _run_guide_generation(
 
 # ── 1. 가이드 생성 ────────────────────────────────────────
 
+
 @router.post(
     "/guides",
     response_model=GuideDetail,
@@ -185,12 +193,16 @@ def create_guide(
     record = _get_record_or_404(data.record_id, user_id, db)
 
     # 이미 active 가이드가 있으면 중복 생성 방지
-    existing = db.query(Guide).filter(
-        Guide.record_id == data.record_id,
-        Guide.user_id == user_id,
-        Guide.status == GuideStatusEnum.active,
-        Guide.deleted_at.is_(None),
-    ).first()
+    existing = (
+        db.query(Guide)
+        .filter(
+            Guide.record_id == data.record_id,
+            Guide.user_id == user_id,
+            Guide.status == GuideStatusEnum.active,
+            Guide.deleted_at.is_(None),
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(status_code=409, detail="이미 생성된 가이드가 있습니다. 재생성을 이용해주세요.")
 
@@ -216,6 +228,7 @@ def create_guide(
 
 # ── 2. 목록 조회 ──────────────────────────────────────────
 
+
 @router.get(
     "/guides",
     response_model=GuideListResponse,
@@ -237,8 +250,9 @@ def list_guides(
 
     if order == "visit_date":
         # 진료일자 기준 정렬 — record join 필요
-        query = query.join(MedicalRecord, Guide.record_id == MedicalRecord.id)\
-            .order_by(MedicalRecord.visit_date.desc(), Guide.id.desc())
+        query = query.join(MedicalRecord, Guide.record_id == MedicalRecord.id).order_by(
+            MedicalRecord.visit_date.desc(), Guide.id.desc()
+        )
     else:
         query = query.order_by(Guide.created_at.desc(), Guide.id.desc())
 
@@ -249,21 +263,23 @@ def list_guides(
     record_ids = [g.record_id for g in guides]
     records_map = {}
     if record_ids:
-        records = db.query(MedicalRecord).filter(
-            MedicalRecord.id.in_(record_ids),
-            MedicalRecord.deleted_at.is_(None),
-        ).all()
+        records = (
+            db.query(MedicalRecord)
+            .filter(
+                MedicalRecord.id.in_(record_ids),
+                MedicalRecord.deleted_at.is_(None),
+            )
+            .all()
+        )
         records_map = {r.id: r.diagnosis for r in records}
 
-    items = [
-        _build_brief(g, records_map.get(g.record_id, "알 수 없음"))
-        for g in guides
-    ]
+    items = [_build_brief(g, records_map.get(g.record_id, "알 수 없음")) for g in guides]
 
     return GuideListResponse(items=items, total=total, page=page, size=size)
 
 
 # ── 3. 상세 조회 ──────────────────────────────────────────
+
 
 @router.get(
     "/guides/{guide_id}",
@@ -276,14 +292,13 @@ def get_guide(
     db: Session = Depends(get_db),
 ):
     guide = _get_guide_or_404(guide_id, user_id, db)
-    record = db.query(MedicalRecord).filter(
-        MedicalRecord.id == guide.record_id
-    ).first()
+    record = db.query(MedicalRecord).filter(MedicalRecord.id == guide.record_id).first()
     diagnosis = record.diagnosis if record else "알 수 없음"
     return _build_detail(guide, diagnosis)
 
 
 # ── 4. 가이드 재생성 ──────────────────────────────────────
+
 
 @router.post(
     "/guides/{guide_id}/regenerate",
@@ -325,14 +340,13 @@ def regenerate_guide(
         raise HTTPException(status_code=500, detail="가이드 재생성 요청에 실패했습니다.")
     db.refresh(new_guide)
 
-    background_tasks.add_task(
-        _run_guide_generation, new_guide.id, old_guide.record_id, user_id
-    )
+    background_tasks.add_task(_run_guide_generation, new_guide.id, old_guide.record_id, user_id)
 
     return _build_detail(new_guide, record.diagnosis)
 
 
 # ── 5. 피드백 등록/수정 ───────────────────────────────────
+
 
 @router.post(
     "/guides/{guide_id}/feedback",
@@ -348,10 +362,14 @@ def upsert_feedback(
     """피드백이 없으면 생성, 있으면 수정합니다."""
     _get_guide_or_404(guide_id, user_id, db)
 
-    feedback = db.query(GuideFeedback).filter(
-        GuideFeedback.guide_id == guide_id,
-        GuideFeedback.user_id == user_id,
-    ).first()
+    feedback = (
+        db.query(GuideFeedback)
+        .filter(
+            GuideFeedback.guide_id == guide_id,
+            GuideFeedback.user_id == user_id,
+        )
+        .first()
+    )
 
     if feedback:
         # 기존 피드백 수정
@@ -382,6 +400,7 @@ def upsert_feedback(
 
 # ── 6. 피드백 조회 ────────────────────────────────────────
 
+
 @router.get(
     "/guides/{guide_id}/feedback",
     response_model=GuideFeedbackResponse,
@@ -394,10 +413,14 @@ def get_feedback(
 ):
     _get_guide_or_404(guide_id, user_id, db)
 
-    feedback = db.query(GuideFeedback).filter(
-        GuideFeedback.guide_id == guide_id,
-        GuideFeedback.user_id == user_id,
-    ).first()
+    feedback = (
+        db.query(GuideFeedback)
+        .filter(
+            GuideFeedback.guide_id == guide_id,
+            GuideFeedback.user_id == user_id,
+        )
+        .first()
+    )
     if not feedback:
         raise HTTPException(status_code=404, detail="등록된 피드백이 없습니다.")
     return feedback

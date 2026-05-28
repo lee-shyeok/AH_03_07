@@ -29,14 +29,15 @@ router = APIRouter()
 
 # ── 요청/응답 모델 ──────────────────────────────────────
 
+
 class GoogleLoginRequest(BaseModel):
     id_token: str | None = None
     access_token: str | None = None
 
 
 class NaverLoginRequest(BaseModel):
-    code: str        # 네이버에서 받은 인가 코드
-    state: str       # CSRF 방지용 state
+    code: str  # 네이버에서 받은 인가 코드
+    state: str  # CSRF 방지용 state
 
 
 class SocialLoginResponse(BaseModel):
@@ -47,12 +48,11 @@ class SocialLoginResponse(BaseModel):
 
 # ── 구글 토큰 검증 ──────────────────────────────────────
 
+
 async def verify_google_token(id_token: str | None = None, access_token: str | None = None) -> dict:
     async with httpx.AsyncClient() as client:
         if id_token:
-            response = await client.get(
-                f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
-            )
+            response = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}")
             if response.status_code != 200:
                 raise HTTPException(status_code=401, detail="유효하지 않은 구글 ID 토큰입니다.")
             token_info = response.json()
@@ -63,8 +63,7 @@ async def verify_google_token(id_token: str | None = None, access_token: str | N
             return token_info
         elif access_token:
             response = await client.get(
-                "https://www.googleapis.com/oauth2/v3/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"}
+                "https://www.googleapis.com/oauth2/v3/userinfo", headers={"Authorization": f"Bearer {access_token}"}
             )
             if response.status_code != 200:
                 raise HTTPException(status_code=401, detail="유효하지 않은 구글 액세스 토큰입니다.")
@@ -75,11 +74,9 @@ async def verify_google_token(id_token: str | None = None, access_token: str | N
 
 # ── 공통 유저 처리 ──────────────────────────────────────
 
+
 def get_or_create_user(db: Session, email: str, name: str, social_provider: str, social_id: str):
-    user = db.query(User).filter(
-        User.email == email,
-        User.deleted_at.is_(None)
-    ).first()
+    user = db.query(User).filter(User.email == email, User.deleted_at.is_(None)).first()
 
     is_new_user = False
 
@@ -122,6 +119,7 @@ def issue_tokens(user_id: int) -> tuple[str, str]:
 
 # ── 구글 로그인 ──────────────────────────────────────────
 
+
 @router.post("/google", response_model=SocialLoginResponse, summary="구글 소셜 로그인/회원가입")
 async def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
     token_info = await verify_google_token(
@@ -148,6 +146,7 @@ async def google_login(body: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 # ── 네이버 로그인 ─────────────────────────────────────────
 
+
 @router.post("/naver", response_model=SocialLoginResponse, summary="네이버 소셜 로그인/회원가입")
 async def naver_login(body: NaverLoginRequest, db: Session = Depends(get_db)):
     # 1. 인가 코드로 액세스 토큰 발급
@@ -160,7 +159,7 @@ async def naver_login(body: NaverLoginRequest, db: Session = Depends(get_db)):
                 "client_secret": NAVER_CLIENT_SECRET,
                 "code": body.code,
                 "state": body.state,
-            }
+            },
         )
 
     if token_response.status_code != 200:
@@ -175,8 +174,7 @@ async def naver_login(body: NaverLoginRequest, db: Session = Depends(get_db)):
     # 2. 액세스 토큰으로 사용자 정보 조회
     async with httpx.AsyncClient() as client:
         profile_response = await client.get(
-            "https://openapi.naver.com/v1/nid/me",
-            headers={"Authorization": f"Bearer {naver_access_token}"}
+            "https://openapi.naver.com/v1/nid/me", headers={"Authorization": f"Bearer {naver_access_token}"}
         )
 
     if profile_response.status_code != 200:

@@ -13,6 +13,7 @@ from guide_v2_models import (
 
 # ── 안내문 생성 작업 ──────────────────────────────────────
 
+
 class GuideGenerateRequest(BaseModel):
     trigger_type: GuideTriggerTypeEnum = GuideTriggerTypeEnum.manual
 
@@ -42,6 +43,7 @@ class GuideGenerationJobResponse(BaseModel):
 
 # ── 안내문 출처 ───────────────────────────────────────────
 
+
 class GuideSourceResponse(BaseModel):
     id: int
     source_org: str | None = None
@@ -57,6 +59,7 @@ class GuideSourceResponse(BaseModel):
 
 # ── 안내문 섹션 ───────────────────────────────────────────
 
+
 class GuideSectionResponse(BaseModel):
     id: int
     section_type: GuideSectionTypeEnum
@@ -69,6 +72,7 @@ class GuideSectionResponse(BaseModel):
 
 
 # ── 처방전 편의 응답 ──────────────────────────────────────
+
 
 class PrescriptionBrief(BaseModel):
     id: int
@@ -97,6 +101,7 @@ class PrescriptionBrief(BaseModel):
 
 
 # ── 약품 이미지 인식 ──────────────────────────────────────
+
 
 class PillCandidate(BaseModel):
     drug_name: str
@@ -131,6 +136,7 @@ class PillRecognitionResponse(BaseModel):
 
 
 # ── 리포트 ────────────────────────────────────────────────
+
 
 class ReportCreateRequest(BaseModel):
     visit_date: date

@@ -13,6 +13,7 @@ VALID_SHARE_CATEGORIES = {"medical_records", "guides", "lab_results", "activity_
 
 # ── 약품 기준정보 ─────────────────────────────────────────
 
+
 class DrugReferenceResponse(BaseModel):
     id: int
     drug_name: str
@@ -25,6 +26,7 @@ class DrugReferenceResponse(BaseModel):
 
 
 # ── 활성도 임계 알림 ──────────────────────────────────────
+
 
 class ActivityThresholdUpsert(BaseModel):
     metric_type: str
@@ -71,6 +73,7 @@ class ActivityThresholdResponse(BaseModel):
 
 # ── 피드백 ────────────────────────────────────────────────
 
+
 class FeedbackCreate(BaseModel):
     target_type: FeedbackTargetTypeEnum
     target_id: int | None = None
@@ -109,7 +112,7 @@ class FeedbackResponse(BaseModel):
 import json
 import re
 
-PHONE_REGEX = re.compile(r'^01[0-9]-?\d{3,4}-?\d{4}$')
+PHONE_REGEX = re.compile(r"^01[0-9]-?\d{3,4}-?\d{4}$")
 
 
 class GuardianShareCreate(BaseModel):

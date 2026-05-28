@@ -9,6 +9,7 @@ from ocr_models import DocumentTypeEnum, OcrJobStatusEnum, UploadStatusEnum
 # ── 업로드 응답 ───────────────────────────────────────────
 # [수정 #10] 모델 PK는 id → 응답 필드도 id로 통일 (document_id 제거)
 
+
 class MedicalDocumentUploadResponse(BaseModel):
     id: int
     document_type: DocumentTypeEnum
@@ -21,6 +22,7 @@ class MedicalDocumentUploadResponse(BaseModel):
 
 
 # ── 목록 조회 ─────────────────────────────────────────────
+
 
 class MedicalDocumentBrief(BaseModel):
     id: int
@@ -47,11 +49,12 @@ class MedicalDocumentListResponse(BaseModel):
 #           → /v1/medical-documents/{id}/download 엔드포인트 경유 방식으로 변경
 #           → 직접 경로 노출 없이 인증 후 다운로드 가능
 
+
 class MedicalDocumentDetail(BaseModel):
     id: int
     document_type: DocumentTypeEnum
     original_filename: str
-    download_url: str          # 인증 필요한 다운로드 엔드포인트 URL
+    download_url: str  # 인증 필요한 다운로드 엔드포인트 URL
     upload_status: UploadStatusEnum
     is_user_confirmed: bool
     confirmed_data: dict[str, Any] | None = None
@@ -86,6 +89,7 @@ class MedicalDocumentDetail(BaseModel):
 
 # ── OCR 작업 응답 ──────────────────────────────────────────
 
+
 class OcrJobCreateResponse(BaseModel):
     job_id: int
     document_id: int
@@ -101,8 +105,8 @@ class OcrJobCreateResponse(BaseModel):
 
 class FieldConfidence(BaseModel):
     value: str | None = None
-    confidence: float        # 0.0 ~ 1.0
-    low_confidence: bool     # True면 프론트에서 노란색 하이라이트
+    confidence: float  # 0.0 ~ 1.0
+    low_confidence: bool  # True면 프론트에서 노란색 하이라이트
 
 
 class OcrJobResult(BaseModel):
@@ -147,6 +151,7 @@ class OcrJobResult(BaseModel):
 
 
 # ── OCR 결과 확정 ─────────────────────────────────────────
+
 
 class ConfirmOcrRequest(BaseModel):
     structured_data: dict[str, Any]

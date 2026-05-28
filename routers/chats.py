@@ -8,6 +8,7 @@
   POST   /v1/chat/sessions/{id}/messages       메시지 전송 (SSE 스트리밍)
   POST   /v1/chat/messages/{id}/feedback       응답 평가
 """
+
 import json
 from datetime import UTC, datetime, timedelta
 
@@ -53,11 +54,16 @@ MSG_RATE_WINDOW = 60  # 초
 
 # ── 헬퍼 ──────────────────────────────────────────────────
 
+
 def _get_session_or_404(session_id: int, user_id: int, db: Session) -> ChatSession:
-    session = db.query(ChatSession).filter(
-        ChatSession.id == session_id,
-        ChatSession.user_id == user_id,
-    ).first()
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user_id,
+        )
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
     return session
@@ -88,8 +94,7 @@ def _check_msg_rate_limit(user_id: int) -> None:
     count = results[0]
     if count > MSG_RATE_LIMIT:
         raise HTTPException(
-            status_code=429,
-            detail=f"메시지 전송은 분당 {MSG_RATE_LIMIT}회까지 가능합니다. 잠시 후 다시 시도해주세요."
+            status_code=429, detail=f"메시지 전송은 분당 {MSG_RATE_LIMIT}회까지 가능합니다. 잠시 후 다시 시도해주세요."
         )
 
 
@@ -122,6 +127,7 @@ def _get_recent_guides(user_id: int, db: Session) -> list:
 
 # ── 1. 세션 시작 ──────────────────────────────────────────
 
+
 @router.post(
     "/chat/sessions",
     response_model=ChatSessionResponse,
@@ -133,10 +139,14 @@ def create_session(
     db: Session = Depends(get_db),
 ):
     """새 챗봇 세션을 생성합니다. 기존 활성 세션은 타임아웃 체크 후 유지."""
-    active_sessions = db.query(ChatSession).filter(
-        ChatSession.user_id == user_id,
-        ChatSession.is_active == True,
-    ).all()
+    active_sessions = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.user_id == user_id,
+            ChatSession.is_active == True,
+        )
+        .all()
+    )
     for s in active_sessions:
         _expire_if_timeout(s, db)
 
@@ -153,6 +163,7 @@ def create_session(
 
 # ── 2. 세션 목록 조회 ─────────────────────────────────────
 
+
 @router.get(
     "/chat/sessions",
     response_model=ChatSessionListResponse,
@@ -164,9 +175,13 @@ def list_sessions(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    query = db.query(ChatSession).filter(
-        ChatSession.user_id == user_id,
-    ).order_by(ChatSession.created_at.desc())
+    query = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.user_id == user_id,
+        )
+        .order_by(ChatSession.created_at.desc())
+    )
 
     total = query.count()
     sessions = query.offset((page - 1) * size).limit(size).all()
@@ -215,6 +230,7 @@ def list_sessions(
 
 # ── 3. 대화 내역 조회 ─────────────────────────────────────
 
+
 @router.get(
     "/chat/sessions/{session_id}/messages",
     response_model=ChatHistoryResponse,
@@ -229,10 +245,14 @@ def get_messages(
 ):
     _get_session_or_404(session_id, user_id, db)
 
-    query = db.query(ChatMessage).filter(
-        ChatMessage.session_id == session_id,
-        ChatMessage.user_id == user_id,
-    ).order_by(ChatMessage.created_at.asc())
+    query = (
+        db.query(ChatMessage)
+        .filter(
+            ChatMessage.session_id == session_id,
+            ChatMessage.user_id == user_id,
+        )
+        .order_by(ChatMessage.created_at.asc())
+    )
 
     total = query.count()
     messages = query.offset((page - 1) * size).limit(size).all()
@@ -247,6 +267,7 @@ def get_messages(
 
 
 # ── 4. 메시지 전송 (SSE 스트리밍) ────────────────────────
+
 
 @router.post(
     "/chat/sessions/{session_id}/messages",
@@ -320,10 +341,7 @@ async def send_message(
         .limit(MAX_CONTEXT_MESSAGES)
         .all()
     )
-    history = [
-        {"role": m.role.value, "content": m.content}
-        for m in reversed(history_rows)
-    ]
+    history = [{"role": m.role.value, "content": m.content} for m in reversed(history_rows)]
 
     user = db.query(User).filter(User.id == user_id).first()
     recent_guides = _get_recent_guides(user_id, db)
@@ -349,6 +367,7 @@ async def send_message(
             response_text = "".join(full_response)
             if response_text.strip():
                 from database import SessionLocal
+
                 save_db = SessionLocal()
                 try:
                     assistant_msg = ChatMessage(
@@ -366,7 +385,7 @@ async def send_message(
             # [수정 3] 내부 오류 메시지 노출 방지
             error_data = json.dumps(
                 {"error": "응답 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", "done": True},
-                ensure_ascii=False
+                ensure_ascii=False,
             )
             yield f"data: {error_data}\n\n"
 
@@ -374,6 +393,7 @@ async def send_message(
 
 
 # ── 5. 응답 평가 ──────────────────────────────────────────
+
 
 @router.post(
     "/chat/messages/{message_id}/feedback",
@@ -388,18 +408,26 @@ def upsert_message_feedback(
 ):
     """👍/👎 평가. 이미 평가했으면 수정합니다."""
     # 메시지 소유권 + assistant 메시지만 평가 가능
-    message = db.query(ChatMessage).filter(
-        ChatMessage.id == message_id,
-        ChatMessage.user_id == user_id,
-        ChatMessage.role == MessageRoleEnum.assistant,
-    ).first()
+    message = (
+        db.query(ChatMessage)
+        .filter(
+            ChatMessage.id == message_id,
+            ChatMessage.user_id == user_id,
+            ChatMessage.role == MessageRoleEnum.assistant,
+        )
+        .first()
+    )
     if not message:
         raise HTTPException(status_code=404, detail="메시지를 찾을 수 없습니다.")
 
-    feedback = db.query(ChatFeedback).filter(
-        ChatFeedback.message_id == message_id,
-        ChatFeedback.user_id == user_id,
-    ).first()
+    feedback = (
+        db.query(ChatFeedback)
+        .filter(
+            ChatFeedback.message_id == message_id,
+            ChatFeedback.user_id == user_id,
+        )
+        .first()
+    )
 
     if feedback:
         feedback.is_positive = data.is_positive
