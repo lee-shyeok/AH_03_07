@@ -12,6 +12,7 @@ dependencies = [
     "redis>=4.5.2",
     "tiktoken>=0.13.0",
     "tomlkit>=0.14.0",
+    "tortoise>=0.1.1",
 ]
 
 [dependency-groups]
