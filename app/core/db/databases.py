@@ -37,7 +37,6 @@ TORTOISE_APP_MODELS = [
     "app.models.prompts",
     "app.models.health_guides",
     "app.models.prescriptions",
-    "app.models.prescriptions",
     "app.models.medications",
 ]
 
