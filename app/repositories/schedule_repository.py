@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from app.models.medical_appointments import MedicalAppointment
-
 from app.models.favorite_places import FavoritePlace, PlaceType
 
 
