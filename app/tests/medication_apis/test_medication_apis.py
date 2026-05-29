@@ -18,7 +18,14 @@ async def _signup_and_login(client: AsyncClient, email: str, phone: str) -> str:
     }
     await client.post("/api/v1/auth/signup", json=signup_data)
     resp = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password123!"})
-    return resp.json()["access_token"]
+    token = resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    await client.post(
+        "/api/v1/users/me/consents",
+        json={"consent_type": "MEDICAL_DATA", "agreed": True, "version": "1.0"},
+        headers=headers,
+    )
+    return token
 
 
 class TestMedicationApis(TestCase):
