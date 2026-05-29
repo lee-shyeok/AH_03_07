@@ -36,6 +36,8 @@ TORTOISE_APP_MODELS = [
     "app.models.share_logs",
     "app.models.prompts",
     "app.models.health_guides",
+    "app.models.prescriptions",
+    "app.models.medications",
 ]
 
 TORTOISE_ORM = {
