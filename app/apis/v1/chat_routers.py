@@ -5,7 +5,14 @@ from pydantic import Field
 
 from app.dependencies.security import get_request_user
 from app.dtos.base import BaseSerializerModel
-from app.dtos.chat import MessageRequest, MessageResponse, RagSource, SessionStartResponse
+from app.dtos.chat import (
+    MessageHistoryResponse,
+    MessageItem,
+    MessageRequest,
+    MessageResponse,
+    RagSource,
+    SessionStartResponse,
+)
 from app.models.users import User
 from app.services.chat_message_service import ChatMessageService, get_chat_message_service
 from app.services.chat_service import chat_with_rag
@@ -52,6 +59,27 @@ async def create_chat_message(
         rag_sources=[RagSource(**s) for s in message.rag_sources],
         blocked_by_filter=message.blocked_by_filter,
         block_reason=message.block_reason,
+    )
+
+
+@chat_router.get("/sessions/{session_id}/messages", status_code=status.HTTP_200_OK)
+async def list_chat_messages(
+    session_id: int,
+    user: Annotated[User, Depends(get_request_user)],
+    session_service: Annotated[ChatSessionService, Depends(ChatSessionService)],
+    message_service: Annotated[ChatMessageService, Depends(get_chat_message_service)],
+    page: int = 1,
+    size: int = 20,
+) -> MessageHistoryResponse:
+    session = await session_service.get_user_session(user, session_id)
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="세션을 찾을 수 없습니다")
+    messages, total = await message_service.get_messages(session, page, size)
+    return MessageHistoryResponse(
+        items=[MessageItem.model_validate(m) for m in messages],
+        page=page,
+        size=size,
+        total=total,
     )
 
 

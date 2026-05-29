@@ -64,6 +64,12 @@ class ChatMessageService:
             block_reason=reason,
         )
 
+    async def get_messages(self, session: ChatSession, page: int, size: int) -> tuple[list[ChatMessage], int]:
+        query = ChatMessage.filter(session=session).order_by("created_at")
+        total = await query.count()
+        messages = await query.offset((page - 1) * size).limit(size)
+        return messages, total
+
 
 def get_chat_message_service() -> ChatMessageService:
     return ChatMessageService()
