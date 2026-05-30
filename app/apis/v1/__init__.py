@@ -13,6 +13,7 @@ from app.apis.v1.chat_routers import chat_router
 from app.apis.v1.disease_routers import disease_router
 from app.apis.v1.knowledge_routers import knowledge_router
 from app.apis.v1.lab_result_routers import lab_result_router
+from app.apis.v1.lupus_exposure_routers import lupus_exposure_router
 from app.apis.v1.lupus_skin_routers import lupus_skin_router
 from app.apis.v1.medical_schedule_routers import medical_schedule_router
 from app.apis.v1.medication_routers import medication_router
@@ -46,6 +47,7 @@ v1_routers.include_router(lab_result_router)
 v1_routers.include_router(medication_card_router)
 v1_routers.include_router(pregnancy_safety_router)
 v1_routers.include_router(vaccine_prevention_router)
+v1_routers.include_router(lupus_exposure_router)
 v1_routers.include_router(lupus_skin_router)
 v1_routers.include_router(pre_consultation_report_router)
 v1_routers.include_router(ra_exposure_router)
