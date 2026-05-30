@@ -39,12 +39,13 @@ async def search_knowledge(query: str, top_k: int = 5) -> list[KnowledgeChunk]:
     query_vector = emb_resp.data[0].embedding
 
     qdrant = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT)
-    hits = await qdrant.search(
+    response = await qdrant.query_points(
         collection_name=_COLLECTION_NAME,
-        query_vector=query_vector,
+        query=query_vector,
         limit=top_k,
         with_payload=True,
     )
+    hits = response.points
     chunks = [
         KnowledgeChunk(
             document_id=h.payload["document_id"],

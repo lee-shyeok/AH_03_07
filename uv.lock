@@ -33,9 +33,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dateutil" },
     { name = "redis" },
-    { name = "tiktoken" },
     { name = "tomlkit" },
-    { name = "tortoise" },
 ]
 
 [package.dev-dependencies]
@@ -87,9 +85,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "redis", specifier = ">=4.5.2" },
-    { name = "tiktoken", specifier = ">=0.13.0" },
     { name = "tomlkit", specifier = ">=0.14.0" },
-    { name = "tortoise", specifier = ">=0.1.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -210,15 +206,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/00/65/68e576aecd2a43d383123e3a66339e6a3535495b0e81443e374a3d3c356d/asyncmy-0.2.11-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:577272e238aff9b985eb880b49b1ba009e1fd1133b754fc71c833ab5bd9561ee", size = 5143375, upload-time = "2026-01-15T11:32:15.38Z" },
     { url = "https://files.pythonhosted.org/packages/4e/e4/cd30ea75ab96e5c6fe0daf6bd1871753fe5a1677515530fa0bc1a807dd6c/asyncmy-0.2.11-cp313-cp313-win32.whl", hash = "sha256:29536a08bf8c96437188ae4080fdd09c5a82cbe93794d0996cd0dd238f632664", size = 1559106, upload-time = "2026-01-15T11:32:16.895Z" },
     { url = "https://files.pythonhosted.org/packages/0c/3e/497e3ac839d7d18e79770b977f90e6f17a87181f95b8aed59359ff4aba0c/asyncmy-0.2.11-cp313-cp313-win_amd64.whl", hash = "sha256:f095af7b980505158609ca0bcdd0d14d1e48893e43fc1856c7cecfd9439f498c", size = 1635619, upload-time = "2026-01-15T11:32:18.241Z" },
-]
-
-[[package]]
-name = "atlastk"
-version = "0.13.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/24/0a/05fb6abea27b2b8483328d5e4c8bbe16c5be1c2cb58946a478b79d744132/atlastk-0.13.5.tar.gz", hash = "sha256:1679045b090e1d411806a55a8bef26d6ca268c0ac31ad07dbd17052774316009", size = 19719, upload-time = "2025-05-27T12:51:23.519Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/e1/c8209555c5ff5e2f13c13aa18d1b46eec1618a7e5cc6ec2c548e88a18901/atlastk-0.13.5-py3-none-any.whl", hash = "sha256:70184097f424a70d83822d783d46c7579427c4a6e7227ec54099368fd1fb2750", size = 24933, upload-time = "2025-05-27T12:51:22.046Z" },
 ]
 
 [[package]]
@@ -2477,18 +2464,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/6a/18a582fe3c5ee26f49b5c9fb21ad8016b4d1c06d10178894a58653946fda/torchvision-0.26.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:7058c5878262937e876f20c25867b33724586aa4499e2853b2d52b99a5e51953", size = 7729089, upload-time = "2026-03-23T18:12:31.394Z" },
     { url = "https://files.pythonhosted.org/packages/c5/9b/f7e119b59499edc00c55c03adc9ec3bd96144d9b81c46852c431f9c64a9a/torchvision-0.26.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:8008474855623c6ba52876589dc52df0aa66e518c25eca841445348e5f79844c", size = 7522704, upload-time = "2026-03-23T18:12:20.301Z" },
     { url = "https://files.pythonhosted.org/packages/d0/6a/09f3844c10643f6c0de5d95abc863420cfaf194c88c7dffd0ac523e2015f/torchvision-0.26.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e9d0e022c19a78552fb055d0414d47fecb4a649309b9968573daea160ba6869c", size = 4454275, upload-time = "2026-03-23T18:12:27.487Z" },
-]
-
-[[package]]
-name = "tortoise"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "atlastk" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/98/970d10bcc02eda8370c425dd6306526eec8b407aa83f13bb0ebe7da41012/tortoise-0.1.1.tar.gz", hash = "sha256:a4ebd69b152d266174b3b0f2a22e3fb8995101eb749d3114813a98f405ab10bb", size = 4114, upload-time = "2019-08-03T15:54:19.508Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/ef/b314819f12e48e7a99f07825d064b596d58cc4a0c3b75939d0d10fedf90d/tortoise-0.1.1-py3-none-any.whl", hash = "sha256:bcb58a56d6796cad0db330104450df2caf2ea9e98d844bb2906274bd15c12804", size = 5263, upload-time = "2019-08-03T15:54:17.909Z" },
 ]
 
 [[package]]

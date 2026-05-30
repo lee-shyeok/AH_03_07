@@ -83,13 +83,13 @@ async def test_search_knowledge_cache_miss_calls_qdrant():
         mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)]))
 
         mock_qdrant = mock_qdrant_cls.return_value
-        mock_qdrant.search = AsyncMock(return_value=[fake_point])
+        mock_qdrant.query_points = AsyncMock(return_value=MagicMock(points=[fake_point]))
 
         result = await search_knowledge("EULAR 권고안", top_k=5)
 
     assert len(result) == 1
     assert result[0].document_id == 2
-    mock_qdrant.search.assert_called_once()
+    mock_qdrant.query_points.assert_called_once()
     mock_redis.setex.assert_called_once()
 
 
@@ -120,9 +120,9 @@ async def test_search_knowledge_redis_failure_falls_back_to_qdrant():
         mock_openai = mock_openai_cls.return_value
         mock_openai.embeddings.create = AsyncMock(return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)]))
         mock_qdrant = mock_qdrant_cls.return_value
-        mock_qdrant.search = AsyncMock(return_value=[fake_point])
+        mock_qdrant.query_points = AsyncMock(return_value=MagicMock(points=[fake_point]))
 
         result = await search_knowledge("폴백 테스트")
 
     assert len(result) == 1
-    mock_qdrant.search.assert_called_once()
+    mock_qdrant.query_points.assert_called_once()
