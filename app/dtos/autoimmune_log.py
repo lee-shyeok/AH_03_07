@@ -39,4 +39,5 @@ class SymptomCheckResponse(BaseSerializerModel):
     checked_symptoms: list[SymptomCode]
     red_flag_triggered: bool
     red_flag_symptoms: list[SymptomCode] = []
+    risk_flag_ids: list[int] = []
     created_at: datetime

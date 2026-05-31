@@ -8,13 +8,19 @@ from app.dtos.autoimmune_log import SymptomCheckCreateRequest, SymptomCheckRespo
 from app.models.symptom_check_log import SymptomCheckLog, SymptomCode
 from app.models.users import User
 from app.services.autoimmune_log_service import SymptomCheckService
+from app.services.risk_flag_service import RiskFlagService
 
 symptom_check_router = APIRouter(prefix="/symptom-checks", tags=["symptom-checks"])
 
 
-def _build_response(log: SymptomCheckLog, red_flag_symptoms: list[SymptomCode]) -> dict:
+def _build_response(
+    log: SymptomCheckLog,
+    red_flag_symptoms: list[SymptomCode],
+    risk_flag_ids: list[int] | None = None,
+) -> dict:
     resp = SymptomCheckResponse.model_validate(log)
     resp.red_flag_symptoms = red_flag_symptoms
+    resp.risk_flag_ids = risk_flag_ids or []
     return resp.model_dump()
 
 
@@ -23,9 +29,13 @@ async def create_symptom_check(
     body: SymptomCheckCreateRequest,
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[SymptomCheckService, Depends(SymptomCheckService)],
+    risk_flag_service: Annotated[RiskFlagService, Depends(RiskFlagService)],
 ) -> ORJSONResponse:
     log, red_flags = await service.create_check(user=user, data=body)
-    return ORJSONResponse(_build_response(log, red_flags), status_code=status.HTTP_201_CREATED)
+    symptom_codes = [str(s) for s in body.checked_symptoms]
+    flags = await risk_flag_service.create_from_symptom_check(user, symptom_codes, log.id)
+    flag_ids = [f.id for f in flags]
+    return ORJSONResponse(_build_response(log, red_flags, flag_ids), status_code=status.HTTP_201_CREATED)
 
 
 @symptom_check_router.get("", response_model=list[SymptomCheckResponse], status_code=status.HTTP_200_OK)

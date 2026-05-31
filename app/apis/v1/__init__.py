@@ -21,6 +21,7 @@ from app.apis.v1.mode_routers import mode_router
 from app.apis.v1.pill_recognition_routers import pill_router
 from app.apis.v1.pre_consultation_report_routers import pre_consultation_report_router
 from app.apis.v1.ra_exposure_routers import ra_exposure_router
+from app.apis.v1.risk_flag_routers import risk_flag_router
 from app.apis.v1.risk_profile_routers import risk_profile_router
 from app.apis.v1.symptom_check_routers import symptom_check_router
 from app.apis.v1.user_consent_routers import user_consent_router
@@ -32,6 +33,7 @@ v1_routers.include_router(auth_router)
 v1_routers.include_router(user_consent_router)
 v1_routers.include_router(user_router)
 v1_routers.include_router(mode_router)
+v1_routers.include_router(risk_flag_router)
 v1_routers.include_router(risk_profile_router)
 v1_routers.include_router(knowledge_router)
 v1_routers.include_router(chat_router)
