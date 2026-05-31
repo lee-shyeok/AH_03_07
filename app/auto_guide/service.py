@@ -18,6 +18,7 @@
 import json
 from datetime import UTC, datetime
 
+from app.auto_guide.collector import DbDataSourceCollector
 from app.auto_guide.interfaces import DataSourceCollector
 from app.auto_guide.schema import (
     OrchestratorResult,
@@ -25,14 +26,13 @@ from app.auto_guide.schema import (
     TriggerCheckResult,
     TriggerStatus,
 )
-from app.auto_guide.stubs import StubDataSourceCollector
 from app.core.logger import default_logger as logger
 from app.guide_generator.schema import HealthGuideInput
 from app.guide_generator.service import generate_guide
 from app.highrisk_gate.schema import HighRiskGateInput
 from app.highrisk_gate.service import evaluate_highrisk_gate
 
-_DEFAULT_COLLECTOR: DataSourceCollector = StubDataSourceCollector()
+_DEFAULT_COLLECTOR: DataSourceCollector = DbDataSourceCollector()
 
 
 def _check_trigger(
