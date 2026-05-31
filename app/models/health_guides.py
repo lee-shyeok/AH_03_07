@@ -19,7 +19,7 @@ class GuideStatus(StrEnum):
     FAILED = "FAILED"
 
 
-class HealthGuide(models.Model):
+class HealthGuideContent(models.Model):
     id = fields.UUIDField(primary_key=True, default=uuid.uuid4)
     user = fields.ForeignKeyField("models.User", related_name="health_guides", on_delete=fields.CASCADE)
     guide_type = fields.CharEnumField(enum_type=GuideType, max_length=50)
@@ -32,4 +32,4 @@ class HealthGuide(models.Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        table = "health_guides"
+        table = "health_guide_contents"
