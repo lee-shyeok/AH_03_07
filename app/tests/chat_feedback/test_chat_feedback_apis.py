@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from httpx import ASGITransport, AsyncClient
@@ -13,6 +14,17 @@ BASE_URL = "http://test"
 SESSIONS_EP = "/api/v1/chat/sessions"
 FEEDBACK_EP = "/api/v1/chat/messages/{message_id}/feedback"
 RAG_PATCH = "app.services.chat_rag_service.ChatRAGService.generate_response"
+MODERATION_PATCH = "app.services.chat_guardrail_enhanced.AsyncOpenAI"
+
+
+def _make_moderation_mock() -> AsyncMock:
+    """Moderation API 응답 Mock — flagged=False (통과)."""
+    client = AsyncMock()
+    client.moderations.create = AsyncMock(
+        return_value=SimpleNamespace(results=[SimpleNamespace(flagged=False, categories=SimpleNamespace())])
+    )
+    return client
+
 
 _NORMAL_RAG = {
     "answer": "루푸스 관련 정보입니다.",
@@ -53,6 +65,19 @@ async def _create_session_and_message(client: AsyncClient, headers: dict) -> int
 
 
 class TestChatFeedbackApis(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        try:
+            self._mod_patcher = patch(MODERATION_PATCH, return_value=_make_moderation_mock())
+            self._mod_patcher.start()
+        except (ModuleNotFoundError, AttributeError):
+            self._mod_patcher = None
+
+    def tearDown(self) -> None:
+        if self._mod_patcher:
+            self._mod_patcher.stop()
+        super().tearDown()
+
     async def test_feedback_positive(self):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "fb1@example.com", "01044440001")
