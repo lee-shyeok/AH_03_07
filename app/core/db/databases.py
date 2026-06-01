@@ -42,6 +42,7 @@ TORTOISE_APP_MODELS = [
     "app.models.prescriptions",
     "app.models.medications",
     "app.models.risk_flag",
+    "app.models.autoimmune_profile",
     "app.models.auto_guide",
     "app.models.pre_consultation_report",
     "app.models.report_share",

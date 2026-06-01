@@ -9,6 +9,7 @@ from app.apis.v1.autoimmune_care_routers import (
     pregnancy_safety_router,
     vaccine_prevention_router,
 )
+from app.apis.v1.autoimmune_profile_routers import autoimmune_profile_router
 from app.apis.v1.chat_routers import chat_router
 from app.apis.v1.disease_routers import disease_router
 from app.apis.v1.knowledge_routers import knowledge_router
@@ -36,6 +37,7 @@ v1_routers.include_router(user_router)
 v1_routers.include_router(mode_router)
 v1_routers.include_router(risk_flag_router)
 v1_routers.include_router(risk_profile_router)
+v1_routers.include_router(autoimmune_profile_router)
 v1_routers.include_router(knowledge_router)
 v1_routers.include_router(chat_router)
 v1_routers.include_router(auto_guide_router)
