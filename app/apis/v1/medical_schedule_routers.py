@@ -1,6 +1,7 @@
+from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import ORJSONResponse
 
 from app.dependencies.security import get_request_user
@@ -14,7 +15,7 @@ from app.models.users import User
 from app.services.autoimmune_medical_service import MedicalScheduleService
 from app.services.schedule_reminder_service import ScheduleReminderService
 
-medical_schedule_router = APIRouter(prefix="/medical-schedules", tags=["medical-schedules"])
+medical_schedule_router = APIRouter(prefix="/care-schedules", tags=["care-schedules"])
 
 
 @medical_schedule_router.post("", response_model=MedicalScheduleResponse, status_code=status.HTTP_201_CREATED)
@@ -36,16 +37,20 @@ async def create_medical_schedule(
 async def list_medical_schedules(
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[MedicalScheduleService, Depends(MedicalScheduleService)],
-    schedule_type: MedicalScheduleType | None = None,
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
+    schedule_type: MedicalScheduleType | None = Query(default=None, alias="type"),
 ) -> ORJSONResponse:
-    schedules = await service.list_schedules(user=user, schedule_type=schedule_type)
+    schedules = await service.list_schedules(
+        user=user, schedule_type=schedule_type, from_date=from_date, to_date=to_date
+    )
     return ORJSONResponse(
         [MedicalScheduleResponse.model_validate(s).model_dump() for s in schedules],
         status_code=status.HTTP_200_OK,
     )
 
 
-@medical_schedule_router.patch("/{schedule_id}", response_model=MedicalScheduleResponse, status_code=status.HTTP_200_OK)
+@medical_schedule_router.put("/{schedule_id}", response_model=MedicalScheduleResponse, status_code=status.HTTP_200_OK)
 async def update_medical_schedule(
     schedule_id: int,
     body: MedicalScheduleUpdateRequest,

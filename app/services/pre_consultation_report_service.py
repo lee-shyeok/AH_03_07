@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from app.dtos.pre_consultation_report import PreConsultationReportRequest
 from app.models.disease_activity_log import DiseaseActivityLog
 from app.models.lab_result import LabResult
 from app.models.medical_schedule import MedicalSchedule
+from app.models.report_share import ReportShare
 from app.models.symptom_check_log import SymptomCheckLog
 from app.models.user_medication import UserMedication
 from app.models.users import User
@@ -76,6 +78,18 @@ class PreConsultationReportService:
             deleted_at=None,
             scheduled_date__gte=start_date,
         ).order_by("scheduled_date")
+
+    async def create_share(self, report, recipient_email: str) -> str:
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.now() + timedelta(days=30)
+        await ReportShare.create(
+            report=report,
+            user_id=report.user_id,
+            recipient_email=recipient_email,
+            token=token,
+            expires_at=expires_at,
+        )
+        return token
 
     def _render_pdf(self, context: dict) -> bytes:
         template = self._env.get_template("pre_consultation_report.html")

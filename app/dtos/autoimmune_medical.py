@@ -10,20 +10,26 @@ from app.models.medical_schedule import MedicalScheduleType
 
 class MedicalScheduleCreateRequest(BaseModel):
     schedule_type: MedicalScheduleType
+    title: str = Field(..., max_length=200)
     scheduled_date: date
+    reminder_days_before: int = Field(default=1, ge=1, le=30)
     note: str | None = Field(None, max_length=500)
 
 
 class MedicalScheduleUpdateRequest(BaseModel):
-    schedule_type: MedicalScheduleType | None = None
-    scheduled_date: date | None = None
+    schedule_type: MedicalScheduleType
+    title: str = Field(..., max_length=200)
+    scheduled_date: date
+    reminder_days_before: int = Field(default=1, ge=1, le=30)
     note: str | None = Field(None, max_length=500)
 
 
 class MedicalScheduleResponse(BaseSerializerModel):
     id: int
     schedule_type: MedicalScheduleType
+    title: str | None
     scheduled_date: date
+    reminder_days_before: int
     note: str | None
     created_at: datetime
     updated_at: datetime

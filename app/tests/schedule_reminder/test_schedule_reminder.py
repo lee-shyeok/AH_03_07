@@ -12,10 +12,17 @@ from app.models.notifications import Notification, NotificationType
 from app.models.users import User
 
 BASE_URL = "http://test"
-SCHEDULES_EP = "/api/v1/medical-schedules"
+SCHEDULES_EP = "/api/v1/care-schedules"
 KST = ZoneInfo("Asia/Seoul")
 
 FORBIDDEN_WORDS = ["드세요", "복용", "검사를 받으세요", "결과가", "권장"]
+
+_BASE_PAYLOAD = {
+    "schedule_type": "BLOOD_TEST",
+    "title": "정기 혈액검사",
+    "scheduled_date": "2026-08-01",
+    "reminder_days_before": 1,
+}
 
 
 async def _signup_and_login(client: AsyncClient, email: str, phone: str) -> str:
@@ -44,20 +51,20 @@ class TestScheduleReminder(TestCase):
             token = await _signup_and_login(client, "reminder_basic@example.com", "01093000001")
             await client.post(
                 SCHEDULES_EP,
-                json={"schedule_type": "BLOOD_TEST", "scheduled_date": "2026-08-01"},
+                json=_BASE_PAYLOAD,
                 headers={"Authorization": f"Bearer {token}"},
             )
         user = await User.get(email="reminder_basic@example.com")
         notifs = await Notification.filter(user_id=user.id, notification_type=NotificationType.SCHEDULE).all()
         assert len(notifs) == 1
 
-    async def test_scheduled_at_is_day_before_at_0900_kst(self):
-        """scheduled_at == (scheduled_date − 1일) 09:00 Asia/Seoul"""
+    async def test_scheduled_at_uses_reminder_days_before(self):
+        """reminder_days_before=1 → scheduled_at = (scheduled_date − 1일) 09:00 KST"""
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "reminder_time@example.com", "01093000002")
             await client.post(
                 SCHEDULES_EP,
-                json={"schedule_type": "APPOINTMENT", "scheduled_date": "2026-08-01"},
+                json={**_BASE_PAYLOAD, "schedule_type": "APPOINTMENT", "title": "외래 진료", "reminder_days_before": 1},
                 headers={"Authorization": f"Bearer {token}"},
             )
         user = await User.get(email="reminder_time@example.com")
@@ -66,6 +73,21 @@ class TestScheduleReminder(TestCase):
         assert scheduled_at_kst.date() == date(2026, 7, 31)  # 2026-08-01 − 1일
         assert scheduled_at_kst.hour == 9
         assert scheduled_at_kst.minute == 0
+
+    async def test_reminder_days_before_3_shifts_notification_date(self):
+        """reminder_days_before=3 → scheduled_at = (scheduled_date − 3일) 09:00 KST"""
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "reminder_3days@example.com", "01093000008")
+            await client.post(
+                SCHEDULES_EP,
+                json={**_BASE_PAYLOAD, "reminder_days_before": 3, "scheduled_date": "2026-09-10"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        user = await User.get(email="reminder_3days@example.com")
+        notif = await Notification.filter(user_id=user.id, notification_type=NotificationType.SCHEDULE).first()
+        scheduled_at_kst = notif.scheduled_at.astimezone(KST)
+        assert scheduled_at_kst.date() == date(2026, 9, 7)  # 2026-09-10 − 3일
+        assert scheduled_at_kst.hour == 9
 
     async def test_each_schedule_type_produces_correct_label_title_content(self):
         """각 schedule_type → 올바른 라벨·title·content"""
@@ -78,10 +100,10 @@ class TestScheduleReminder(TestCase):
         ]
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "reminder_labels@example.com", "01093000003")
-            for stype, _ in type_to_label:
+            for stype, label in type_to_label:
                 await client.post(
                     SCHEDULES_EP,
-                    json={"schedule_type": stype, "scheduled_date": "2026-09-01"},
+                    json={**_BASE_PAYLOAD, "schedule_type": stype, "title": label, "scheduled_date": "2026-09-01"},
                     headers={"Authorization": f"Bearer {token}"},
                 )
         user = await User.get(email="reminder_labels@example.com")
@@ -102,7 +124,7 @@ class TestScheduleReminder(TestCase):
             for stype in ["BLOOD_TEST", "URINE_TEST", "EYE_EXAM", "APPOINTMENT", "INJECTION"]:
                 await client.post(
                     SCHEDULES_EP,
-                    json={"schedule_type": stype, "scheduled_date": "2026-09-15"},
+                    json={**_BASE_PAYLOAD, "schedule_type": stype, "title": stype, "scheduled_date": "2026-09-15"},
                     headers={"Authorization": f"Bearer {token}"},
                 )
         user = await User.get(email="reminder_safety@example.com")
@@ -119,7 +141,12 @@ class TestScheduleReminder(TestCase):
             await _signup_and_login(client, "reminder_owner_b@example.com", "01093000006")
             await client.post(
                 SCHEDULES_EP,
-                json={"schedule_type": "INJECTION", "scheduled_date": "2026-08-20"},
+                json={
+                    **_BASE_PAYLOAD,
+                    "schedule_type": "INJECTION",
+                    "title": "주사 투여",
+                    "scheduled_date": "2026-08-20",
+                },
                 headers={"Authorization": f"Bearer {token_a}"},
             )
         user_a = await User.get(email="reminder_owner_a@example.com")
@@ -133,10 +160,14 @@ class TestScheduleReminder(TestCase):
         """알림 생성(과거 remind_date)이 일정 생성 201 응답을 막지 않음"""
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "reminder_201@example.com", "01093000007")
-            # scheduled_date = 2026-05-15 → remind_date = 2026-05-14 (과거)
             resp = await client.post(
                 SCHEDULES_EP,
-                json={"schedule_type": "EYE_EXAM", "scheduled_date": "2026-05-15"},
+                json={
+                    **_BASE_PAYLOAD,
+                    "schedule_type": "EYE_EXAM",
+                    "title": "안과 검진",
+                    "scheduled_date": "2026-05-15",
+                },
                 headers={"Authorization": f"Bearer {token}"},
             )
         assert resp.status_code == status.HTTP_201_CREATED
