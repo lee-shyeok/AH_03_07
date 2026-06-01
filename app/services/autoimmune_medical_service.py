@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from app.core import config
 from app.dtos.autoimmune_medical import (
@@ -19,16 +19,26 @@ class MedicalScheduleService:
         return await MedicalSchedule.create(
             user=user,
             schedule_type=data.schedule_type,
+            title=data.title,
             scheduled_date=data.scheduled_date,
+            reminder_days_before=data.reminder_days_before,
             note=data.note,
         )
 
     async def list_schedules(
-        self, user: User, schedule_type: MedicalScheduleType | None = None
+        self,
+        user: User,
+        schedule_type: MedicalScheduleType | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
     ) -> list[MedicalSchedule]:
         qs = MedicalSchedule.filter(user=user, deleted_at=None)
         if schedule_type is not None:
             qs = qs.filter(schedule_type=schedule_type)
+        if from_date is not None:
+            qs = qs.filter(scheduled_date__gte=from_date)
+        if to_date is not None:
+            qs = qs.filter(scheduled_date__lte=to_date)
         return await qs.order_by("scheduled_date")
 
     async def get_schedule(self, user: User, schedule_id: int) -> MedicalSchedule | None:
@@ -40,13 +50,15 @@ class MedicalScheduleService:
         schedule = await self.get_schedule(user, schedule_id)
         if schedule is None:
             return None
-        update_data = data.model_dump(exclude_unset=True)
-        update_fields = list(update_data.keys())
-        for field, value in update_data.items():
-            setattr(schedule, field, value)
+        schedule.schedule_type = data.schedule_type
+        schedule.title = data.title
+        schedule.scheduled_date = data.scheduled_date
+        schedule.reminder_days_before = data.reminder_days_before
+        schedule.note = data.note
         schedule.updated_at = datetime.now(config.TIMEZONE)
-        update_fields.append("updated_at")
-        await schedule.save(update_fields=update_fields)
+        await schedule.save(
+            update_fields=["schedule_type", "title", "scheduled_date", "reminder_days_before", "note", "updated_at"]
+        )
         return schedule
 
     async def delete_schedule(self, user: User, schedule_id: int) -> bool:
