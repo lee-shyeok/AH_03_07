@@ -42,6 +42,7 @@ TORTOISE_APP_MODELS = [
     "app.models.prescriptions",
     "app.models.medications",
     "app.models.risk_flag",
+    "app.models.auto_guide",
 ]
 
 TORTOISE_ORM = {
