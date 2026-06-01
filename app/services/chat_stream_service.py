@@ -53,7 +53,9 @@ class ChatStreamService:
     async def stream_message(
         self, session: ChatSession, user: User, user_message: str
     ) -> AsyncIterator[str]:
-        # Step 1: 사용자 메시지 저장
+        # Step 1: 컨텍스트 빌드 (현재 메시지 저장 전 — 히스토리 중복 방지)
+        system_prompt, history = await self._build_context(session, user)
+        # Step 2: 사용자 메시지 저장
         await ChatMessage.create(
             session=session,
             role=MessageRole.USER,
@@ -61,7 +63,7 @@ class ChatStreamService:
             rag_sources=[],
             blocked_by_filter=False,
         )
-        # Step 2: 의도 분류 (가드레일)
+        # Step 3: 의도 분류 (가드레일)
         category = self._validation.classify_intent(user_message)
         if category is not None:
             event, msg = self._make_block_event(category)
@@ -75,8 +77,6 @@ class ChatStreamService:
                 block_reason=category,
             )
             return
-        # Step 3: 컨텍스트 빌드
-        system_prompt, history = await self._build_context(session, user)
         # Step 4: OpenAI 스트리밍
         client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
         messages = [
