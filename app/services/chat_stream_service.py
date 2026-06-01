@@ -18,7 +18,9 @@ SESSION_EXPIRE_MINUTES = 30
 LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.7
 GUIDE_MAX_CHARS = 5000
-HISTORY_LIMIT = 20  # 10턴 × 2 (USER + ASSISTANT)
+HISTORY_LIMIT = (
+    10  # 사용자 5턴 + 챗봇 5턴 = 10 메시지 (REQ-CHAT-003). 메시지 개수 제한이 토큰 초과 방지의 proxy 역할을 한다.
+)
 
 _EMERGENCY_CATEGORIES = frozenset({"EMERGENCY"})
 _CRISIS_CATEGORIES = frozenset({"SELF_HARM"})
