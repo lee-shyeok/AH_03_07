@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from unittest.mock import AsyncMock, patch
-
 from httpx import ASGITransport, AsyncClient
 from tortoise.contrib.test import TestCase
 
-from app.auto_guide.schema import OrchestratorResult, OrchestratorStatus
-from app.guide_generator.schema import GuideStatus, HealthGuideOutput, SourceItem
+from app.guide_generator.schema import SourceItem
 from app.main import app
+from app.models.auto_guide import AutoGuide, AutoGuideStatus
 from app.models.users import User
 
 BASE_URL = "http://test"
-GENERATE_EP = "/api/v1/guides/generate"
 
 _SOURCES = [
     SourceItem(
@@ -55,37 +51,18 @@ async def _signup_and_login(client: AsyncClient, email: str, phone: str) -> str:
     return resp.json()["access_token"]
 
 
-def _make_guide_output(user_id: int) -> HealthGuideOutput:
-    return HealthGuideOutput(
+async def _create_guide(user_id: int) -> int:
+    guide = await AutoGuide.create(
         user_id=user_id,
-        status=GuideStatus.GENERATED,
+        status=AutoGuideStatus.GENERATED,
         medication_general="약물 복용 시 의료진 지시를 따르세요.",
         side_effect_monitoring=_SIDE_EFFECTS,
         lifestyle_info="규칙적인 생활을 유지하세요.",
         symptom_summary="증상 변화를 다음 진료 시 공유하세요.",
-        sources=_SOURCES,
+        sources=[s.model_dump() for s in _SOURCES],
         disclaimer="※ 이 안내문은 의료 진단·처방·치료를 대체하지 않습니다.",
-        created_at=datetime.now(UTC),
     )
-
-
-def _make_result(user_id: int) -> OrchestratorResult:
-    return OrchestratorResult(
-        user_id=user_id,
-        orchestrator_status=OrchestratorStatus.GENERATED,
-        guide=_make_guide_output(user_id),
-        evaluated_at=datetime.now(UTC),
-    )
-
-
-async def _generate_guide(client: AsyncClient, token: str, user_id: int) -> int:
-    mock_result = _make_result(user_id)
-    with patch("app.apis.v1.auto_guide_router.orchestrate", AsyncMock(return_value=mock_result)):
-        resp = await client.post(GENERATE_EP, headers={"Authorization": f"Bearer {token}"})
-    assert resp.status_code == 200
-    guide_id = resp.json()["guide_id"]
-    assert guide_id is not None
-    return guide_id
+    return guide.id
 
 
 class TestGuideSources(TestCase):
@@ -94,7 +71,7 @@ class TestGuideSources(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "src_owner@example.com", "01096000001")
             user = await User.get(email="src_owner@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sources",
@@ -110,7 +87,7 @@ class TestGuideSources(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "src_order@example.com", "01096000002")
             user = await User.get(email="src_order@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sources",
@@ -126,7 +103,7 @@ class TestGuideSources(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "src_fields@example.com", "01096000003")
             user = await User.get(email="src_fields@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sources",
@@ -143,9 +120,9 @@ class TestGuideSources(TestCase):
     async def test_sources_other_user_404(self):
         """다른 유저의 guide_id로 조회하면 404."""
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
-            token_a = await _signup_and_login(client, "src_usera@example.com", "01096000004")
+            await _signup_and_login(client, "src_usera@example.com", "01096000004")
             user_a = await User.get(email="src_usera@example.com")
-            guide_id = await _generate_guide(client, token_a, user_a.id)
+            guide_id = await _create_guide(user_a.id)
 
             token_b = await _signup_and_login(client, "src_userb@example.com", "01096000005")
             resp = await client.get(
@@ -174,7 +151,7 @@ class TestGuideSections(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "sec_owner@example.com", "01096000007")
             user = await User.get(email="sec_owner@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sections",
@@ -189,7 +166,7 @@ class TestGuideSections(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "sec_order@example.com", "01096000008")
             user = await User.get(email="sec_order@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sections",
@@ -204,7 +181,7 @@ class TestGuideSections(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "sec_types@example.com", "01096000009")
             user = await User.get(email="sec_types@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sections",
@@ -219,7 +196,7 @@ class TestGuideSections(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "sec_join@example.com", "01096000010")
             user = await User.get(email="sec_join@example.com")
-            guide_id = await _generate_guide(client, token, user.id)
+            guide_id = await _create_guide(user.id)
 
             resp = await client.get(
                 f"/api/v1/guides/{guide_id}/sections",
@@ -233,9 +210,9 @@ class TestGuideSections(TestCase):
     async def test_sections_other_user_404(self):
         """다른 유저의 guide_id로 sections 조회하면 404."""
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
-            token_a = await _signup_and_login(client, "sec_usera@example.com", "01096000011")
+            await _signup_and_login(client, "sec_usera@example.com", "01096000011")
             user_a = await User.get(email="sec_usera@example.com")
-            guide_id = await _generate_guide(client, token_a, user_a.id)
+            guide_id = await _create_guide(user_a.id)
 
             token_b = await _signup_and_login(client, "sec_userb@example.com", "01096000012")
             resp = await client.get(
