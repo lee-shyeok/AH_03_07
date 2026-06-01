@@ -19,11 +19,7 @@ STREAM_PATCH = "app.services.chat_stream_service.AsyncOpenAI"
 
 
 def parse_sse(text: str) -> list[dict]:
-    return [
-        json.loads(line.strip()[6:])
-        for line in text.split("\n")
-        if line.strip().startswith("data: ")
-    ]
+    return [json.loads(line.strip()[6:]) for line in text.split("\n") if line.strip().startswith("data: ")]
 
 
 def make_openai_mock(tokens: list[str]) -> AsyncMock:

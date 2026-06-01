@@ -50,9 +50,7 @@ class ChatStreamService:
             created = created.replace(tzinfo=UTC)
         return datetime.now(tz=UTC) > created + timedelta(minutes=SESSION_EXPIRE_MINUTES)
 
-    async def stream_message(
-        self, session: ChatSession, user: User, user_message: str
-    ) -> AsyncIterator[str]:
+    async def stream_message(self, session: ChatSession, user: User, user_message: str) -> AsyncIterator[str]:
         # Step 1: 컨텍스트 빌드 (현재 메시지 저장 전 — 히스토리 중복 방지)
         system_prompt, history = await self._build_context(session, user)
         # Step 2: 사용자 메시지 저장
@@ -116,11 +114,13 @@ class ChatStreamService:
                 rag_sources=[],
                 blocked_by_filter=False,
             )
-        yield _sse({
-            "type": "done",
-            "message_id": msg_obj.id,
-            "created_at": msg_obj.created_at.isoformat(),
-        })
+        yield _sse(
+            {
+                "type": "done",
+                "message_id": msg_obj.id,
+                "created_at": msg_obj.created_at.isoformat(),
+            }
+        )
 
     def _make_block_event(self, category: str) -> tuple[dict, str]:
         if category in _EMERGENCY_CATEGORIES:
@@ -130,9 +130,7 @@ class ChatStreamService:
         msg = _GUARDRAIL_MESSAGES.get(category, _DEFAULT_GUARDRAIL)
         return {"type": "guardrail", "category": category, "message": msg}, msg
 
-    async def _build_context(
-        self, session: ChatSession, user: User
-    ) -> tuple[str, list[dict]]:
+    async def _build_context(self, session: ChatSession, user: User) -> tuple[str, list[dict]]:
         recent = await ChatMessage.filter(session=session).order_by("-created_at").limit(HISTORY_LIMIT)
         history = [
             {
@@ -147,17 +145,17 @@ class ChatStreamService:
             names = ", ".join(d.disease_code for d in diseases)
             disease_part = f"\n등록 질환: {names}"
         cutoff = datetime.now(tz=UTC) - timedelta(days=30)
-        guide = await HealthGuideContent.filter(
-            user=user,
-            status=GuideStatus.COMPLETED,
-            created_at__gte=cutoff,
-        ).order_by("-created_at").first()
+        guide = (
+            await HealthGuideContent.filter(
+                user=user,
+                status=GuideStatus.COMPLETED,
+                created_at__gte=cutoff,
+            )
+            .order_by("-created_at")
+            .first()
+        )
         guide_part = ""
         if guide and guide.guide_content:
             guide_part = f"\n\n[최근 맞춤 안내문 - 30일 이내]\n{guide.guide_content[:GUIDE_MAX_CHARS]}"
-        system_prompt = (
-            f"{_SYSTEM_BASE}\n\n"
-            f"[사용자 정보]\n모드: {session.mode}{disease_part}"
-            f"{guide_part}"
-        )
+        system_prompt = f"{_SYSTEM_BASE}\n\n[사용자 정보]\n모드: {session.mode}{disease_part}{guide_part}"
         return system_prompt, history
