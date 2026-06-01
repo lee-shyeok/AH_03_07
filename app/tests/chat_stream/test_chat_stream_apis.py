@@ -91,3 +91,38 @@ class TestChatStreamApis(TestCase):
                 headers=headers,
             )
         assert resp.status_code == status.HTTP_410_GONE
+
+    async def test_stream_blocked_intent_guardrail(self):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "str3@example.com", "01099990003")
+            headers = {"Authorization": f"Bearer {token}"}
+            session_resp = await client.post(SESSIONS_EP, headers=headers)
+            session_id = session_resp.json()["session_id"]
+            resp = await client.post(
+                STREAM_EP.format(session_id=session_id),
+                json={"message": "진단해줘"},
+                headers=headers,
+            )
+        assert resp.status_code == status.HTTP_200_OK
+        events = parse_sse(resp.text)
+        assert len(events) == 1
+        assert events[0]["type"] == "guardrail"
+        assert "category" in events[0]
+        assert "message" in events[0]
+
+    async def test_stream_emergency_event(self):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "str4@example.com", "01099990004")
+            headers = {"Authorization": f"Bearer {token}"}
+            session_resp = await client.post(SESSIONS_EP, headers=headers)
+            session_id = session_resp.json()["session_id"]
+            resp = await client.post(
+                STREAM_EP.format(session_id=session_id),
+                json={"message": "지금 죽을 것 같아"},
+                headers=headers,
+            )
+        assert resp.status_code == status.HTTP_200_OK
+        events = parse_sse(resp.text)
+        assert len(events) == 1
+        assert events[0]["type"] == "emergency"
+        assert "message" in events[0]

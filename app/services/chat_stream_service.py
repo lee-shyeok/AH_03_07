@@ -50,7 +50,29 @@ class ChatStreamService:
     async def stream_message(
         self, session: ChatSession, user: User, user_message: str
     ) -> AsyncIterator[str]:
-        # Task 3~5에서 순차 구현 — 임시 placeholder
+        # Step 1: 사용자 메시지 저장
+        await ChatMessage.create(
+            session=session,
+            role=MessageRole.USER,
+            content=user_message,
+            rag_sources=[],
+            blocked_by_filter=False,
+        )
+        # Step 2: 의도 분류 (가드레일)
+        category = self._validation.classify_intent(user_message)
+        if category is not None:
+            event, msg = self._make_block_event(category)
+            yield _sse(event)
+            await ChatMessage.create(
+                session=session,
+                role=MessageRole.ASSISTANT,
+                content=msg,
+                rag_sources=[],
+                blocked_by_filter=True,
+                block_reason=category,
+            )
+            return
+        # Step 3~5: OpenAI 스트리밍 (Task 4~5에서 구현)
         yield _sse({"type": "done", "message_id": 0, "created_at": ""})
 
     def _make_block_event(self, category: str) -> tuple[dict, str]:
