@@ -3,10 +3,49 @@ from __future__ import annotations
 from datetime import datetime
 
 from app.core import config
-from app.dtos.autoimmune_profile import MedicationBulkCreateRequest, MedicationUpdateRequest, RiskProfileUpsertRequest
+from app.dtos.autoimmune_profile import (
+    AutoimmuneProfileUpsertRequest,
+    MedicationBulkCreateRequest,
+    MedicationUpdateRequest,
+    RiskProfileUpsertRequest,
+)
+from app.models.autoimmune_profile import AutoimmunePregnancyStatus, AutoimmuneProfile
 from app.models.user_medication import UserMedication
 from app.models.user_risk_profile import UserRiskProfile
 from app.models.users import User
+
+_PREGNANCY_ADVISORY = "담당 류마티스내과 및 산부인과 상담이 필요합니다."
+_ADVISORY_STATUSES = {
+    AutoimmunePregnancyStatus.PREGNANT,
+    AutoimmunePregnancyStatus.BREASTFEEDING,
+    AutoimmunePregnancyStatus.PLANNING,
+}
+
+
+class AutoimmuneProfileService:
+    async def get_profile(self, user: User) -> AutoimmuneProfile | None:
+        return await AutoimmuneProfile.get_or_none(user=user)
+
+    async def upsert_profile(self, user: User, data: AutoimmuneProfileUpsertRequest) -> AutoimmuneProfile:
+        profile = await AutoimmuneProfile.get_or_none(user=user)
+        if profile is None:
+            return await AutoimmuneProfile.create(
+                user=user,
+                risk_factors=data.risk_factors,
+                pregnancy_status=data.pregnancy_status,
+                vaccination_history=data.vaccination_history,
+            )
+        profile.risk_factors = data.risk_factors
+        profile.pregnancy_status = data.pregnancy_status
+        profile.vaccination_history = data.vaccination_history
+        await profile.save(update_fields=["risk_factors", "pregnancy_status", "vaccination_history", "updated_at"])
+        return profile
+
+    @staticmethod
+    def advisory_message(profile: AutoimmuneProfile) -> str | None:
+        if profile.pregnancy_status in _ADVISORY_STATUSES:
+            return _PREGNANCY_ADVISORY
+        return None
 
 
 class RiskProfileService:

@@ -5,8 +5,28 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.dtos.base import BaseSerializerModel
+from app.models.autoimmune_profile import AutoimmunePregnancyStatus
 from app.models.user_medication import DrugClass
 from app.models.user_risk_profile import PregnancyStatus
+
+
+class AutoimmuneProfileResponse(BaseSerializerModel):
+    risk_factors: dict
+    pregnancy_status: AutoimmunePregnancyStatus
+    vaccination_history: list
+
+
+class AutoimmuneProfileUpsertRequest(BaseModel):
+    risk_factors: dict = Field(default_factory=dict)
+    pregnancy_status: AutoimmunePregnancyStatus = AutoimmunePregnancyStatus.NONE
+    vaccination_history: list = Field(default_factory=list)
+
+
+class AutoimmuneProfilePutResponse(BaseModel):
+    risk_factors: dict
+    pregnancy_status: AutoimmunePregnancyStatus
+    vaccination_history: list
+    advisory_message: str | None = None
 
 
 class RiskProfileUpsertRequest(BaseModel):
