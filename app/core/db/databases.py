@@ -46,6 +46,7 @@ TORTOISE_APP_MODELS = [
     "app.models.auto_guide",
     "app.models.pre_consultation_report",
     "app.models.report_share",
+    "app.models.safety_filter_log",
 ]
 
 TORTOISE_ORM = {
