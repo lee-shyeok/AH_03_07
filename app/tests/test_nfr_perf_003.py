@@ -126,3 +126,89 @@ async def test_drug_search_cache_miss_calls_http_and_stores() -> None:
     assert key == "cache:drug:search:타이레놀:5"
     assert mock_set.call_args.kwargs["ttl"] == 3600
     assert result.drugs[0].item_name == "타이레놀정500mg"
+
+
+# ── 사용자 프로필 캐시 서비스 ──────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_user_cache_hit_skips_db() -> None:
+    """캐시 히트 시 DB 조회를 건너뛴다."""
+    from app.core.cache.user_cache import UserCacheService
+
+    cached = {"id": 1, "name": "테스터"}
+
+    with (
+        patch("app.core.cache.user_cache.cache_get_json", return_value=cached),
+        patch("app.core.cache.user_cache.cache_set_json") as mock_set,
+        patch("app.core.cache.user_cache.UserRepository") as mock_repo_cls,
+    ):
+        result = await UserCacheService.get_cached_user_info(user_id=1)
+
+    mock_repo_cls.assert_not_called()
+    mock_set.assert_not_called()
+    assert result == cached
+
+
+@pytest.mark.asyncio
+async def test_user_cache_miss_queries_db_and_stores() -> None:
+    """캐시 미스 시 DB를 조회하고 결과를 캐시에 저장한다."""
+    from datetime import date, datetime
+    from unittest.mock import MagicMock
+
+    from app.core.cache.user_cache import UserCacheService
+
+    mock_user = MagicMock()
+    mock_user.id = 2
+    mock_user.name = "신규유저"
+    mock_user.email = "new@example.com"
+    mock_user.phone_number = "01099998888"
+    mock_user.birthday = date(1995, 5, 15)
+    mock_user.gender = "FEMALE"
+    mock_user.created_at = datetime(2026, 1, 1)
+
+    mock_repo = AsyncMock()
+    mock_repo.get_user = AsyncMock(return_value=mock_user)
+
+    with (
+        patch("app.core.cache.user_cache.cache_get_json", return_value=None),
+        patch("app.core.cache.user_cache.cache_set_json") as mock_set,
+        patch("app.core.cache.user_cache.UserRepository", return_value=mock_repo),
+    ):
+        result = await UserCacheService.get_cached_user_info(user_id=2)
+
+    mock_set.assert_awaited_once()
+    assert mock_set.call_args.args[0] == "cache:user:profile:2"
+    assert mock_set.call_args.kwargs["ttl"] == 600
+    assert result is not None
+    assert result["name"] == "신규유저"
+
+
+@pytest.mark.asyncio
+async def test_user_cache_miss_returns_none_when_user_not_found() -> None:
+    """DB에 유저가 없으면 None을 반환한다."""
+    from app.core.cache.user_cache import UserCacheService
+
+    mock_repo = AsyncMock()
+    mock_repo.get_user = AsyncMock(return_value=None)
+
+    with (
+        patch("app.core.cache.user_cache.cache_get_json", return_value=None),
+        patch("app.core.cache.user_cache.cache_set_json") as mock_set,
+        patch("app.core.cache.user_cache.UserRepository", return_value=mock_repo),
+    ):
+        result = await UserCacheService.get_cached_user_info(user_id=999)
+
+    mock_set.assert_not_called()
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_user_cache_invalidate_deletes_key() -> None:
+    """invalidate 호출 시 해당 유저 캐시 키를 삭제한다."""
+    from app.core.cache.user_cache import UserCacheService
+
+    with patch("app.core.cache.user_cache.cache_delete") as mock_del:
+        await UserCacheService.invalidate(user_id=3)
+
+    mock_del.assert_awaited_once_with("cache:user:profile:3")
