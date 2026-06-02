@@ -32,8 +32,16 @@ class TestActivityChartApis(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "chart_data@example.com", "01077770001")
             headers = {"Authorization": f"Bearer {token}"}
-            await client.put(f"/api/v1/activity-logs/{date_1}", json={**LOG_DATA, "pain_vas": 4}, headers=headers)
-            await client.put(f"/api/v1/activity-logs/{date_2}", json={**LOG_DATA, "pain_vas": 8}, headers=headers)
+            await client.post(
+                "/api/v1/activity-logs",
+                json={**LOG_DATA, "log_date": date_1, "pain_vas": 4},
+                headers=headers,
+            )
+            await client.post(
+                "/api/v1/activity-logs",
+                json={**LOG_DATA, "log_date": date_2, "pain_vas": 8},
+                headers=headers,
+            )
             resp = await client.get("/api/v1/activity-logs/chart?period=1w", headers=headers)
         assert resp.status_code == status.HTTP_200_OK
         body = resp.json()

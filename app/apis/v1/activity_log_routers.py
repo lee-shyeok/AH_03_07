@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import ORJSONResponse as Response
 
 from app.dependencies.security import get_request_user
@@ -14,14 +14,13 @@ from app.services.autoimmune_log_service import ActivityLogService
 activity_log_router = APIRouter(prefix="/activity-logs", tags=["activity-logs"])
 
 
-@activity_log_router.put("/{log_date}", response_model=ActivityLogResponse, status_code=status.HTTP_200_OK)
+@activity_log_router.post("", response_model=ActivityLogResponse, status_code=status.HTTP_200_OK)
 async def upsert_activity_log(
-    log_date: date,
     body: ActivityLogUpsertRequest,
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[ActivityLogService, Depends(ActivityLogService)],
 ) -> Response:
-    log = await service.upsert_log(user=user, log_date=log_date, data=body)
+    log = await service.upsert_log(user=user, data=body)
     return Response(ActivityLogResponse.model_validate(log).model_dump(), status_code=status.HTTP_200_OK)
 
 
@@ -29,8 +28,10 @@ async def upsert_activity_log(
 async def list_activity_logs(
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[ActivityLogService, Depends(ActivityLogService)],
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
 ) -> Response:
-    logs = await service.list_logs(user=user)
+    logs = await service.list_logs(user=user, from_date=from_date, to_date=to_date)
     return Response(
         [ActivityLogResponse.model_validate(log).model_dump() for log in logs],
         status_code=status.HTTP_200_OK,

@@ -21,25 +21,25 @@ RED_FLAG_SYMPTOMS: frozenset[SymptomCode] = frozenset(
 
 
 class ActivityLogService:
-    async def upsert_log(self, user: User, log_date: date, data: ActivityLogUpsertRequest) -> DiseaseActivityLog:
-        log = await DiseaseActivityLog.get_or_none(user=user, log_date=log_date)
+    async def upsert_log(self, user: User, data: ActivityLogUpsertRequest) -> DiseaseActivityLog:
+        log = await DiseaseActivityLog.get_or_none(user=user, log_date=data.log_date)
         if log is None:
             return await DiseaseActivityLog.create(
                 user=user,
-                log_date=log_date,
+                log_date=data.log_date,
                 pain_vas=data.pain_vas,
                 fatigue=data.fatigue,
-                morning_stiffness_min=data.morning_stiffness_min,
+                morning_stiffness_min=data.morning_stiffness_minutes,
                 joint_swelling_areas=data.joint_swelling_areas,
                 daily_difficulty=data.daily_difficulty,
-                note=data.note,
+                note=data.free_memo,
             )
         log.pain_vas = data.pain_vas
         log.fatigue = data.fatigue
-        log.morning_stiffness_min = data.morning_stiffness_min
+        log.morning_stiffness_min = data.morning_stiffness_minutes
         log.joint_swelling_areas = data.joint_swelling_areas
         log.daily_difficulty = data.daily_difficulty
-        log.note = data.note
+        log.note = data.free_memo
         log.updated_at = datetime.now(config.TIMEZONE)
         await log.save(
             update_fields=[
@@ -54,8 +54,18 @@ class ActivityLogService:
         )
         return log
 
-    async def list_logs(self, user: User) -> list[DiseaseActivityLog]:
-        return await DiseaseActivityLog.filter(user=user).order_by("-log_date")
+    async def list_logs(
+        self,
+        user: User,
+        from_date: date | None = None,
+        to_date: date | None = None,
+    ) -> list[DiseaseActivityLog]:
+        qs = DiseaseActivityLog.filter(user=user)
+        if from_date is not None:
+            qs = qs.filter(log_date__gte=from_date)
+        if to_date is not None:
+            qs = qs.filter(log_date__lte=to_date)
+        return await qs.order_by("-log_date")
 
     async def get_log_by_date(self, user: User, log_date: date) -> DiseaseActivityLog | None:
         return await DiseaseActivityLog.get_or_none(user=user, log_date=log_date)

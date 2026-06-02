@@ -41,12 +41,13 @@ async def _register_sle_disease(client: AsyncClient, headers: dict) -> None:
 
 async def _upsert_activity_log(client: AsyncClient, headers: dict, log_date: str, **fields) -> None:
     body = {
+        "log_date": log_date,
         "pain_vas": 3,
         "fatigue": 3,
         "daily_difficulty": 3,
         **fields,
     }
-    await client.put(f"/api/v1/activity-logs/{log_date}", json=body, headers=headers)
+    await client.post("/api/v1/activity-logs", json=body, headers=headers)
 
 
 async def _create_skin_log(email: str, symptom_type: LupusSkinSymptomType = LupusSkinSymptomType.RASH) -> None:

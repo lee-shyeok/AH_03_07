@@ -39,12 +39,13 @@ async def _register_ra_disease(client: AsyncClient, headers: dict) -> None:
 
 async def _upsert_activity_log(client: AsyncClient, headers: dict, log_date: str, **fields) -> None:
     body = {
+        "log_date": log_date,
         "pain_vas": 3,
         "fatigue": 3,
         "daily_difficulty": 3,
         **fields,
     }
-    await client.put(f"/api/v1/activity-logs/{log_date}", json=body, headers=headers)
+    await client.post("/api/v1/activity-logs", json=body, headers=headers)
 
 
 class TestRAExposureApis(TestCase):
@@ -75,7 +76,7 @@ class TestRAExposureApis(TestCase):
             token = await _signup_and_login(client, "ra_stiff@example.com", "01090000003")
             headers = {"Authorization": f"Bearer {token}"}
             await _register_ra_disease(client, headers)
-            await _upsert_activity_log(client, headers, today, morning_stiffness_min=30)
+            await _upsert_activity_log(client, headers, today, morning_stiffness_minutes=30)
             resp = await client.get(ENDPOINT, headers=headers)
         data = resp.json()
         codes = [t["code"] for t in data["triggers"]]
@@ -192,7 +193,7 @@ class TestRAExposureApis(TestCase):
             token = await _signup_and_login(client, "ra_safety@example.com", "01090000010")
             headers = {"Authorization": f"Bearer {token}"}
             await _register_ra_disease(client, headers)
-            await _upsert_activity_log(client, headers, today.isoformat(), morning_stiffness_min=45, pain_vas=9)
+            await _upsert_activity_log(client, headers, today.isoformat(), morning_stiffness_minutes=45, pain_vas=9)
             for i in range(3):
                 await _upsert_activity_log(
                     client,

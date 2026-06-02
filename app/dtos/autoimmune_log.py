@@ -9,12 +9,13 @@ from app.models.symptom_check_log import SymptomCode
 
 
 class ActivityLogUpsertRequest(BaseModel):
+    log_date: date
     pain_vas: int = Field(..., ge=0, le=10)
     fatigue: int = Field(..., ge=0, le=10)
-    morning_stiffness_min: int | None = Field(None, ge=0)
+    morning_stiffness_minutes: int | None = Field(None, ge=0)
     joint_swelling_areas: list[str] | None = None
     daily_difficulty: int = Field(..., ge=0, le=10)
-    note: str | None = Field(None, max_length=500)
+    free_memo: str | None = Field(None, max_length=500)
 
 
 class ActivityLogResponse(BaseSerializerModel):
@@ -22,10 +23,10 @@ class ActivityLogResponse(BaseSerializerModel):
     log_date: date
     pain_vas: int
     fatigue: int
-    morning_stiffness_min: int | None
+    morning_stiffness_minutes: int | None = Field(None, validation_alias="morning_stiffness_min")
     joint_swelling_areas: list[str] | None
     daily_difficulty: int
-    note: str | None
+    free_memo: str | None = Field(None, validation_alias="note")
     created_at: datetime
     updated_at: datetime
 

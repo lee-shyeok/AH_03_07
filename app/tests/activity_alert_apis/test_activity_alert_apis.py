@@ -34,7 +34,7 @@ async def _signup_and_login(client: AsyncClient, email: str, phone: str) -> str:
 
 async def _put_log(client: AsyncClient, headers: dict, days_ago: int, data: dict) -> None:
     log_date = (date.today() - timedelta(days=days_ago)).isoformat()
-    await client.put(f"/api/v1/activity-logs/{log_date}", json=data, headers=headers)
+    await client.post("/api/v1/activity-logs", json={**data, "log_date": log_date}, headers=headers)
 
 
 class TestAlertSettingApis(TestCase):
