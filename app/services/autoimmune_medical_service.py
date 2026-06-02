@@ -75,14 +75,24 @@ class LabResultService:
         return await LabResult.create(
             user=user,
             test_date=data.test_date,
-            test_item=data.test_item,
-            value=data.value,
+            test_item=data.test_type,
+            value=data.user_recorded_value,
             reference_range=data.reference_range,
             note=data.note,
         )
 
-    async def list_results(self, user: User) -> list[LabResult]:
-        return await LabResult.filter(user=user, deleted_at=None).order_by("-test_date")
+    async def list_results(
+        self,
+        user: User,
+        from_date: date | None = None,
+        to_date: date | None = None,
+    ) -> list[LabResult]:
+        qs = LabResult.filter(user=user, deleted_at=None)
+        if from_date is not None:
+            qs = qs.filter(test_date__gte=from_date)
+        if to_date is not None:
+            qs = qs.filter(test_date__lte=to_date)
+        return await qs.order_by("-test_date")
 
     async def get_result(self, user: User, result_id: int) -> LabResult | None:
         return await LabResult.get_or_none(id=result_id, user=user, deleted_at=None)
@@ -91,13 +101,23 @@ class LabResultService:
         result = await self.get_result(user, result_id)
         if result is None:
             return None
-        update_data = data.model_dump(exclude_unset=True)
-        update_fields = list(update_data.keys())
-        for field, value in update_data.items():
-            setattr(result, field, value)
-        result.updated_at = datetime.now(config.TIMEZONE)
-        update_fields.append("updated_at")
-        await result.save(update_fields=update_fields)
+        # DTO field name → model column name mapping (PATCH: only set fields explicitly sent)
+        field_map: list[tuple[str, str]] = [
+            ("test_date", "test_date"),
+            ("test_type", "test_item"),
+            ("user_recorded_value", "value"),
+            ("reference_range", "reference_range"),
+            ("note", "note"),
+        ]
+        update_fields: list[str] = []
+        for dto_field, model_field in field_map:
+            if dto_field in data.model_fields_set:
+                setattr(result, model_field, getattr(data, dto_field))
+                update_fields.append(model_field)
+        if update_fields:
+            result.updated_at = datetime.now(config.TIMEZONE)
+            update_fields.append("updated_at")
+            await result.save(update_fields=update_fields)
         return result
 
     async def delete_result(self, user: User, result_id: int) -> bool:
