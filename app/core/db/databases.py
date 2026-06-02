@@ -48,6 +48,9 @@ TORTOISE_APP_MODELS = [
     "app.models.pre_consultation_report",
     "app.models.report_share",
     "app.models.safety_filter_log",
+    "app.models.model_improvement_dataset",
+    "app.models.model_version",
+    "app.models.prompt_version",
 ]
 
 TORTOISE_ORM = {

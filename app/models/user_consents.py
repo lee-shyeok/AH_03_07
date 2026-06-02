@@ -9,6 +9,8 @@ class ConsentType(StrEnum):
     PRIVACY_POLICY = "PRIVACY_POLICY"
     MEDICAL_DATA = "MEDICAL_DATA"
     MARKETING = "MARKETING"
+    # REQ-FEED-002: 피드백 가명처리 후 모델 개선 활용 동의 (개인정보보호법 §28-2)
+    MODEL_IMPROVEMENT = "MODEL_IMPROVEMENT"
 
 
 class UserConsent(models.Model):
