@@ -44,6 +44,7 @@ TORTOISE_APP_MODELS = [
     "app.models.risk_flag",
     "app.models.autoimmune_profile",
     "app.models.auto_guide",
+    "app.models.guide_generation_job",
     "app.models.pre_consultation_report",
     "app.models.report_share",
     "app.models.safety_filter_log",
