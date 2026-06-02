@@ -212,3 +212,116 @@ async def test_user_cache_invalidate_deletes_key() -> None:
         await UserCacheService.invalidate(user_id=3)
 
     mock_del.assert_awaited_once_with("cache:user:profile:3")
+
+
+# ── 가이드 상세 캐시 ──────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_guide_cache_hit_skips_repo() -> None:
+    """캐시 히트 시 레포지토리 조회를 건너뛴다."""
+    from uuid import UUID
+
+    from app.services.health_guides import HealthGuideService
+
+    guide_id = UUID("11111111-1111-1111-1111-111111111111")
+    cached_guide = {
+        "id": str(guide_id),
+        "guide_type": "GENERAL",
+        "status": "COMPLETED",
+        "user_question": "두통이 심해요",
+        "guide_content": "충분한 수분 섭취를 권장합니다.",
+        "created_at": "2026-01-01T00:00:00",
+        "updated_at": "2026-01-01T00:00:00",
+    }
+
+    service = HealthGuideService.__new__(HealthGuideService)
+    service.repo = AsyncMock()
+
+    with (
+        patch("app.services.health_guides.cache_get_json", return_value=cached_guide),
+        patch("app.services.health_guides.cache_set_json") as mock_set,
+    ):
+        result = await service.get_guide_by_id(guide_id)
+
+    service.repo.get_by_id.assert_not_called()
+    mock_set.assert_not_called()
+    assert result is not None
+    assert result.guide_content == "충분한 수분 섭취를 권장합니다."
+
+
+@pytest.mark.asyncio
+async def test_guide_cache_miss_queries_repo_and_stores() -> None:
+    """캐시 미스 시 레포지토리를 조회하고 결과를 캐시에 저장한다."""
+    from datetime import datetime
+    from unittest.mock import MagicMock
+    from uuid import uuid4
+
+    from app.services.health_guides import HealthGuideService
+
+    guide_id = uuid4()
+    mock_guide = MagicMock()
+    mock_guide.id = guide_id
+    mock_guide.guide_type = "GENERAL"
+    mock_guide.status = "COMPLETED"
+    mock_guide.user_question = "두통이 심해요"
+    mock_guide.guide_content = "충분한 수분 섭취를 권장합니다."
+    mock_guide.created_at = datetime(2026, 1, 1)
+    mock_guide.updated_at = datetime(2026, 1, 1)
+
+    mock_repo = AsyncMock()
+    mock_repo.get_by_id = AsyncMock(return_value=mock_guide)
+
+    service = HealthGuideService.__new__(HealthGuideService)
+    service.repo = mock_repo
+
+    with (
+        patch("app.services.health_guides.cache_get_json", return_value=None),
+        patch("app.services.health_guides.cache_set_json") as mock_set,
+    ):
+        result = await service.get_guide_by_id(guide_id)
+
+    mock_set.assert_awaited_once()
+    assert mock_set.call_args.args[0] == f"cache:guide:detail:{guide_id}"
+    assert mock_set.call_args.kwargs["ttl"] == 1800
+    assert result is not None
+    assert result.guide_content == "충분한 수분 섭취를 권장합니다."
+
+
+@pytest.mark.asyncio
+async def test_guide_cache_miss_returns_none_when_not_found() -> None:
+    """레포지토리에 가이드가 없으면 None을 반환한다."""
+    from uuid import uuid4
+
+    from app.services.health_guides import HealthGuideService
+
+    mock_repo = AsyncMock()
+    mock_repo.get_by_id = AsyncMock(return_value=None)
+
+    service = HealthGuideService.__new__(HealthGuideService)
+    service.repo = mock_repo
+
+    with (
+        patch("app.services.health_guides.cache_get_json", return_value=None),
+        patch("app.services.health_guides.cache_set_json") as mock_set,
+    ):
+        result = await service.get_guide_by_id(uuid4())
+
+    mock_set.assert_not_called()
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_guide_cache_invalidated_on_cache_invalidate_call() -> None:
+    """invalidate_guide_cache 호출 시 해당 가이드 캐시 키를 삭제한다."""
+    from uuid import uuid4
+
+    from app.services.health_guides import HealthGuideService
+
+    guide_id = uuid4()
+    service = HealthGuideService.__new__(HealthGuideService)
+
+    with patch("app.services.health_guides.cache_delete") as mock_del:
+        await service.invalidate_guide_cache(guide_id)
+
+    mock_del.assert_awaited_once_with(f"cache:guide:detail:{guide_id}")

@@ -4,6 +4,7 @@ from uuid import UUID
 from openai import OpenAI
 
 from app.core import config
+from app.core.cache.client import TTL_GUIDE_DETAIL, cache_delete, cache_get_json, cache_set_json
 from app.dtos.health_guides import (
     HealthGuideCreateRequest,
     HealthGuideListResponse,
@@ -15,6 +16,10 @@ from app.models.prompts import PromptType
 from app.repositories.health_guide_repository import HealthGuideRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.prompt_repository import PromptRepository
+
+
+def _guide_cache_key(guide_id: UUID) -> str:
+    return f"cache:guide:detail:{guide_id}"
 
 
 class HealthGuideService:
@@ -30,6 +35,25 @@ class HealthGuideService:
             guides=[HealthGuideResponse.model_validate(g) for g in guides],
             total=len(guides),
         )
+
+    async def get_guide_by_id(self, guide_id: UUID) -> HealthGuideResponse | None:
+        """가이드 상세 조회 (Cache-Aside, TTL 30분)"""
+        key = _guide_cache_key(guide_id)
+        cached = await cache_get_json(key)
+        if cached is not None:
+            return HealthGuideResponse.model_validate(cached)
+
+        guide = await self.repo.get_by_id(guide_id)
+        if guide is None:
+            return None
+
+        result = HealthGuideResponse.model_validate(guide)
+        await cache_set_json(key, result.model_dump(mode="json"), ttl=TTL_GUIDE_DETAIL)
+        return result
+
+    async def invalidate_guide_cache(self, guide_id: UUID) -> None:
+        """가이드 수정 시 캐시 무효화."""
+        await cache_delete(_guide_cache_key(guide_id))
 
     async def generate_guide(self, user_id: UUID, data: HealthGuideCreateRequest) -> HealthGuideResponse:
         """AI 가이드 생성!"""
@@ -65,6 +89,7 @@ class HealthGuideService:
                 guide_content=guide_content,
                 status=GuideStatus.COMPLETED,
             )
+            await self.invalidate_guide_cache(guide.id)
             guide = await self.repo.get_by_id(guide.id)
 
             # NOTI-003: 가이드 생성 완료 알림
@@ -82,6 +107,7 @@ class HealthGuideService:
                 guide_content=f"가이드 생성 실패: {str(e)}",
                 status=GuideStatus.FAILED,
             )
+            await self.invalidate_guide_cache(guide.id)
             guide = await self.repo.get_by_id(guide.id)
 
         return HealthGuideResponse.model_validate(guide)
