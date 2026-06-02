@@ -1,7 +1,12 @@
 import httpx
 
 from app.core import config
+from app.core.cache.client import TTL_DRUG_SEARCH, cache_get_json, cache_set_json
 from app.dtos.drug_info import DrugInfo, DrugSearchResponse
+
+
+def _drug_cache_key(drug_name: str, num_of_rows: int) -> str:
+    return f"cache:drug:search:{drug_name}:{num_of_rows}"
 
 
 class DrugInfoService:
@@ -13,8 +18,12 @@ class DrugInfoService:
 
     async def search_drug(self, drug_name: str, num_of_rows: int = 5) -> DrugSearchResponse:
         """약품명으로 의약품 정보 검색"""
-        url = f"{self.base_url}/getDrbEasyDrugList"
+        key = _drug_cache_key(drug_name, num_of_rows)
+        cached = await cache_get_json(key)
+        if cached is not None:
+            return DrugSearchResponse.model_validate(cached)
 
+        url = f"{self.base_url}/getDrbEasyDrugList"
         params = {
             "serviceKey": self.api_key,
             "itemName": drug_name,
@@ -28,7 +37,6 @@ class DrugInfoService:
             response.raise_for_status()
             data = response.json()
 
-        # 응답 파싱
         body = data.get("body", {})
         items = body.get("items", [])
         total_count = body.get("totalCount", 0)
@@ -54,8 +62,6 @@ class DrugInfoService:
                 )
             )
 
-        return DrugSearchResponse(
-            query=drug_name,
-            total_count=total_count,
-            drugs=drugs,
-        )
+        result = DrugSearchResponse(query=drug_name, total_count=total_count, drugs=drugs)
+        await cache_set_json(key, result.model_dump(), ttl=TTL_DRUG_SEARCH)
+        return result
