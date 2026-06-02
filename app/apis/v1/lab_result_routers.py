@@ -1,6 +1,7 @@
+from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import ORJSONResponse
 
 from app.dependencies.security import get_request_user
@@ -32,8 +33,10 @@ async def create_lab_result(
 async def list_lab_results(
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[LabResultService, Depends(LabResultService)],
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
 ) -> ORJSONResponse:
-    results = await service.list_results(user=user)
+    results = await service.list_results(user=user, from_date=from_date, to_date=to_date)
     return ORJSONResponse(
         [LabResultResponse.model_validate(r).model_dump() for r in results],
         status_code=status.HTTP_200_OK,
