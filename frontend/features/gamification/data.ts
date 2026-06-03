@@ -1,0 +1,57 @@
+// 게임화 더미 데이터 (Flutter dummyList 이식) — 백엔드 연동 시 API로 교체
+import type { Badge, Reward, UserPoints } from "./types";
+
+export const DUMMY_POINTS: UserPoints = { totalPoints: 240, todayCheckedIn: false };
+
+export const BADGES: Badge[] = [
+  { id: "checkin_1", name: "첫 출석", description: "첫 출석체크 완료", icon: "👋", earned: true },
+  { id: "streak_3", name: "3일 연속", description: "3일 연속 출석", icon: "🌱", earned: true },
+  { id: "streak_7", name: "7일 연속", description: "7일 연속 출석", icon: "🔥", earned: true },
+  { id: "streak_14", name: "2주 개근", description: "14일 연속 출석", icon: "⚡", earned: false },
+  { id: "streak_30", name: "한 달 개근", description: "30일 연속 출석", icon: "🌟", earned: false },
+  { id: "streak_100", name: "100일의 기적", description: "100일 연속 출석", icon: "🎯", earned: false },
+  { id: "streak_365", name: "1년 개근왕", description: "365일 연속 출석", icon: "👑", earned: false },
+  { id: "med_1", name: "첫 복약", description: "복약 체크 첫 완료", icon: "💊", earned: true },
+  { id: "med_10", name: "복약 습관", description: "복약 체크 10회", icon: "🩺", earned: true },
+  { id: "med_30", name: "복약 마스터", description: "복약 체크 30회", icon: "🏆", earned: false },
+  { id: "med_100", name: "복약 레전드", description: "복약 체크 100회", icon: "🦸", earned: false },
+  { id: "lab_1", name: "첫 기록", description: "검사결과 첫 등록", icon: "🏅", earned: true },
+  { id: "lab_5", name: "검사 기록왕", description: "검사결과 5개 등록", icon: "🔬", earned: false },
+  { id: "lab_10", name: "검사 전문가", description: "검사결과 10개 등록", icon: "🧬", earned: false },
+  { id: "chat_1", name: "첫 대화", description: "챗봇 첫 이용", icon: "💬", earned: true },
+  { id: "chat_10", name: "챗봇 친구", description: "챗봇 10회 이용", icon: "🤖", earned: false },
+  { id: "chat_50", name: "챗봇 마스터", description: "챗봇 50회 이용", icon: "🧠", earned: false },
+  { id: "guide_1", name: "첫 가이드", description: "가이드 첫 읽기", icon: "📖", earned: true },
+  { id: "guide_5", name: "가이드 탐험가", description: "가이드 5개 읽기", icon: "🗺️", earned: false },
+  { id: "guide_20", name: "가이드 박사", description: "가이드 20개 읽기", icon: "🎓", earned: false },
+  { id: "point_100", name: "새싹 투자자", description: "포인트 100P 달성", icon: "🌿", earned: true },
+  { id: "point_500", name: "포인트 수집가", description: "포인트 500P 달성", icon: "💰", earned: false },
+  { id: "point_1000", name: "포인트 부자", description: "포인트 1000P 달성", icon: "💎", earned: false },
+  { id: "first_reward", name: "첫 교환", description: "보상 첫 교환 완료", icon: "🎁", earned: false },
+  { id: "reward_10", name: "수집 마니아", description: "보상 10개 교환", icon: "🗝️", earned: false },
+  { id: "health_week", name: "건강 일주일", description: "7일간 건강기록 입력", icon: "📅", earned: false },
+  { id: "health_month", name: "건강 한 달", description: "30일간 건강기록 입력", icon: "📆", earned: false },
+  { id: "early_bird", name: "얼리버드", description: "오전 7시 이전 출석체크", icon: "🌅", earned: false },
+  { id: "night_owl", name: "야행성", description: "오후 11시 이후 출석체크", icon: "🦉", earned: false },
+  { id: "comeback", name: "컴백", description: "7일 공백 후 복귀", icon: "🔄", earned: false },
+  { id: "perfect_week", name: "완벽한 일주일", description: "7일 모든 미션 완료", icon: "✨", earned: false },
+  { id: "all_rounder", name: "올라운더", description: "모든 카테고리 1회 이상", icon: "🌈", earned: false },
+  { id: "dedicated", name: "헌신자", description: "총 활동 50회 달성", icon: "🎗️", earned: false },
+  { id: "legend", name: "전설", description: "모든 뱃지 80% 달성", icon: "🌠", earned: false },
+];
+
+export const REWARDS: Reward[] = [
+  { id: "title_beginner", name: "건강 입문자", type: "title", requiredPoints: 50, owned: true },
+  { id: "title_explorer", name: "가이드 탐험가", type: "title", requiredPoints: 100, owned: true },
+  { id: "title_guardian", name: "건강 지킴이", type: "title", requiredPoints: 150, owned: false },
+  { id: "title_med_master", name: "복약 마스터", type: "title", requiredPoints: 250, owned: false },
+  { id: "title_expert", name: "건강 전문가", type: "title", requiredPoints: 500, owned: false },
+  { id: "title_legend", name: "건강 레전드", type: "title", requiredPoints: 900, owned: false },
+  { id: "title_god", name: "건강의 신", type: "title", requiredPoints: 2000, owned: false },
+  { id: "theme_green", name: "그린 테마", type: "theme", requiredPoints: 300, owned: false },
+  { id: "theme_blue", name: "블루 테마", type: "theme", requiredPoints: 300, owned: false },
+  { id: "theme_purple", name: "퍼플 테마", type: "theme", requiredPoints: 600, owned: false },
+  { id: "theme_gold", name: "골드 테마", type: "theme", requiredPoints: 800, owned: false },
+  { id: "theme_rainbow", name: "레인보우 테마", type: "theme", requiredPoints: 1000, owned: false },
+  { id: "theme_diamond", name: "다이아 테마", type: "theme", requiredPoints: 1500, owned: false },
+];
