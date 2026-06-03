@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.apis.v1.activity_alert_routers import activity_alert_router
 from app.apis.v1.activity_log_routers import activity_log_router
+from app.apis.v1.admin_routers import admin_router
 from app.apis.v1.auth_routers import auth_router
 from app.apis.v1.auto_guide_router import auto_guide_router, guide_generation_job_router
 from app.apis.v1.autoimmune_care_routers import (
@@ -39,6 +40,7 @@ from app.apis.v1.user_medication_routers import user_medication_router
 from app.apis.v1.user_routers import user_router
 
 v1_routers = APIRouter(prefix="/api/v1")
+v1_routers.include_router(admin_router)
 v1_routers.include_router(auth_router)
 v1_routers.include_router(user_consent_router)
 v1_routers.include_router(user_router)
