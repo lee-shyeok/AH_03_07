@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
-      router.replace("/home");
+      router.replace("/mode-select");
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -78,7 +78,7 @@ export default function LoginPage() {
             variant="outline"
             className="mt-3 w-full"
             size="lg"
-            onClick={() => router.replace("/home")}
+            onClick={() => router.replace("/mode-select")}
           >
             로그인 없이 둘러보기 (체험)
           </Button>

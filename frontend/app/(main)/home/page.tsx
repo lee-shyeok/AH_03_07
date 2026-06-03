@@ -6,6 +6,7 @@ import { ArrowRight, Check, Circle, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getDashboard } from "@/features/dashboard/api";
 import { getMe } from "@/features/auth/api";
+import { getMode } from "@/features/auth/mode";
 import type { DashboardData } from "@/features/dashboard/api";
 
 const PURPLE = "#7C5CCF";
@@ -22,6 +23,8 @@ export default function HomePage() {
   const [userType, setUserType] = useState<"general" | "autoimmune">("general");
 
   useEffect(() => {
+    // 로컬에 저장된 모드 선택을 우선 반영 (백엔드 없이도 동작)
+    setUserType(getMode());
     getMe()
       .then((u) => {
         setName(u.name);

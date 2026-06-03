@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getMe, logout } from "@/features/auth/api";
+import { getMode, type UserMode } from "@/features/auth/mode";
 import type { UserProfile } from "@/features/auth/types";
 
 const PURPLE = "#7C5CCF";
@@ -18,12 +19,14 @@ const PURPLE = "#7C5CCF";
 export default function MyPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [mode, setModeState] = useState<UserMode>("general");
 
   useEffect(() => {
+    setModeState(getMode());
     getMe().then(setUser).catch(() => {});
   }, []);
 
-  const isAuto = user?.user_type === "autoimmune";
+  const isAuto = (user?.user_type ?? mode) === "autoimmune";
   const accent = isAuto ? PURPLE : undefined; // 일반=초록(기본), 자가면역=보라
 
   async function handleLogout() {
@@ -64,6 +67,7 @@ export default function MyPage() {
   ];
 
   const appMenus = [
+    { href: "/mode-select", label: "모드 변경 (일반 / 자가면역)", icon: User },
     { href: "/notifications", label: "알림 설정", icon: Bell },
     { href: "/consent", label: "동의 관리", icon: ShieldCheck },
     { href: "/settings", label: "설정", icon: Settings },

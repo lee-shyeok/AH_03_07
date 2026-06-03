@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, UserPlus } from "lucide-react";
+import { setMode } from "@/features/auth/mode";
 
 const GREEN = "hsl(142 71% 45%)";
 const PURPLE = "#7C5CCF";
@@ -14,7 +15,14 @@ export default function ModeSelectPage() {
   const [selected, setSelected] = useState<Mode | null>(null);
 
   function confirm() {
-    // 백엔드: PATCH /v1/users/me { user_type: selected } 또는 mode API
+    if (!selected) return;
+    // 백엔드: PATCH /v1/users/me { user_type: selected } (현재는 로컬 저장)
+    setMode(selected);
+    router.replace("/home");
+  }
+
+  function later() {
+    setMode("general");
     router.replace("/home");
   }
 
@@ -69,7 +77,7 @@ export default function ModeSelectPage() {
             확인
           </button>
         )}
-        <button onClick={() => router.replace("/home")} className="text-sm text-muted-foreground">
+        <button onClick={later} className="text-sm text-muted-foreground">
           나중에 선택할게요
         </button>
       </div>
