@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createRecord } from "@/features/medical-records/api";
+import { addLocalRecord } from "@/features/medical-records/local";
 
 export default function NewRecordPage() {
   const router = useRouter();
@@ -21,20 +22,23 @@ export default function NewRecordPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const payload = {
+      hospital_name: hospital,
+      department,
+      visit_date: visitDate,
+      diagnosis,
+      memo,
+    };
+    // 로컬에 항상 저장(데모에서 목록에 바로 표시)
+    addLocalRecord(payload);
     try {
-      // 백엔드가 살아있으면 저장, 없으면 2초 후 데모로 진행
+      // 백엔드가 살아있으면 서버에도 저장, 없으면 2초 후 진행
       await Promise.race([
-        createRecord({
-          hospital_name: hospital,
-          department,
-          visit_date: visitDate,
-          diagnosis,
-          memo,
-        }),
+        createRecord(payload),
         new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
       ]);
     } catch {
-      // 백엔드 미가동(데모) — 저장 흐름은 그대로 진행
+      // 백엔드 미가동(데모) — 로컬 저장으로 충분
     }
     router.replace("/records");
   }

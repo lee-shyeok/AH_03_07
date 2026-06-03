@@ -5,23 +5,33 @@ import Link from "next/link";
 import { Plus, Trash2, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getRecords, deleteRecord } from "@/features/medical-records/api";
+import { getLocalRecords, deleteLocalRecord } from "@/features/medical-records/local";
 import type { MedicalRecord } from "@/features/medical-records/api";
 
 export default function RecordsPage() {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
-    setError(null);
+    // 로컬 저장분을 먼저 표시(백엔드 없이 즉시 동작)
+    const local = getLocalRecords();
+    let server: MedicalRecord[] = [];
     try {
-      setRecords(await getRecords());
+      server = await Promise.race([
+        getRecords(),
+        new Promise<MedicalRecord[]>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
+      ]);
     } catch {
-      setError("진료기록을 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
+      // 백엔드 미가동 — 로컬만 표시
     }
+    // 서버 데이터와 병합(id 기준 중복 제거)
+    const merged = [...local];
+    for (const s of server) {
+      if (!merged.some((r) => r.id === s.id)) merged.push(s);
+    }
+    setRecords(merged);
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -30,11 +40,12 @@ export default function RecordsPage() {
 
   async function handleDelete(id: number) {
     if (!confirm("이 진료기록을 삭제하시겠습니까?")) return;
+    deleteLocalRecord(id);
+    setRecords((prev) => prev.filter((r) => r.id !== id));
     try {
       await deleteRecord(id);
-      setRecords((prev) => prev.filter((r) => r.id !== id));
     } catch {
-      alert("삭제에 실패했습니다.");
+      // 백엔드 미가동 — 로컬 삭제만 적용
     }
   }
 
@@ -53,13 +64,6 @@ export default function RecordsPage() {
 
       {loading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
-      ) : error ? (
-        <div className="mt-8">
-          <p className="text-sm text-destructive">{error}</p>
-          <button onClick={load} className="mt-2 text-sm text-primary hover:underline">
-            다시 시도
-          </button>
-        </div>
       ) : records.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-muted-foreground">
           <FileText className="h-12 w-12 opacity-30" />

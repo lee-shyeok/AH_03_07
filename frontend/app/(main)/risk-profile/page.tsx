@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ShieldCheck, Check } from "lucide-react";
 
 const PURPLE = "#7C5CCF";
@@ -32,6 +33,8 @@ function CheckItem({ label, checked, onClick }: { label: string; checked: boolea
 }
 
 export default function RiskProfilePage() {
+  const router = useRouter();
+  const [saved, setSaved] = useState(false);
   const [pregnancy, setPregnancy] = useState("해당없음");
   const [kidney, setKidney] = useState("없음");
   const [liver, setLiver] = useState("없음");
@@ -41,6 +44,11 @@ export default function RiskProfilePage() {
 
   function toggle(list: string[], setList: (v: string[]) => void, item: string) {
     setList(list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
+  }
+
+  function save() {
+    setSaved(true);
+    setTimeout(() => router.back(), 800);
   }
 
   return (
@@ -105,8 +113,8 @@ export default function RiskProfilePage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-16 mx-auto max-w-md px-5">
-        <button className="w-full rounded-xl py-3.5 text-base font-bold text-white" style={{ background: PURPLE }}>
-          저장하기
+        <button onClick={save} disabled={saved} className="w-full rounded-xl py-3.5 text-base font-bold text-white disabled:opacity-60" style={{ background: PURPLE }}>
+          {saved ? "저장됨 ✓" : "저장하기"}
         </button>
       </div>
     </main>
