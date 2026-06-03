@@ -35,12 +35,23 @@ export default function RoomPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   const roomRef = useRef<HTMLDivElement>(null);
+  const [roomW, setRoomW] = useState(360);
 
   useEffect(() => {
     setRoom(loadRoom());
     setPoints(getPoints());
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!roomRef.current) return;
+    const el = roomRef.current;
+    const update = () => setRoomW(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mounted]);
 
   const persist = useCallback((next: RoomState) => {
     setRoom(next);
@@ -127,6 +138,7 @@ export default function RoomPage() {
               placed={p}
               def={def}
               containerRef={roomRef}
+              containerW={roomW}
               onMove={(x, y) => moveAt(i, x, y)}
               onDelete={() => removeAt(i)}
             />
@@ -204,11 +216,12 @@ export default function RoomPage() {
 
 // ── 배치 아이템 (드래그 + 삭제) ────────────────────────────
 function PlacedView({
-  placed, def, containerRef, onMove, onDelete,
+  placed, def, containerRef, containerW, onMove, onDelete,
 }: {
   placed: PlacedItem;
   def: RoomItemDef;
   containerRef: React.RefObject<HTMLDivElement>;
+  containerW: number;
   onMove: (x: number, y: number) => void;
   onDelete: () => void;
 }) {
@@ -234,7 +247,8 @@ function PlacedView({
     onMove(pos.x, pos.y);
   }
 
-  const fontSize = `${Math.round(def.size * 230)}%`;
+  // 방 너비 대비 비율 → 실제 px (최소 34px)
+  const px = Math.max(34, Math.round(containerW * def.size * 1.15));
 
   return (
     <div
@@ -244,7 +258,7 @@ function PlacedView({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <span style={{ fontSize }} className="block leading-none drop-shadow-sm">{def.emoji}</span>
+      <span style={{ fontSize: `${px}px` }} className="block leading-none drop-shadow-sm">{def.emoji}</span>
       <button
         onClick={onDelete}
         onPointerDown={(e) => e.stopPropagation()}
@@ -293,7 +307,7 @@ function Pet({ defId, containerRef }: { defId: string; containerRef: React.RefOb
 
   return (
     <div ref={ref} className="absolute" style={{ left: "25%", bottom: "32%" }}>
-      <span className="block text-4xl leading-none">{def.emoji}</span>
+      <span className="block text-5xl leading-none">{def.emoji}</span>
     </div>
   );
 }

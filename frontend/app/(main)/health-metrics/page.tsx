@@ -52,7 +52,24 @@ function Sparkline({ data }: { data: number[] }) {
 
 export default function HealthMetricsPage() {
   const [tab, setTab] = useState<Tab>("bp");
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState("");
+  const [extra, setExtra] = useState<Record<Tab, { date: string; value: string; status: string }[]>>({
+    bp: [], glucose: [], weight: [],
+  });
   const d = DATA[tab];
+  const history = [...extra[tab], ...d.history];
+
+  function save() {
+    const v = val.trim();
+    if (!v) return;
+    setExtra((prev) => ({
+      ...prev,
+      [tab]: [{ date: "오늘", value: v, status: "정상" }, ...prev[tab]],
+    }));
+    setVal("");
+    setOpen(false);
+  }
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
@@ -105,7 +122,7 @@ export default function HealthMetricsPage() {
       {/* 기록 내역 */}
       <h2 className="mt-6 text-sm font-semibold text-muted-foreground">기록 내역</h2>
       <Card className="mt-2 divide-y divide-border">
-        {d.history.map((h, i) => (
+        {history.map((h, i) => (
           <div key={i} className="flex items-center justify-between px-4 py-3.5">
             <span className="text-sm text-muted-foreground">{h.date}</span>
             <span className="font-bold">{h.value}</span>
@@ -122,8 +139,29 @@ export default function HealthMetricsPage() {
       </Card>
 
       <div className="fixed inset-x-0 bottom-16 mx-auto max-w-md px-5">
-        <Button className="w-full" size="lg">+ 수치 입력</Button>
+        <Button className="w-full" size="lg" onClick={() => setOpen(true)}>+ 수치 입력</Button>
       </div>
+
+      {/* 수치 입력 모달 */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setOpen(false)}>
+          <div className="mx-auto w-full max-w-md rounded-t-2xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
+            <h2 className="font-bold">
+              {TABS.find((t) => t.key === tab)?.label} 입력 <span className="text-sm font-normal text-muted-foreground">({d.unit})</span>
+            </h2>
+            <input
+              autoFocus
+              value={val}
+              onChange={(e) => setVal(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && save()}
+              placeholder={tab === "bp" ? "예: 120/80" : tab === "glucose" ? "예: 98" : "예: 75.0"}
+              className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
+            />
+            <Button className="mt-4 w-full" size="lg" onClick={save}>저장</Button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

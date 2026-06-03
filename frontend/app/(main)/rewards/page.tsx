@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Home, ChevronRight } from "lucide-react";
+import { Home, Gamepad2, ChevronRight } from "lucide-react";
 import {
   levelOf, levelName, progressRatio, nextLevelPoints,
 } from "@/features/gamification/types";
@@ -76,6 +76,18 @@ export default function RewardsPage() {
         <div className="flex-1">
           <p className="text-sm font-bold">내 방 꾸미기</p>
           <p className="text-xs text-muted-foreground">포인트로 가구를 사고 헬씨를 키워요</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+
+      {/* 미니게임 진입 */}
+      <Link href="/games" className="mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 hover:bg-accent">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+          <Gamepad2 className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold">건강 미니게임</p>
+          <p className="text-xs text-muted-foreground">OX퀴즈·카드맞추기 등 4종으로 포인트 획득</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
