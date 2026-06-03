@@ -17,15 +17,27 @@ function emoji(type?: string) {
   }
 }
 
+// 백엔드 미가동 시 보여줄 예시 알림(데모)
+const DUMMY: AppNotification[] = [
+  { id: 1, title: "복약 시간이에요 💊", body: "오후 약(MTX) 복용할 시간입니다.", notification_type: "medication", is_read: false },
+  { id: 2, title: "활성도 점검 알림", body: "이번 주 활성도를 기록해주세요.", notification_type: "activity", is_read: false },
+  { id: 3, title: "고위험 신호 감지", body: "최근 CRP 수치가 참고 범위를 초과했어요. 의료진 상담을 권장합니다.", notification_type: "risk", is_read: false },
+  { id: 4, title: "새 맞춤 안내문 도착", body: "여름철 자외선 관리 가이드가 도착했어요.", notification_type: "guide", is_read: true },
+  { id: 5, title: "출석체크 완료", body: "오늘도 건강 관리 성공! +10P 적립되었습니다.", notification_type: "done", is_read: true },
+];
+
 export default function NotificationsPage() {
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getNotifications()
-      .then(setItems)
-      .catch(() => setError("알림을 불러오지 못했습니다."))
+    // 백엔드가 살아있으면 실데이터, 없으면 2초 후 예시 알림 표시
+    Promise.race([
+      getNotifications(),
+      new Promise<AppNotification[]>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
+    ])
+      .then((data) => setItems(data.length ? data : DUMMY))
+      .catch(() => setItems(DUMMY))
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,8 +59,6 @@ export default function NotificationsPage() {
 
       {loading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
-      ) : error ? (
-        <p className="mt-8 text-sm text-destructive">{error}</p>
       ) : items.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-muted-foreground">
           <Bell className="h-12 w-12 opacity-30" />

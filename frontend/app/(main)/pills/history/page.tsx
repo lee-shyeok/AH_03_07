@@ -6,15 +6,25 @@ import { Card } from "@/components/ui/card";
 import { getRecognitions } from "@/features/pills/api";
 import type { PillRecognition } from "@/features/pills/api";
 
+// 백엔드 미가동 시 보여줄 예시 인식 내역(데모)
+const DUMMY: PillRecognition[] = [
+  { id: 1, drug_name: "타이레놀정 500mg", confidence: 0.97 },
+  { id: 2, drug_name: "아스피린프로텍트정 100mg", confidence: 0.91 },
+  { id: 3, drug_name: "리리카캡슐 75mg", confidence: 0.84 },
+];
+
 export default function PillsPage() {
   const [items, setItems] = useState<PillRecognition[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getRecognitions()
-      .then(setItems)
-      .catch(() => setError("인식 내역을 불러오지 못했습니다."))
+    // 백엔드가 살아있으면 실데이터, 없으면 2초 후 예시 표시
+    Promise.race([
+      getRecognitions(),
+      new Promise<PillRecognition[]>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
+    ])
+      .then((data) => setItems(data.length ? data : DUMMY))
+      .catch(() => setItems(DUMMY))
       .finally(() => setLoading(false));
   }, []);
 
@@ -24,8 +34,6 @@ export default function PillsPage() {
 
       {loading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
-      ) : error ? (
-        <p className="mt-8 text-sm text-destructive">{error}</p>
       ) : items.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-muted-foreground">
           <ScanLine className="h-12 w-12 opacity-30" />
