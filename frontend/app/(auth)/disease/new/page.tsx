@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
 
 const DISEASES = ["류마티스 관절염", "루푸스", "강직성 척추염", "쇼그렌 증후군", "기타"];
 
@@ -45,15 +45,12 @@ export default function DiseaseNewPage() {
 
         <div>
           <label className="text-sm font-medium">진단일 <span className="text-destructive">*</span></label>
-          <div className="relative mt-2">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-12 w-full rounded-xl border border-input bg-background px-4 text-sm"
-            />
-            <Calendar className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-4 text-sm"
+          />
         </div>
 
         <div>
