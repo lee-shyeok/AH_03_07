@@ -1,68 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FolderOpen } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { Search, FileText, FlaskConical, Pill } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getDocuments } from "@/features/documents/api";
-import type { MedicalDocument } from "@/features/documents/api";
 
-const typeLabel: Record<string, string> = {
-  prescription: "처방전",
-  medical_record: "진료기록",
-  pill_bag: "약봉투",
-  lab_result: "검사결과지",
-  health_checkup: "건강검진",
-  other: "기타",
-};
+type Filter = "전체" | "진료기록" | "검사결과" | "처방전";
+const FILTERS: Filter[] = ["전체", "진료기록", "검사결과", "처방전"];
+
+interface Doc {
+  type: Exclude<Filter, "전체">;
+  title: string;
+  detail: string;
+  date: string;
+  month: string;
+}
+
+const DOCS: Doc[] = [
+  { type: "진료기록", title: "진료기록", detail: "서울대학교병원 내과 · 위염", date: "2026.5.20", month: "2026년 5월" },
+  { type: "검사결과", title: "검사결과", detail: "서울대병원 류마티스 · CRP, ESR", date: "2026.5.12", month: "2026년 5월" },
+  { type: "처방전", title: "처방전", detail: "서울가정의학과 · 아세트아미노펜", date: "2026.04.25", month: "2026년 4월" },
+  { type: "진료기록", title: "진료기록", detail: "서울대병원 류마티스 · 류마티스 관절염", date: "2026.04.10", month: "2026년 4월" },
+];
+
+const ICONS = { 진료기록: FileText, 검사결과: FlaskConical, 처방전: Pill };
+const ICON_BG = { 진료기록: "bg-secondary text-primary", 검사결과: "bg-[#F0E8FF] text-[#7C5CCF]", 처방전: "bg-secondary text-primary" };
 
 export default function DocumentsPage() {
-  const [docs, setDocs] = useState<MedicalDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("전체");
 
-  useEffect(() => {
-    getDocuments()
-      .then(setDocs)
-      .catch(() => setError("문서를 불러오지 못했습니다."))
-      .finally(() => setLoading(false));
-  }, []);
+  const filtered = DOCS.filter((d) => filter === "전체" || d.type === filter);
+  const months = Array.from(new Set(filtered.map((d) => d.month)));
 
   return (
-    <main className="mx-auto w-full max-w-md px-5 pt-10">
-      <h1 className="text-2xl font-bold">문서 보관함</h1>
+    <main className="mx-auto w-full max-w-md px-5 pt-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">의료문서</h1>
+        <Link href="/search" aria-label="검색"><Search className="h-6 w-6" /></Link>
+      </div>
 
-      {loading ? (
-        <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
-      ) : error ? (
-        <p className="mt-8 text-sm text-destructive">{error}</p>
-      ) : docs.length === 0 ? (
-        <div className="mt-16 flex flex-col items-center text-muted-foreground">
-          <FolderOpen className="h-12 w-12 opacity-30" />
-          <p className="mt-3 text-sm">보관된 문서가 없습니다.</p>
-        </div>
-      ) : (
-        <div className="mt-6 space-y-3">
-          {docs.map((d) => (
-            <Card key={d.id} className="flex items-center justify-between p-4">
-              <div>
-                <p className="font-semibold">
-                  {typeLabel[d.document_type ?? "other"] ?? "기타"}
-                </p>
-                {d.created_at && (
-                  <p className="text-xs text-muted-foreground">
-                    {d.created_at.slice(0, 10)}
-                  </p>
-                )}
-              </div>
-              {d.status && (
-                <span className="rounded bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground">
-                  {d.status}
-                </span>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* 필터 */}
+      <div className="mt-4 flex gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={"rounded-full px-4 py-2 text-sm font-semibold " + (filter === f ? "bg-primary text-primary-foreground" : "border border-border")}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* 월별 그룹 */}
+      <div className="mt-6 space-y-6 pb-6">
+        {months.map((month) => (
+          <div key={month}>
+            <p className="text-sm font-bold text-muted-foreground">{month}</p>
+            <div className="mt-2 space-y-3">
+              {filtered.filter((d) => d.month === month).map((d, i) => {
+                const Icon = ICONS[d.type];
+                return (
+                  <Card key={i} className="flex items-center gap-3 p-4">
+                    <div className={"flex h-12 w-12 items-center justify-center rounded-xl " + ICON_BG[d.type]}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold">{d.title}</p>
+                      <p className="text-xs text-muted-foreground">{d.detail}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{d.date}</span>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
