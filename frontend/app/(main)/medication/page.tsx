@@ -1,33 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Pill, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getMedications } from "@/features/medication/api";
-import type { Medication } from "@/features/medication/api";
-
-// 백엔드 미가동 시 보여줄 예시 약물(데모)
-const DUMMY: Medication[] = [
-  { id: 1, name: "메토트렉세이트(MTX)", frequency: "주 1회 (금)" },
-  { id: 2, name: "엽산", frequency: "주 1회 (토)" },
-  { id: 3, name: "하이드록시클로로퀸", frequency: "1일 1회" },
-];
+import { useMedications } from "@/features/medication/queries";
 
 export default function MedicationPage() {
-  const [meds, setMeds] = useState<Medication[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // 백엔드가 살아있으면 실데이터, 없으면 2초 후 예시 표시
-    Promise.race([
-      getMedications(),
-      new Promise<Medication[]>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
-    ])
-      .then((data) => setMeds(data.length ? data : DUMMY))
-      .catch(() => setMeds(DUMMY))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: meds = [], isLoading } = useMedications();
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-10">
@@ -43,7 +22,7 @@ export default function MedicationPage() {
       </div>
       <p className="mt-1 text-sm text-muted-foreground">복용 중인 약 {meds.length}개</p>
 
-      {loading ? (
+      {isLoading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
       ) : meds.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-muted-foreground">

@@ -1,36 +1,37 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { login } from "@/features/auth/api";
+import { Field } from "@/components/form/Field";
+import { loginSchema, type LoginInput } from "@/features/auth/schema";
+import { useLogin } from "@/features/auth/queries";
 import { ApiError } from "@/lib/api/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const login = useLogin();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  async function onSubmit(values: LoginInput) {
     try {
-      await login({ email, password });
+      await login.mutateAsync(values);
       router.replace("/mode-select");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("네트워크 오류가 발생했습니다.");
-      }
-    } finally {
-      setLoading(false);
+      const message =
+        err instanceof ApiError ? err.message : "네트워크 오류가 발생했습니다.";
+      setError("root", { message });
     }
   }
 
@@ -39,39 +40,33 @@ export default function LoginPage() {
       <h1 className="text-4xl font-extrabold">반가워요!</h1>
       <p className="mt-2 text-sm text-muted-foreground">로그인해주세요</p>
 
-      <form onSubmit={handleSubmit} className="mt-12 flex flex-1 flex-col">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-12 flex flex-1 flex-col" noValidate>
         <div className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
+          <Field label="이메일" htmlFor="email" error={errors.email?.message}>
             <Input
               id="email"
               type="email"
               autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
+              {...register("email")}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
+          </Field>
+          <Field label="비밀번호" htmlFor="password" error={errors.password?.message}>
             <Input
               id="password"
               type="password"
               autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호 입력"
+              {...register("password")}
             />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          </Field>
+          {errors.root && <p className="text-sm text-destructive">{errors.root.message}</p>}
         </div>
 
         {/* 하단 고정 영역 */}
         <div className="mt-auto">
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? "로그인 중..." : "로그인"}
+          <Button type="submit" className="w-full" size="lg" disabled={login.isPending}>
+            {login.isPending ? "로그인 중..." : "로그인"}
           </Button>
           <Button
             type="button"

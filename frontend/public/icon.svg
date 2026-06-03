@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="MediGuide">
+  <!-- maskable: 전체 배경 채움, 핵심 요소는 중앙 안전영역 -->
+  <rect width="512" height="512" rx="112" fill="#22C55E"/>
+  <g transform="rotate(20 256 256)">
+    <!-- 알약 윗부분 -->
+    <path d="M168 196a88 88 0 0 1 176 0v60H168z" fill="#EAF7EC"/>
+    <!-- 알약 아랫부분 -->
+    <path d="M168 256h176v60a88 88 0 0 1-176 0z" fill="#FFFFFF"/>
+    <!-- 체크 -->
+    <path d="M212 300l30 30 58-64" stroke="#22C55E" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>
