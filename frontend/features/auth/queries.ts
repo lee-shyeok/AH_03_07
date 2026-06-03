@@ -1,7 +1,10 @@
 // 인증 서버 통신 (TanStack Query). 토큰/사용자 상태는 zustand auth store로 반영.
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { login, logout, getMe } from "./api";
-import type { LoginRequest } from "./types";
+import {
+  login, logout, getMe,
+  sendEmailVerifyCode, confirmEmailVerifyCode, signup,
+} from "./api";
+import type { LoginRequest, SignupRequest } from "./types";
 import { useAuthStore } from "@/stores/auth";
 
 export const authKeys = {
@@ -35,6 +38,22 @@ export function useLogout() {
     },
     onSettled: () => clear(),
   });
+}
+
+// ── 이메일 인증 회원가입 위저드 ──────────────────────────
+export function useSendEmailCode() {
+  return useMutation({ mutationFn: (email: string) => sendEmailVerifyCode(email) });
+}
+
+export function useConfirmEmailCode() {
+  return useMutation({
+    mutationFn: ({ email, code }: { email: string; code: string }) =>
+      confirmEmailVerifyCode(email, code),
+  });
+}
+
+export function useSignup() {
+  return useMutation({ mutationFn: (req: SignupRequest) => signup(req) });
 }
 
 // 내 정보 조회 (인증된 경우에만 활성화하여 불필요한 401 방지)
