@@ -18,6 +18,7 @@ export const signupSchema = z
       .regex(/[0-9]/, "숫자를 포함해야 합니다"),
     passwordConfirm: z.string().min(1, "비밀번호를 한 번 더 입력하세요"),
     name: z.string().min(1, "이름을 입력하세요").max(40),
+    agree: z.boolean().refine((v) => v === true, { message: "이용약관에 동의해주세요" }),
   })
   .refine((v) => v.password === v.passwordConfirm, {
     path: ["passwordConfirm"],
