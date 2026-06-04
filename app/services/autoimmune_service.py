@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import HTTPException
 
@@ -33,7 +33,7 @@ class ModeService:
                 detail={"from": str(user.mode), "to": str(new_mode)},
             )
             user.mode = new_mode
-            user.mode_selected_at = datetime.now(timezone.utc)
+            user.mode_selected_at = datetime.now(config.TIMEZONE)
             user.updated_at = datetime.now(config.TIMEZONE)
             await user.save(update_fields=["mode", "mode_selected_at", "updated_at"])
         return user
