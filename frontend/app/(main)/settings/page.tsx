@@ -23,7 +23,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [alerts, setAlerts] = useState({ med: true, guide: true, marketing: false });
+  const [alerts, setAlerts] = useState({ med: true, guide: true, marketing: false, location: false });
   const [channels, setChannels] = useState({ app: true, email: false, kakao: true });
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,6 +57,7 @@ export default function SettingsPage() {
         <Row label="복약 알림" right={<Toggle on={alerts.med} onChange={(v) => setAlerts({ ...alerts, med: v })} />} />
         <Row label="가이드 확인 알림" right={<Toggle on={alerts.guide} onChange={(v) => setAlerts({ ...alerts, guide: v })} />} />
         <Row label="마케팅 알림" right={<Toggle on={alerts.marketing} onChange={(v) => setAlerts({ ...alerts, marketing: v })} />} />
+        <Row label="복약 완료 시 위치 태깅 (선택)" right={<Toggle on={alerts.location} onChange={(v) => setAlerts({ ...alerts, location: v })} />} />
       </Card>
 
       {/* 알림 채널 */}
