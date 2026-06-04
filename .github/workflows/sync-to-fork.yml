@@ -17,6 +17,7 @@ jobs:
         env:
           FORK_TOKEN: ${{ secrets.FORK_DEPLOY_TOKEN }}
         run: |
+          git config --global --unset-all http.https://github.com/.extraheader || true
           git config --global credential.helper store
           printf 'https://lee-shyeok:%s@github.com\n' "${FORK_TOKEN}" > ~/.git-credentials
           git push https://github.com/lee-shyeok/AH_03_07.git HEAD:main --force
