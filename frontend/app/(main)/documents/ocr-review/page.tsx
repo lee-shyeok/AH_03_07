@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FileText, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ function structuredDataToFields(
   }));
 }
 
-export default function OcrReviewPage() {
+function OcrReviewInner() {
   const router = useRouter();
   const params = useSearchParams();
   const documentId = Number(params.get("documentId"));
@@ -180,5 +180,19 @@ export default function OcrReviewPage() {
         </Button>
       </div>
     </main>
+  );
+}
+
+export default function OcrReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto w-full max-w-md px-5 py-8">
+          <p className="text-center text-muted-foreground">OCR 결과 불러오는 중...</p>
+        </main>
+      }
+    >
+      <OcrReviewInner />
+    </Suspense>
   );
 }
