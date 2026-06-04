@@ -51,7 +51,7 @@ class MessageItem(BaseModel):
 
 
 class MessageHistoryResponse(BaseModel):
-    items: list[MessageItem]
+    messages: list[MessageItem]
     total: int
     page: int
     size: int

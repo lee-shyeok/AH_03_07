@@ -57,7 +57,7 @@ async def list_chat_messages(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="세션을 찾을 수 없습니다")
     messages, total = await message_service.get_messages(session, page, size)
     return MessageHistoryResponse(
-        items=[MessageItem.model_validate(m) for m in messages],
+        messages=[MessageItem.model_validate(m) for m in messages],
         page=page,
         size=size,
         total=total,

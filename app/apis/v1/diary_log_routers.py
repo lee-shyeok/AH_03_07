@@ -1,7 +1,9 @@
+import io
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import ORJSONResponse as Response
+from fastapi.responses import StreamingResponse
 
 from app.dependencies.consent import require_consent
 from app.dependencies.security import get_request_user
@@ -85,3 +87,25 @@ async def create_medication_log(
     """복약 기록 생성"""
     result = await diary_service.create_medication_log(user_id=user.id, data=request)
     return Response(result.model_dump(mode="json"), status_code=status.HTTP_201_CREATED)
+
+
+# ========== PDF 출력 ==========
+
+
+@diary_log_router.get(
+    "/pdf",
+    status_code=status.HTTP_200_OK,
+    response_class=StreamingResponse,
+    dependencies=[Depends(require_consent(ConsentType.MEDICAL_DATA))],
+)
+async def get_diary_pdf(
+    user: Annotated[User, Depends(get_request_user)],
+    diary_service: Annotated[DiaryLogService, Depends(DiaryLogService)],
+) -> StreamingResponse:
+    """일기 PDF 출력 — 증상·복약 별도 섹션 (REQ-DIARY-001)"""
+    pdf_bytes = await diary_service.generate_pdf_bytes(user.id)
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=diary.pdf"},
+    )

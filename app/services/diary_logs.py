@@ -1,5 +1,8 @@
 from datetime import datetime
+from pathlib import Path
 from uuid import UUID
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.dtos.diary_logs import (
     MedicationLogCreateRequest,
@@ -11,6 +14,15 @@ from app.dtos.diary_logs import (
 )
 from app.repositories.accessibility_repository import AccessibilityRepository
 from app.repositories.diary_log_repository import DiaryLogRepository
+
+_TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
+_CONDITION_LABELS = {
+    "VERY_BAD": "매우 나쁨",
+    "BAD": "나쁨",
+    "NORMAL": "보통",
+    "GOOD": "좋음",
+    "VERY_GOOD": "매우 좋음",
+}
 
 
 class DiaryLogService:
@@ -77,3 +89,25 @@ class DiaryLogService:
             location_recorded_at=location_recorded_at,
         )
         return MedicationLogResponse.model_validate(new_log)
+
+    # ========== PDF 출력 ==========
+    async def generate_pdf_bytes(self, user_id: UUID) -> bytes:
+        """증상·복약 기록 일기 PDF 생성 (REQ-DIARY-001)"""
+        symptom_logs = await self.repo.get_symptom_logs(user_id)
+        medication_logs = await self.repo.get_medication_logs(user_id)
+
+        env = Environment(
+            loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+            autoescape=select_autoescape(["html"]),
+        )
+        html_str = env.get_template("diary_pdf.html").render(
+            symptom_logs=symptom_logs,
+            medication_logs=medication_logs,
+            generated_at=datetime.now(),
+            condition_labels=_CONDITION_LABELS,
+        )
+        from weasyprint import HTML
+
+        return HTML(string=html_str, base_url=str(_TEMPLATE_DIR)).write_pdf(
+            stylesheets=[str(_TEMPLATE_DIR / "pre_consultation_report.css")],
+        )

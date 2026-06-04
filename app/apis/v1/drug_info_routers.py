@@ -7,10 +7,10 @@ from app.dtos.drug_info import DrugSearchResponse
 from app.models.users import User
 from app.services.drug_info import DrugInfoService
 
-drug_info_router = APIRouter(prefix="/drug-info", tags=["drug-info"])
+drug_info_router = APIRouter(prefix="/drug-references", tags=["drug-references"])
 
 
-@drug_info_router.get("/search", response_model=DrugSearchResponse)
+@drug_info_router.get("", response_model=DrugSearchResponse)
 async def search_drug(
     drug_name: Annotated[str, Query(description="약품명 (예: 타이레놀)")],
     user: Annotated[User, Depends(get_request_user)],

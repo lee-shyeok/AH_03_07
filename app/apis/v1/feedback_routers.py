@@ -11,7 +11,7 @@ from app.dtos.feedback_logs import (
 from app.models.users import User
 from app.services.feedback_logs import FeedbackService
 
-feedback_router = APIRouter(prefix="/feedbacks", tags=["feedbacks"])
+feedback_router = APIRouter(prefix="/feedback", tags=["feedback"])
 
 
 @feedback_router.get("", response_model=FeedbackListResponse)

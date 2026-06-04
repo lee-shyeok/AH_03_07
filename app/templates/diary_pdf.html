@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>일기 PDF</title>
+    <link rel="stylesheet" href="pre_consultation_report.css">
+</head>
+<body>
+    <header>
+        <h1>일기 기록 (진료용)</h1>
+        <div class="meta">
+            <span>생성 일시: {{ generated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        </div>
+    </header>
+
+    <section class="symptom-logs">
+        <h2>증상 기록</h2>
+        {% if symptom_logs %}
+        <table>
+            <thead>
+                <tr><th>날짜</th><th>전반적 상태</th><th>신체 부위</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for log in symptom_logs %}
+                <tr>
+                    <td>{{ log.log_date }}</td>
+                    <td>{{ condition_labels.get(log.overall_condition, log.overall_condition) }}</td>
+                    <td>{{ (log.body_parts | join(', ')) if log.body_parts else '' }}</td>
+                    <td>{{ log.memo or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">기록된 증상이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <section class="medication-logs">
+        <h2>복약 기록</h2>
+        {% if medication_logs %}
+        <table>
+            <thead>
+                <tr><th>날짜</th><th>약품명</th><th>복용 여부</th><th>복용 시간</th><th>메모</th></tr>
+            </thead>
+            <tbody>
+                {% for log in medication_logs %}
+                <tr>
+                    <td>{{ log.log_date }}</td>
+                    <td>{{ log.drug_name }}</td>
+                    <td>{{ '복용' if log.taken else '미복용' }}</td>
+                    <td>{{ log.taken_time.strftime('%H:%M') if log.taken_time else '' }}</td>
+                    <td>{{ log.notes or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">기록된 복약 내역이 없습니다.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        <p>본 자료는 진료 시 의료진과 상의하기 위한 본인용 참고 자료이며,
+           의학적 진단·치료 권고가 아닙니다.</p>
+    </footer>
+</body>
+</html>

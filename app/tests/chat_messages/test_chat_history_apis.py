@@ -102,9 +102,9 @@ class TestChatHistoryApis(TestCase):
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
         assert data["total"] == 4  # USER + ASSISTANT 각 2개
-        assert len(data["items"]) == 4
-        assert data["items"][0]["role"] == "USER"
-        assert data["items"][0]["content"] == "첫 번째 질문"
+        assert len(data["messages"]) == 4
+        assert data["messages"][0]["role"] == "USER"
+        assert data["messages"][0]["content"] == "첫 번째 질문"
 
     async def test_list_messages_empty_session(self):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
@@ -114,7 +114,7 @@ class TestChatHistoryApis(TestCase):
             resp = await client.get(f"{SESSIONS_EP}/{session_id}/messages", headers=headers)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        assert data["items"] == []
+        assert data["messages"] == []
         assert data["total"] == 0
 
     async def test_list_messages_includes_blocked(self):
@@ -125,7 +125,7 @@ class TestChatHistoryApis(TestCase):
             await _send_message(client, session_id, "진단해줘", headers)
             resp = await client.get(f"{SESSIONS_EP}/{session_id}/messages", headers=headers)
         data = resp.json()
-        blocked = [m for m in data["items"] if m["blocked_by_filter"] is True]
+        blocked = [m for m in data["messages"] if m["blocked_by_filter"] is True]
         assert len(blocked) >= 1
 
     async def test_list_messages_pagination(self):
@@ -138,7 +138,7 @@ class TestChatHistoryApis(TestCase):
             resp = await client.get(f"{SESSIONS_EP}/{session_id}/messages?page=1&size=1", headers=headers)
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
-        assert len(data["items"]) == 1
+        assert len(data["messages"]) == 1
         assert data["total"] == 4  # USER + ASSISTANT 각 2개
         assert data["size"] == 1
 

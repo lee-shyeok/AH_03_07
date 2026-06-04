@@ -10,7 +10,7 @@ from app.dtos.content_conversions import (
 from app.models.users import User
 from app.services.content_conversions import ContentConversionService
 
-content_router = APIRouter(prefix="/content", tags=["content"])
+content_router = APIRouter(prefix="/contents", tags=["content"])
 
 
 @content_router.post("/card-news", response_model=ContentConversionResponse, status_code=status.HTTP_201_CREATED)
