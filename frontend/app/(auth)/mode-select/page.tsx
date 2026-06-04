@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { setMode } from "@/features/auth/mode";
 
-const GREEN = "hsl(142 71% 45%)";
+const GREEN = "#22C55E";
 const PURPLE = "#7C5CCF";
 
 type Mode = "general" | "autoimmune";
