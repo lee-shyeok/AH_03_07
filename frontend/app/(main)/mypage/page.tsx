@@ -7,7 +7,7 @@ import {
   User, FileText, Pill, Activity, FolderOpen,
   Bell, Settings, HelpCircle, Megaphone, LogOut, ChevronRight,
   ShieldCheck, BarChart3, FlaskConical, CalendarDays, AlertTriangle,
-  RefreshCw,
+  RefreshCw, Gift, Home, Gamepad2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getMe, logout } from "@/features/auth/api";
@@ -52,6 +52,12 @@ export default function MyPage() {
         { href: "/documents", label: "문서 보관함", icon: FolderOpen },
       ];
 
+  const benefitMenus = [
+    { href: "/rewards", label: "포인트 · 보상", icon: Gift },
+    { href: "/room", label: "방 꾸미기", icon: Home },
+    { href: "/games", label: "건강 미니게임", icon: Gamepad2 },
+  ];
+
   const appMenus = [
     { href: "/notifications/settings", label: "알림 설정", icon: Bell },
     { href: "/mode-select", label: "모드 전환", icon: RefreshCw },
@@ -87,6 +93,7 @@ export default function MyPage() {
       </span>
 
       <Section title="내 건강 정보" menus={healthMenus} />
+      <Section title="혜택" menus={benefitMenus} />
       <Section title="앱 설정" menus={appMenus} />
 
       <h2 className="mt-6 text-sm font-semibold text-muted-foreground">지원</h2>
