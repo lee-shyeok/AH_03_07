@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Pill, FileText, BookOpen, BarChart3, ChevronRight } from "lucide-react";
+import { Search, X, Pill, FileText, BookOpen, BarChart3, ChevronRight, Gift } from "lucide-react";
 
 const POPULAR = ["통증", "관절통", "활성도", "수면", "복약 시간", "메토트렉세이트"];
 const CATEGORIES = [
@@ -10,6 +10,7 @@ const CATEGORIES = [
   { label: "진료 기록", href: "/records", icon: FileText },
   { label: "가이드 모음", href: "/guides", icon: BookOpen },
   { label: "활성도 기록", href: "/lab", icon: BarChart3 },
+  { label: "혜택 · 게임", href: "/rewards", icon: Gift },
 ];
 
 export default function SearchPage() {
