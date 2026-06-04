@@ -16,6 +16,4 @@ jobs:
       - name: Push to fork main (triggers Vercel)
         env:
           TOKEN: ${{ secrets.FORK_DEPLOY_TOKEN }}
-        run: |
-          git remote add fork https://x-access-token:${TOKEN}@github.com/lee-shyeok/AH_03_07.git
-          git push fork HEAD:main --force
+        run: git push "https://x-access-token:${TOKEN}@github.com/lee-shyeok/AH_03_07.git" HEAD:main --force
