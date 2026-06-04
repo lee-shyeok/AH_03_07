@@ -35,7 +35,7 @@ export default function ModeSelectPage() {
             key={c.key}
             onClick={() => select(c.key)}
             className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{ borderColor: c.color }}
+            style={{ borderColor: c.color, boxShadow: `inset 0 0 0 1px ${c.color}40` }}
           >
             <div
               className="flex h-16 w-16 items-center justify-center rounded-full text-4xl shadow-md"
