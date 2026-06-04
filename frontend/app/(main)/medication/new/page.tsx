@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, Calendar } from "lucide-react";
+import { Search, ChevronDown, Calendar, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -38,8 +38,13 @@ export default function MedicationNewPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
-      <h1 className="text-2xl font-bold">약 등록</h1>
+    <main className="mx-auto w-full max-w-md px-5 py-6 pb-28">
+      <div className="flex items-center gap-2">
+        <button onClick={() => router.back()} className="p-1 text-foreground">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-2xl font-bold">약 등록</h1>
+      </div>
 
       {/* 약품 정보 */}
       <p className="mt-6 text-sm font-semibold text-muted-foreground">약품 정보</p>

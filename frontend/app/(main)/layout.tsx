@@ -2,15 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Search, Home, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { getMode } from "@/features/auth/mode";
+import RecordsIcon from "@/components/icons/nav/RecordsIcon";
+import SearchIcon from "@/components/icons/nav/SearchIcon";
+import HomeIcon from "@/components/icons/nav/HomeIcon";
+import BellIcon from "@/components/icons/nav/BellIcon";
+import MyIcon from "@/components/icons/nav/MyIcon";
+
+const PURPLE = "#7C5CCF";
 
 const tabs = [
-  { href: "/records", label: "기록", icon: Activity },
-  { href: "/search", label: "검색", icon: Search },
-  { href: "/home", label: "홈", icon: Home },
-  { href: "/notifications", label: "알림", icon: Bell },
-  { href: "/mypage", label: "마이", icon: User },
+  { href: "/records", label: "기록", icon: RecordsIcon },
+  { href: "/search", label: "검색", icon: SearchIcon },
+  { href: "/home", label: "홈", icon: HomeIcon },
+  { href: "/notifications", label: "알림", icon: BellIcon },
+  { href: "/mypage", label: "마이", icon: MyIcon },
 ];
 
 export default function MainLayout({
@@ -19,6 +27,13 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [isAuto, setIsAuto] = useState(false);
+
+  useEffect(() => {
+    setIsAuto(getMode() === "autoimmune");
+  }, []);
+
+  const activeColor = isAuto ? PURPLE : "hsl(var(--primary))";
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -32,8 +47,9 @@ export default function MainLayout({
               href={href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-1 text-xs",
-                active ? "text-primary" : "text-muted-foreground"
+                active ? "" : "text-muted-foreground"
               )}
+              style={active ? { color: activeColor } : undefined}
             >
               <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
               {label}
