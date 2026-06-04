@@ -18,8 +18,8 @@ export default function ModeSelectPage() {
   }
 
   const cards: { key: Mode; title: string; lines: string[]; color: string; emoji: string }[] = [
-    { key: "autoimmune", title: "자가면역환자", lines: ["활성도 추적", "면역약물 특화 정보"], color: GREEN, emoji: "🟢" },
-    { key: "general", title: "일반 환자", lines: ["복약 관리", "일반 의료 정보"], color: PURPLE, emoji: "🟣" },
+    { key: "autoimmune", title: "자가면역환자", lines: ["활성도 추적", "면역약물 특화 정보"], color: PURPLE, emoji: "🟣" },
+    { key: "general", title: "일반 환자", lines: ["복약 관리", "일반 의료 정보"], color: GREEN, emoji: "🟢" },
   ];
 
   return (
