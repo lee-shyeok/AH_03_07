@@ -1,0 +1,19 @@
+name: Sync develop to fork for Vercel deploy
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to fork main (triggers Vercel)
+        run: |
+          git remote add fork https://x-access-token:${{ secrets.FORK_DEPLOY_TOKEN }}@github.com/lee-shyeok/AH_03_07.git
+          git push fork HEAD:main --force
