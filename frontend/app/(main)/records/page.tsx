@@ -1,52 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getRecords, deleteRecord } from "@/features/medical-records/api";
-import { getLocalRecords, deleteLocalRecord } from "@/features/medical-records/local";
-import type { MedicalRecord } from "@/features/medical-records/api";
+import { useRecords, useDeleteRecord } from "@/features/medical-records/queries";
 
 export default function RecordsPage() {
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: records = [], isLoading } = useRecords();
+  const del = useDeleteRecord();
 
-  async function load() {
-    setLoading(true);
-    // 로컬 저장분을 먼저 표시(백엔드 없이 즉시 동작)
-    const local = getLocalRecords();
-    let server: MedicalRecord[] = [];
-    try {
-      server = await Promise.race([
-        getRecords(),
-        new Promise<MedicalRecord[]>((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000)),
-      ]);
-    } catch {
-      // 백엔드 미가동 — 로컬만 표시
-    }
-    // 서버 데이터와 병합(id 기준 중복 제거)
-    const merged = [...local];
-    for (const s of server) {
-      if (!merged.some((r) => r.id === s.id)) merged.push(s);
-    }
-    setRecords(merged);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function handleDelete(id: number) {
+  function handleDelete(id: number) {
     if (!confirm("이 진료기록을 삭제하시겠습니까?")) return;
-    deleteLocalRecord(id);
-    setRecords((prev) => prev.filter((r) => r.id !== id));
-    try {
-      await deleteRecord(id);
-    } catch {
-      // 백엔드 미가동 — 로컬 삭제만 적용
-    }
+    del.mutate(id);
   }
 
   return (
@@ -62,7 +27,7 @@ export default function RecordsPage() {
         </Link>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
       ) : records.length === 0 ? (
         <div className="mt-16 flex flex-col items-center text-muted-foreground">
@@ -79,17 +44,9 @@ export default function RecordsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-semibold">{r.hospital_name || "병원"}</p>
-                  {r.department && (
-                    <p className="text-xs text-muted-foreground">{r.department}</p>
-                  )}
-                  {r.diagnosis && (
-                    <p className="mt-1 text-sm text-foreground">{r.diagnosis}</p>
-                  )}
-                  {r.visit_date && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {r.visit_date}
-                    </p>
-                  )}
+                  {r.department && <p className="text-xs text-muted-foreground">{r.department}</p>}
+                  {r.diagnosis && <p className="mt-1 text-sm text-foreground">{r.diagnosis}</p>}
+                  {r.visit_date && <p className="mt-1 text-xs text-muted-foreground">{r.visit_date}</p>}
                 </div>
                 <button
                   onClick={() => handleDelete(r.id)}

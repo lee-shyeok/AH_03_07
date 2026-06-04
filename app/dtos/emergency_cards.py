@@ -26,3 +26,15 @@ class EmergencyCardResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SOSTriggerRequest(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class SOSTriggerResponse(BaseModel):
+    status: str
+    notified_count: int
+    latitude: float
+    longitude: float

@@ -9,9 +9,19 @@ export interface Medication {
   type?: string;
 }
 
+export interface MedicationCreate {
+  name: string;
+  frequency?: string;
+  type?: string;
+}
+
 export async function getMedications(): Promise<Medication[]> {
   const res = await apiFetch<{ items?: Medication[] } | Medication[]>(
     "/v1/medications"
   );
   return Array.isArray(res) ? res : (res.items ?? []);
+}
+
+export async function createMedication(data: MedicationCreate): Promise<void> {
+  await apiFetch("/v1/medications", { method: "POST", body: data });
 }

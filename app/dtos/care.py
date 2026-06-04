@@ -65,3 +65,11 @@ class ShareLogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class GuardianViewResponse(BaseModel):
+    share_id: UUID
+    categories: list[str]
+    include_summary_only: bool
+    expires_at: datetime
+    viewed_at: datetime

@@ -1,48 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { getConsents, updateConsent } from "@/features/consent/api";
 import { CONSENT_META } from "@/features/consent/types";
-import type { ConsentItem, ConsentType } from "@/features/consent/types";
+import type { ConsentType } from "@/features/consent/types";
+import { useConsents, useUpdateConsent } from "@/features/consent/queries";
 
 export default function ConsentPage() {
-  const [items, setItems] = useState<ConsentItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      setItems(await getConsents());
-    } catch {
-      setError("동의 이력을 불러오지 못했습니다.\n잠시 후 다시 시도해주세요.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
+  const { data: items = [], isLoading } = useConsents();
+  const update = useUpdateConsent();
 
   function isAgreed(type: ConsentType) {
     return items.some((i) => i.consent_type === type && i.agreed);
   }
 
-  async function handleToggle(type: ConsentType, required: boolean) {
+  function handleToggle(type: ConsentType, required: boolean) {
     const current = isAgreed(type);
     if (required && current) {
       alert("필수 동의 항목은 철회할 수 없습니다.");
       return;
     }
-    try {
-      await updateConsent(type, !current);
-      load();
-    } catch {
-      alert("변경에 실패했습니다.");
-    }
+    update.mutate({ type, agreed: !current });
   }
 
   return (
@@ -59,15 +36,8 @@ export default function ConsentPage() {
         </ul>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="mt-6 text-sm text-muted-foreground">불러오는 중...</p>
-      ) : error ? (
-        <div className="mt-6">
-          <p className="whitespace-pre-line text-sm text-destructive">{error}</p>
-          <button onClick={load} className="mt-2 text-sm text-primary hover:underline">
-            다시 시도
-          </button>
-        </div>
       ) : (
         <div className="mt-6 space-y-3">
           {CONSENT_META.map((meta) => {
