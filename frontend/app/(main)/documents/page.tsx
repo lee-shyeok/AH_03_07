@@ -49,6 +49,7 @@ export default function DocumentsPage() {
   const [filter, setFilter] = useState<Filter>("전체");
   const [docs, setDocs] = useState<MedicalDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getDocuments()
@@ -91,9 +92,12 @@ export default function DocumentsPage() {
       {loading && (
         <p className="mt-10 text-center text-sm text-muted-foreground">불러오는 중...</p>
       )}
+      {error && (
+        <p className="mt-10 text-center text-sm text-destructive">{error}</p>
+      )}
 
       {/* 월별 그룹 */}
-      {!loading && (
+      {!loading && !error && (
         <div className="mt-6 space-y-6 pb-6">
           {months.length === 0 ? (
             <p className="mt-10 text-center text-sm text-muted-foreground">문서가 없습니다</p>
