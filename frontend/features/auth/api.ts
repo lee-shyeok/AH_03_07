@@ -68,3 +68,18 @@ export async function withdraw(): Promise<void> {
   setAccessToken(null);
   logger.warn("auth", "회원탈퇴 완료");
 }
+
+// REQ-MODE-001/002: 모드 조회·전환
+export interface ModeResponse {
+  mode: "general" | "autoimmune";
+  selected_at: string;
+  updated_at: string;
+}
+
+export async function getMode(): Promise<ModeResponse> {
+  return apiFetch<ModeResponse>("/v1/users/me/mode");
+}
+
+export async function updateMode(mode: "general" | "autoimmune"): Promise<ModeResponse> {
+  return apiFetch<ModeResponse>("/v1/users/me/mode", { method: "PUT", body: { mode } });
+}

@@ -1,76 +1,63 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { setMode } from "@/features/auth/mode";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useUpdateMode } from "@/features/auth/queries";
 
-const GREEN = "#22C55E";
-const PURPLE = "#7C5CCF";
+const GREEN = "#03C85F";
+const PURPLE = "#A83AC1";
 
 type Mode = "general" | "autoimmune";
 
-function PersonPlusIcon({ color, id }: { color: string; id: string }) {
-  return (
-    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id={`bg-${id}`} cx="38%" cy="28%" r="65%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="1" />
-        </radialGradient>
-        <radialGradient id={`shine-${id}`} cx="38%" cy="22%" r="40%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <filter id={`shadow-${id}`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#00000033" />
-        </filter>
-      </defs>
-      <circle cx="32" cy="32" r="30" fill={`url(#bg-${id})`} filter={`url(#shadow-${id})`} />
-      <ellipse cx="26" cy="20" rx="13" ry="8" fill={`url(#shine-${id})`} />
-      <circle cx="28" cy="22" r="8" fill="white" fillOpacity="0.92" />
-      <path d="M12 46c0-8.8 7.2-16 16-16h0c8.8 0 16 7.2 16 16" fill="white" fillOpacity="0.92" />
-      <circle cx="46" cy="44" r="10" fill="white" />
-      <rect x="44.5" y="38" width="3" height="12" rx="1.5" fill={color} />
-      <rect x="40" y="42.5" width="12" height="3" rx="1.5" fill={color} />
-    </svg>
-  );
-}
-
 export default function ModeSelectPage() {
   const router = useRouter();
+  const updateModeMutation = useUpdateMode();
 
   function select(mode: Mode) {
-    setMode(mode);
-    router.replace(mode === "autoimmune" ? "/mode-consent" : "/home");
+    if (mode === "autoimmune") {
+      router.replace("/mode-consent");
+      return;
+    }
+    updateModeMutation.mutate("general", {
+      onSuccess: () => router.replace("/home"),
+    });
   }
 
-  const cards: { key: Mode; title: string; lines: string[]; color: string; id: string }[] = [
-    { key: "autoimmune", title: "자가면역환자", lines: ["활성도 추적", "면역약물 특화 정보"], color: PURPLE, id: "auto" },
-    { key: "general", title: "일반 환자", lines: ["복약 관리", "일반 의료 정보"], color: GREEN, id: "gen" },
+  const cards: { key: Mode; title: string; lines: string[]; color: string; image: string }[] = [
+    { key: "general", title: "일반 환자", lines: ["복약 관리", "일반 의료 정보"], color: GREEN, image: "/mode-select/person-general.png" },
+    { key: "autoimmune", title: "자가면역환자", lines: ["활성도 추적", "면역약물 특화 정보"], color: PURPLE, image: "/mode-select/person-auto.png" },
   ];
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pb-10 pt-12">
-      <h1 className="mt-6 text-3xl font-extrabold leading-tight">
+      <button onClick={() => router.back()} aria-label="뒤로" className="-ml-2 w-fit">
+        <ChevronLeft className="h-7 w-7" />
+      </button>
+
+      <h1 className="mt-6 text-[32px] font-extrabold leading-tight">
         어떤 도움이<br />필요하신가요?
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">맞춤 가이드를 제공해드릴게요</p>
 
-      <div className="mt-12 space-y-4">
+      <div className="mt-12 flex flex-col gap-[18px]">
         {cards.map((c) => (
           <button
             key={c.key}
             onClick={() => select(c.key)}
-            className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{ borderColor: c.color, boxShadow: `inset 0 0 0 1px ${c.color}40` }}
+            className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-colors"
+            style={{ borderColor: c.color }}
           >
-            <PersonPlusIcon color={c.color} id={c.id} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: c.color + "1f" }}>
+              <Image src={c.image} alt={c.title} width={50} height={50} />
+            </div>
             <div className="flex-1">
-              <p className="text-lg font-bold" style={{ color: c.color }}>{c.title}</p>
+              <p className="text-[22px] font-semibold" style={{ color: c.color }}>{c.title}</p>
               {c.lines.map((l) => (
-                <p key={l} className="text-sm text-muted-foreground">{l}</p>
+                <p key={l} className="text-base font-normal text-muted-foreground">{l}</p>
               ))}
             </div>
-            <span style={{ color: c.color }}>›</span>
+            <ChevronRight className="h-6 w-6 shrink-0" style={{ color: c.color }} />
           </button>
         ))}
       </div>

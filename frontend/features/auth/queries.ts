@@ -1,15 +1,38 @@
 // 인증 서버 통신 (TanStack Query). 토큰/사용자 상태는 zustand auth store로 반영.
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   login, logout, getMe,
   sendEmailVerifyCode, confirmEmailVerifyCode, signup,
+  getMode, updateMode,
 } from "./api";
 import type { LoginRequest, SignupRequest } from "./types";
 import { useAuthStore } from "@/stores/auth";
+import { setMode } from "./mode";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
 };
+
+export const modeKeys = {
+  mode: ["mode"] as const,
+};
+
+// REQ-MODE-001: 현재 모드 조회
+export function useMode() {
+  return useQuery({ queryKey: modeKeys.mode, queryFn: getMode });
+}
+
+// REQ-MODE-002: 모드 전환 (성공 시 캐시 무효화 + localStorage 동기화)
+export function useUpdateMode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (mode: "general" | "autoimmune") => updateMode(mode),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: modeKeys.mode });
+      setMode(data.mode);
+    },
+  });
+}
 
 // 로그인: 성공 시 토큰(메모리) 저장 후 내 정보 조회하여 store 반영
 export function useLogin() {
