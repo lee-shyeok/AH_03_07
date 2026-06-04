@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Pill, FileText, BookOpen, BarChart3, ChevronRight } from "lucide-react";
+import { Search, X, Pill, FileText, BookOpen, BarChart3, ChevronRight, Gift } from "lucide-react";
 
 const POPULAR = ["통증", "관절통", "활성도", "수면", "복약 시간", "메토트렉세이트"];
 const CATEGORIES = [
@@ -10,6 +10,7 @@ const CATEGORIES = [
   { label: "진료 기록", href: "/records", icon: FileText },
   { label: "가이드 모음", href: "/guides", icon: BookOpen },
   { label: "활성도 기록", href: "/lab", icon: BarChart3 },
+  { label: "혜택 · 게임", href: "/rewards", icon: Gift },
 ];
 
 export default function SearchPage() {
@@ -58,7 +59,7 @@ export default function SearchPage() {
                 key={r}
                 className={"flex items-center justify-between px-4 py-3 " + (i > 0 ? "border-t border-border" : "")}
               >
-                <button onClick={() => submit(r)} className="text-sm">{r}</button>
+                <button onClick={() => submit(r)} className="text-sm font-semibold text-foreground">{r}</button>
                 <button onClick={() => setRecent((prev) => prev.filter((x) => x !== r))} aria-label="삭제">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -76,7 +77,7 @@ export default function SearchPage() {
             <button
               key={p}
               onClick={() => submit(p)}
-              className="rounded-full border border-border px-3.5 py-2 text-sm font-medium"
+              className="rounded-full border border-border px-3.5 py-2 text-sm font-semibold text-foreground"
             >
               {p}
             </button>
@@ -94,8 +95,8 @@ export default function SearchPage() {
               onClick={() => router.push(href)}
               className={"flex w-full items-center gap-3 px-4 py-3.5 " + (i > 0 ? "border-t border-border" : "")}
             >
-              <Icon className="h-5 w-5 text-muted-foreground" />
-              <span className="flex-1 text-left text-sm">{label}</span>
+              <Icon className="h-5 w-5 text-foreground" strokeWidth={1.8} />
+              <span className="flex-1 text-left text-sm font-semibold text-foreground">{label}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           ))}

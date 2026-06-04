@@ -1,0 +1,23 @@
+name: Sync develop to fork for Vercel deploy
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to fork main (triggers Vercel)
+        env:
+          FORK_TOKEN: ${{ secrets.FORK_DEPLOY_TOKEN }}
+        run: |
+          git config --global credential.helper store
+          echo "https://x-access-token:${FORK_TOKEN}@github.com" > ~/.git-credentials
+          git push https://github.com/lee-shyeok/AH_03_07.git HEAD:main --force

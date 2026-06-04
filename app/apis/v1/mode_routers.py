@@ -15,14 +15,20 @@ mode_router = APIRouter(prefix="/users/me", tags=["mode"])
 async def get_mode(
     user: Annotated[User, Depends(get_request_user)],
 ) -> Response:
-    return Response(ModeResponse.model_validate(user).model_dump(), status_code=status.HTTP_200_OK)
+    return Response(
+        ModeResponse(mode=user.mode, selected_at=user.mode_selected_at).model_dump(),
+        status_code=status.HTTP_200_OK,
+    )
 
 
-@mode_router.patch("/mode", response_model=ModeResponse, status_code=status.HTTP_200_OK)
+@mode_router.put("/mode", response_model=ModeResponse, status_code=status.HTTP_200_OK)
 async def update_mode(
     body: ModeUpdateRequest,
     user: Annotated[User, Depends(get_request_user)],
     service: Annotated[ModeService, Depends(ModeService)],
 ) -> Response:
     updated_user = await service.update_mode(user=user, new_mode=body.mode)
-    return Response(ModeResponse.model_validate(updated_user).model_dump(), status_code=status.HTTP_200_OK)
+    return Response(
+        ModeResponse(mode=updated_user.mode, selected_at=updated_user.mode_selected_at).model_dump(),
+        status_code=status.HTTP_200_OK,
+    )

@@ -9,8 +9,8 @@ class Gender(StrEnum):
 
 
 class UserMode(StrEnum):
-    GENERAL = "GENERAL"
-    AUTOIMMUNE = "AUTOIMMUNE"
+    GENERAL = "general"
+    AUTOIMMUNE = "autoimmune"
 
 
 class User(models.Model):
@@ -22,6 +22,7 @@ class User(models.Model):
     birthday = fields.DateField()
     phone_number = fields.CharField(max_length=11)
     mode = fields.CharEnumField(enum_type=UserMode, default=UserMode.GENERAL, max_length=16)
+    mode_selected_at = fields.DatetimeField(null=True)
     is_active = fields.BooleanField(default=True)
     is_admin = fields.BooleanField(default=False)
     last_login = fields.DatetimeField(null=True)

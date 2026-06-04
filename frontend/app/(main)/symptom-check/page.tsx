@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, Check, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const RED = "#EF5B5B";
@@ -18,6 +19,7 @@ const SYMPTOMS = [
 ];
 
 export default function SymptomCheckPage() {
+  const router = useRouter();
   const [checked, setChecked] = useState<number[]>([0, 2]);
   const [modal, setModal] = useState(false);
 
@@ -27,7 +29,12 @@ export default function SymptomCheckPage() {
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
-      <h1 className="text-xl font-bold">주의 증상 체크</h1>
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => router.back()} className="p-1 text-foreground">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-xl font-bold">주의 증상 체크</h1>
+      </div>
 
       {/* 빨강 안내 */}
       <div className="mt-4 flex items-center gap-3 rounded-2xl border p-4" style={{ borderColor: RED + "44", background: RED + "10" }}>

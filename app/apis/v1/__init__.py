@@ -16,6 +16,7 @@ from app.apis.v1.chat_routers import chat_router
 from app.apis.v1.chat_stream_routers import chat_stream_router
 from app.apis.v1.content_conversion_routers import content_router
 from app.apis.v1.diary_log_routers import diary_log_router
+from app.apis.v1.diet_info_routers import diet_info_router
 from app.apis.v1.disease_routers import disease_router
 from app.apis.v1.emergency_card_routers import emergency_card_router
 from app.apis.v1.health_guide_routers import health_guide_router
@@ -56,6 +57,7 @@ v1_routers.include_router(auto_guide_router)
 v1_routers.include_router(guide_generation_job_router)
 v1_routers.include_router(care_router)
 v1_routers.include_router(diary_log_router)
+v1_routers.include_router(diet_info_router)
 v1_routers.include_router(disease_router)
 v1_routers.include_router(emergency_card_router)
 v1_routers.include_router(health_metric_router)

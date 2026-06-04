@@ -30,18 +30,23 @@ class TestModeApis(TestCase):
             token = await _signup_and_login(client, "mode_get@example.com", "01011110001")
             resp = await client.get("/api/v1/users/me/mode", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["mode"] == "GENERAL"
+        assert resp.json()["mode"] == "general"
 
     async def test_update_mode_general_to_autoimmune_creates_audit_log(self):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "mode_switch@example.com", "01011110002")
-            resp = await client.patch(
+            await client.post(
+                "/api/v1/users/me/consents",
+                json={"consent_type": "MEDICAL_DATA", "agreed": True, "version": "1.0"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            resp = await client.put(
                 "/api/v1/users/me/mode",
-                json={"mode": "AUTOIMMUNE"},
+                json={"mode": "autoimmune"},
                 headers={"Authorization": f"Bearer {token}"},
             )
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["mode"] == "AUTOIMMUNE"
+        assert resp.json()["mode"] == "autoimmune"
         log_count = await AuditLog.filter(action="MODE_SWITCH").count()
         assert log_count >= 1
 
@@ -49,13 +54,26 @@ class TestModeApis(TestCase):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "mode_noop@example.com", "01011110003")
             before = await AuditLog.filter(action="MODE_SWITCH").count()
-            await client.patch(
+            await client.put(
                 "/api/v1/users/me/mode",
-                json={"mode": "GENERAL"},
+                json={"mode": "general"},
                 headers={"Authorization": f"Bearer {token}"},
             )
             after = await AuditLog.filter(action="MODE_SWITCH").count()
         assert before == after
+
+    async def test_update_mode_autoimmune_without_consent_returns_403(self):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
+            token = await _signup_and_login(client, "mode_no_consent@example.com", "01011110004")
+            resp = await client.put(
+                "/api/v1/users/me/mode",
+                json={"mode": "autoimmune"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        assert resp.status_code == status.HTTP_403_FORBIDDEN
+        detail = resp.json()["detail"]
+        assert detail["code"] == "CONSENT_REQUIRED"
+        assert "medical_data" in detail["details"]["consent_types"]
 
     async def test_get_mode_unauthorized(self):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:

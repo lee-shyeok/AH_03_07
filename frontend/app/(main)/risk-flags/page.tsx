@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ClipboardCheck } from "lucide-react";
 
 interface Flag {
   id: number;
@@ -30,6 +32,14 @@ export default function RiskFlagsPage() {
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <h1 className="text-3xl font-extrabold leading-tight">의료진 확인이<br />필요한 신호</h1>
       <p className="mt-2 text-sm text-muted-foreground">최근 데이터에서 주의가 필요한<br />패턴을 감지했어요</p>
+
+      <Link href="/symptom-check" className="mt-5 flex items-center justify-between rounded-2xl bg-destructive/10 border border-destructive/30 px-4 py-3.5">
+        <span className="flex items-center gap-2 text-sm font-semibold text-destructive">
+          <ClipboardCheck className="h-4 w-4" />
+          주의 증상 체크하기
+        </span>
+        <span className="text-xs text-destructive">→</span>
+      </Link>
 
       {/* 활성 신호 */}
       <p className="mt-7 font-bold">활성 신호 {active.length}건</p>

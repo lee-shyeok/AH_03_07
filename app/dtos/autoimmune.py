@@ -15,6 +15,7 @@ class ModeUpdateRequest(BaseModel):
 
 class ModeResponse(BaseSerializerModel):
     mode: UserMode
+    selected_at: datetime | None = None
 
 
 class DiseaseCreateItem(BaseModel):

@@ -21,6 +21,7 @@ class UserMedication(models.Model):
     name = fields.CharField(max_length=128)
     drug_class = fields.CharEnumField(enum_type=DrugClass, max_length=24)
     is_injection = fields.BooleanField(default=False)
+    end_date = fields.DateField(null=True)  # REQ-NOTI-007: 처방 종료일
     note = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -13,19 +12,10 @@ type Mode = "general" | "autoimmune";
 
 export default function ModeSelectPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<Mode | null>(null);
 
-  function confirm() {
-    if (!selected) return;
-    // 백엔드: PATCH /v1/users/me { user_type: selected } (현재는 로컬 저장)
-    setMode(selected);
-    // 자가면역: 동의 → 질환 등록 흐름 / 일반: 바로 홈
-    router.replace(selected === "autoimmune" ? "/mode-consent" : "/home");
-  }
-
-  function later() {
-    setMode("general");
-    router.replace("/home");
+  function select(mode: Mode) {
+    setMode(mode);
+    router.replace(mode === "autoimmune" ? "/mode-consent" : "/home");
   }
 
   const cards: { key: Mode; title: string; lines: string[]; color: string; image: string }[] = [
@@ -48,7 +38,7 @@ export default function ModeSelectPage() {
         {cards.map((c) => (
           <button
             key={c.key}
-            onClick={() => setSelected(c.key)}
+            onClick={() => select(c.key)}
             className="flex w-full items-center gap-4 rounded-2xl border-2 bg-card p-5 text-left transition-colors"
             style={{ borderColor: c.color }}
           >
@@ -66,17 +56,8 @@ export default function ModeSelectPage() {
         ))}
       </div>
 
-      <div className="mt-auto flex flex-col items-center gap-4">
-        {selected && (
-          <button
-            onClick={confirm}
-            className="w-full rounded-xl py-3.5 text-base font-bold text-white"
-            style={{ background: selected === "general" ? GREEN : PURPLE }}
-          >
-            확인
-          </button>
-        )}
-        <button onClick={later} className="text-sm text-muted-foreground">
+      <div className="mt-auto flex justify-center pt-8">
+        <button onClick={() => select("general")} className="text-sm text-muted-foreground">
           나중에 선택할게요
         </button>
       </div>

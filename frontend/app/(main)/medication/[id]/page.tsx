@@ -22,6 +22,16 @@ export default function MedicationDetailPage() {
       <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
         <Pill className="h-4 w-4" /> 매주 1회 복용
       </p>
+      <a
+        href={`https://nedrug.mfds.go.kr/searchDrug?searchYn=true&itemName=메토트렉세이트`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-primary hover:bg-accent"
+      >
+        <LinkIcon className="h-4 w-4" />
+        공식 정보 보기 (식약처 의약품안전나라)
+        <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+      </a>
 
       {/* 탭 */}
       <div className="mt-6 flex border-b border-border">

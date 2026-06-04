@@ -12,6 +12,7 @@ celery_app = Celery(
     include=[
         "ai_worker.tasks.embedding",
         "ai_worker.tasks.feedback_aggregation_tasks",  # REQ-FEED-002
+        "ai_worker.tasks.prescription_end_alert_tasks",  # REQ-NOTI-007
     ],
 )
 
@@ -25,10 +26,15 @@ celery_app.conf.update(
     timezone="Asia/Seoul",
     enable_utc=True,
     # REQ-FEED-002: 주 1회 피드백 집계 (매주 월요일 02:00 KST = UTC 17:00 일요일)
+    # REQ-NOTI-007: 매일 처방 종료일 알림 (08:00 KST = UTC 23:00 전날)
     beat_schedule={
         "aggregate-feedback-weekly": {
             "task": "ai_worker.tasks.feedback_aggregation_tasks.aggregate_feedback_weekly",
             "schedule": crontab(hour=17, minute=0, day_of_week=0),
+        },
+        "prescription-end-alert-daily": {
+            "task": "ai_worker.tasks.prescription_end_alert_tasks.send_prescription_end_alerts",
+            "schedule": crontab(hour=23, minute=0),  # 매일 08:00 KST
         },
     },
 )
