@@ -1,10 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronDown, Pill, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  getNotificationSettings,
+  updateNotificationSettings,
+  type NotificationSettings,
+} from "@/features/notifications/api";
 
 const DRUG = { name: "메토트렉세이트 7.5mg", type: "자가면역" };
 
@@ -99,21 +104,49 @@ function CheckRow({
   );
 }
 
+const FALLBACK_SETTINGS: NotificationSettings = {
+  enabled: true,
+  time: "09:00",
+  repeat: "weekly_fri",
+  early_reminder: true,
+  missed_reminder: true,
+  location_record: false,
+  channels: { app: true, kakao: true, email: false },
+};
+
 // --- page ---
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
   const timeInputRef = useRef<HTMLInputElement>(null);
 
-  const [alertOn, setAlertOn] = useState(true);
-  const [alertTime, setAlertTime] = useState("09:00");
-  const [repeat, setRepeat] = useState("weekly_fri");
+  const [alertOn, setAlertOn] = useState(FALLBACK_SETTINGS.enabled);
+  const [alertTime, setAlertTime] = useState(FALLBACK_SETTINGS.time);
+  const [repeat, setRepeat] = useState(FALLBACK_SETTINGS.repeat);
   const [repeatOpen, setRepeatOpen] = useState(false);
-  const [earlyReminder, setEarlyReminder] = useState(true);
-  const [missedReminder, setMissedReminder] = useState(true);
-  const [locationRecord, setLocationRecord] = useState(false);
-  const [channels, setChannels] = useState({ app: true, kakao: true, email: false });
+  const [earlyReminder, setEarlyReminder] = useState(FALLBACK_SETTINGS.early_reminder);
+  const [missedReminder, setMissedReminder] = useState(FALLBACK_SETTINGS.missed_reminder);
+  const [locationRecord, setLocationRecord] = useState(FALLBACK_SETTINGS.location_record);
+  const [channels, setChannels] = useState(FALLBACK_SETTINGS.channels);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getNotificationSettings()
+      .then((s) => {
+        setAlertOn(s.enabled);
+        setAlertTime(s.time);
+        setRepeat(s.repeat);
+        setEarlyReminder(s.early_reminder);
+        setMissedReminder(s.missed_reminder);
+        setLocationRecord(s.location_record);
+        setChannels(s.channels);
+      })
+      .catch(() => {
+        // API 실패 시 fallback 유지
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const repeatLabel = REPEAT_OPTIONS.find((o) => o.value === repeat)?.label ?? "매주 금요일";
 
@@ -124,25 +157,29 @@ export default function NotificationSettingsPage() {
   async function handleSave() {
     setSaving(true);
     try {
-      await fetch("/api/v1/notifications/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          enabled: alertOn,
-          time: alertTime,
-          repeat,
-          early_reminder: earlyReminder,
-          missed_reminder: missedReminder,
-          location_record: locationRecord,
-          channels,
-        }),
+      await updateNotificationSettings({
+        enabled: alertOn,
+        time: alertTime,
+        repeat,
+        early_reminder: earlyReminder,
+        missed_reminder: missedReminder,
+        location_record: locationRecord,
+        channels,
       });
     } catch {
-      // 데모: 무시
+      // API 실패 시 무시하고 뒤로 이동
     } finally {
       setSaving(false);
       router.back();
     }
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto flex w-full max-w-md items-center justify-center py-20">
+        <p className="text-sm text-muted-foreground">설정을 불러오는 중...</p>
+      </main>
+    );
   }
 
   return (
