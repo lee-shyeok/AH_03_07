@@ -23,6 +23,22 @@ const ACTIVITY = [
   { label: "불편도", value: 7 },
 ];
 
+const FALLBACK_GUIDES: Guide[] = [
+  { id: 1, symptom_summary: "위염 복약 가이드", created_at: "2026-05-20" },
+  { id: 2, symptom_summary: "감기 생활습관 안내", created_at: "2026-05-15" },
+  { id: 3, symptom_summary: "고혈압 관리 가이드", created_at: "2026-05-10" },
+];
+
+const FALLBACK_RECORDS: MedicalRecord[] = [
+  { id: 1, hospital_name: "서울대학교병원 내과", diagnosis: "위염", visit_date: "2026-05-20" },
+  { id: 2, hospital_name: "서울가정의학과의원", diagnosis: "상기도 감염", visit_date: "2026-05-10" },
+  { id: 3, hospital_name: "건강한약국", diagnosis: "처방전 확인", visit_date: "2026-04-25" },
+];
+
+const FALLBACK_OCR: MedicalDocument[] = [
+  { id: 1, file_name: "진료기록_2026-05.jpg", status: "processing" },
+];
+
 function formatDate(dateStr?: string) {
   if (!dateStr) return "";
   return dateStr.slice(0, 10).replace(/-/g, ".");
@@ -42,24 +58,20 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [name, setName] = useState<string>("");
   const [userType, setUserType] = useState<"general" | "autoimmune">("general");
-  const [guides, setGuides] = useState<Guide[]>([]);
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [ocrDocs, setOcrDocs] = useState<MedicalDocument[]>([]);
+  const [guides, setGuides] = useState<Guide[]>(FALLBACK_GUIDES);
+  const [records, setRecords] = useState<MedicalRecord[]>(FALLBACK_RECORDS);
+  const [ocrDocs, setOcrDocs] = useState<MedicalDocument[]>(FALLBACK_OCR);
 
   useEffect(() => {
     setUserType(getMode());
     getMe().then((u) => { setName(u.name); if (u.user_type) setUserType(u.user_type); }).catch(() => {});
     getDashboard().then((d) => { setData(d); if (d.user_type) setUserType(d.user_type); }).catch(() => setData(fallback));
-    getGuides().then((g) => setGuides(g.length > 0 ? g.slice(0, 3) : fallbackGuides)).catch(() => setGuides(fallbackGuides));
-    getRecords().then((r) => setRecords(r.length > 0 ? r.slice(0, 3) : fallbackRecords)).catch(() => setRecords(fallbackRecords));
+    getGuides().then((g) => { if (g.length > 0) setGuides(g.slice(0, 3)); }).catch(() => {});
+    getRecords().then((r) => { if (r.length > 0) setRecords(r.slice(0, 3)); }).catch(() => {});
     getDocuments().then((docs) => {
       const pending = docs.filter((d) => d.status === "processing" || d.status === "pending");
-      setOcrDocs(pending.length > 0 ? pending : fallbackOcr);
-    }).catch(() => setOcrDocs(fallbackOcr));
-    // 초기값도 fallback으로 설정
-    setGuides(fallbackGuides);
-    setRecords(fallbackRecords);
-    setOcrDocs(fallbackOcr);
+      if (pending.length > 0) setOcrDocs(pending);
+    }).catch(() => {});
   }, []);
 
   const meds = data?.medications ?? fallback.medications!;
@@ -220,22 +232,6 @@ export default function HomePage() {
     </main>
   );
 }
-
-const fallbackGuides: Guide[] = [
-  { id: 1, symptom_summary: "위염 복약 가이드", created_at: "2026-05-20" },
-  { id: 2, symptom_summary: "감기 생활습관 안내", created_at: "2026-05-15" },
-  { id: 3, symptom_summary: "고혈압 관리 가이드", created_at: "2026-05-10" },
-];
-
-const fallbackRecords: MedicalRecord[] = [
-  { id: 1, hospital_name: "서울대학교병원 내과", diagnosis: "위염", visit_date: "2026-05-20" },
-  { id: 2, hospital_name: "서울가정의학과의원", diagnosis: "상기도 감염", visit_date: "2026-05-10" },
-  { id: 3, hospital_name: "건강한약국", diagnosis: "처방전 확인", visit_date: "2026-04-25" },
-];
-
-const fallbackOcr: MedicalDocument[] = [
-  { id: 1, file_name: "진료기록_2026-05.jpg", status: "processing" },
-];
 
 const fallback: DashboardData = {
   user_type: "general",
