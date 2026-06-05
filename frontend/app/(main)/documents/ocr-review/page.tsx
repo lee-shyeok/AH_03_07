@@ -16,32 +16,12 @@ interface Field {
   confidence: number;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const DOC_TYPE_MAP: Record<string, string> = {
-  처방전: "prescription",
-  검사결과: "lab_result",
-  진료기록: "medical_record",
-};
-
 const FALLBACK_FIELDS: Field[] = [
   { key: "visit_date", label: "진료일", value: "2026.5.20", confidence: 98 },
-  {
-    key: "hospital",
-    label: "병원명",
-    value: "서울대학교병원 내과",
-    confidence: 95,
-  },
+  { key: "hospital", label: "병원명", value: "서울대학교병원 내과", confidence: 95 },
   { key: "diagnosis", label: "진단명", value: "위염", confidence: 88 },
-  {
-    key: "medication",
-    label: "처방 약물",
-    value: "라베프라졸 10mg",
-    confidence: 92,
-  },
+  { key: "medication", label: "처방 약물", value: "라베프라졸 10mg", confidence: 92 },
 ];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function structuredDataToFields(
   data: Record<string, unknown>,
@@ -64,9 +44,6 @@ function OcrReviewInner() {
   const params = useSearchParams();
   const documentId = Number(params.get("documentId"));
   const jobId = params.get("jobId") ?? "";
-  const rawDocType = params.get("document_type") ?? "other";
-  // 한글 타입명 → 영어 정규화 (영어 값은 그대로 통과)
-  const documentType = DOC_TYPE_MAP[rawDocType] ?? rawDocType;
 
   const [fields, setFields] = useState<Field[]>([]);
   const [editing, setEditing] = useState(false);
@@ -76,7 +53,7 @@ function OcrReviewInner() {
 
   useEffect(() => {
     if (!jobId) {
-      setError("jobId 파라미터가 없습니다.");
+      setFields(FALLBACK_FIELDS);
       setLoading(false);
       return;
     }
@@ -99,7 +76,7 @@ function OcrReviewInner() {
       })
       .catch(() => setError("OCR 결과를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
-  }, [jobId, documentType]);
+  }, [jobId]);
 
   function setValue(key: string, value: string) {
     setFields((prev) =>
@@ -142,12 +119,12 @@ function OcrReviewInner() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
+    <main className="mx-auto w-full max-w-md px-5 pt-6 pb-10">
       <h1 className="text-2xl font-bold">OCR 결과 검토</h1>
 
       {/* 안내 배너 */}
       <div className="mt-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary p-4">
-        <FileText className="h-6 w-6 shrink-0 text-primary" />
+        <FileText className="h-6 w-6 text-primary" />
         <div>
           <p className="font-bold">인식된 정보를 확인해주세요</p>
           <p className="text-sm text-secondary-foreground">
@@ -157,14 +134,14 @@ function OcrReviewInner() {
       </div>
 
       {/* 원본 이미지 */}
-      <p className="mt-6 text-sm text-muted-foreground">원본 이미지</p>
+      <p className="mt-5 text-sm text-muted-foreground">원본 이미지</p>
       <Card className="mt-2 flex flex-col items-center justify-center gap-2 border-dashed py-10 text-muted-foreground">
         <ImageIcon className="h-10 w-10 opacity-40" />
-        <span className="text-sm">문서 ID: {documentId}</span>
+        <span className="text-sm">진료기록_240517.pdf</span>
       </Card>
 
       {/* 인식된 정보 */}
-      <p className="mt-6 text-sm text-muted-foreground">인식된 정보</p>
+      <p className="mt-5 text-sm text-muted-foreground">인식된 정보</p>
       {fields.length === 0 ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           인식된 정보가 없습니다.
@@ -200,15 +177,15 @@ function OcrReviewInner() {
         </div>
       )}
 
-      <p className="mt-5 text-center text-xs text-muted-foreground">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
         OCR 결과는 참고용이며 사용자 확정 후 저장됩니다
       </p>
 
       {/* 버튼 공간 확보 */}
       <div className="h-24" />
 
-      {/* 하단 버튼 */}
-      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md gap-3 bg-background px-5 pb-6 pt-3">
+      {/* 버튼 */}
+      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md gap-3 px-5 pb-6 pt-3 bg-background">
         <Button
           variant="outline"
           className="flex-1"
