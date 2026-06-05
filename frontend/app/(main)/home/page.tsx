@@ -50,9 +50,12 @@ export default function HomePage() {
     setUserType(getMode());
     getMe().then((u) => { setName(u.name); if (u.user_type) setUserType(u.user_type); }).catch(() => {});
     getDashboard().then((d) => { setData(d); if (d.user_type) setUserType(d.user_type); }).catch(() => setData(fallback));
-    getGuides().then((g) => setGuides(g.slice(0, 3))).catch(() => {});
-    getRecords().then((r) => setRecords(r.slice(0, 3))).catch(() => {});
-    getDocuments().then((docs) => setOcrDocs(docs.filter((d) => d.status === "processing" || d.status === "pending"))).catch(() => {});
+    getGuides().then((g) => setGuides(g.slice(0, 3))).catch(() => setGuides(fallbackGuides));
+    getRecords().then((r) => setRecords(r.slice(0, 3))).catch(() => setRecords(fallbackRecords));
+    getDocuments().then((docs) => {
+      const pending = docs.filter((d) => d.status === "processing" || d.status === "pending");
+      setOcrDocs(pending.length > 0 ? pending : fallbackOcr);
+    }).catch(() => setOcrDocs(fallbackOcr));
   }, []);
 
   const meds = data?.medications ?? fallback.medications!;
@@ -216,6 +219,22 @@ export default function HomePage() {
     </main>
   );
 }
+
+const fallbackGuides: Guide[] = [
+  { id: 1, symptom_summary: "위염 복약 가이드", created_at: "2026-05-20" },
+  { id: 2, symptom_summary: "감기 생활습관 안내", created_at: "2026-05-15" },
+  { id: 3, symptom_summary: "고혈압 관리 가이드", created_at: "2026-05-10" },
+];
+
+const fallbackRecords: MedicalRecord[] = [
+  { id: 1, hospital_name: "서울대학교병원 내과", diagnosis: "위염", visit_date: "2026-05-20" },
+  { id: 2, hospital_name: "서울가정의학과의원", diagnosis: "상기도 감염", visit_date: "2026-05-10" },
+  { id: 3, hospital_name: "건강한약국", diagnosis: "처방전 확인", visit_date: "2026-04-25" },
+];
+
+const fallbackOcr: MedicalDocument[] = [
+  { id: 1, file_name: "진료기록_2026-05.jpg", status: "processing" },
+];
 
 const fallback: DashboardData = {
   user_type: "general",
