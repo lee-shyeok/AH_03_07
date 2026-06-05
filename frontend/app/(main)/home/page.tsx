@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Circle, AlertTriangle, ClipboardCheck, FileText, User } from "lucide-react";
+import { ArrowRight, Check, Circle, AlertTriangle, ClipboardCheck, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getDashboard } from "@/features/dashboard/api";
 import { getMe } from "@/features/auth/api";
@@ -139,15 +139,12 @@ export default function HomePage() {
           <h2 className="text-base font-bold">최근 진료 기록</h2>
           <Card className="mt-3 divide-y divide-border overflow-hidden p-0">
             {records.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-50">
-                  <User className="h-5 w-5 text-teal-500" strokeWidth={1.5} />
-                </div>
+              <div key={r.id} className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-foreground">{r.hospital_name ?? "병원명 없음"}</p>
                   {r.diagnosis && <p className="text-xs text-muted-foreground">{r.diagnosis}</p>}
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">{shortDate(r.visit_date)}</span>
+                <span className="ml-3 shrink-0 text-xs text-muted-foreground">{shortDate(r.visit_date)}</span>
               </div>
             ))}
             <div className="px-4 py-2.5 text-right">
