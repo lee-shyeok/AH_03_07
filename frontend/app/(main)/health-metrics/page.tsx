@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity } from "lucide-react";
+import { Activity, ChevronLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -112,11 +113,33 @@ function Sparkline({ data }: { data: number[] }) {
 }
 
 export default function HealthMetricsPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("bp");
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
   const [data, setData] = useState<Record<Tab, TabData>>(FALLBACK_DATA);
   const [saving, setSaving] = useState(false);
+
+  function handleValChange(raw: string) {
+    if (tab === "bp") {
+      const filtered = raw.replace(/[^\d/]/g, "");
+      const isDeleting = filtered.length < val.length;
+      if (!isDeleting && !filtered.includes("/") && filtered.length === 3) {
+        setVal(filtered + "/");
+      } else {
+        setVal(filtered);
+      }
+    } else {
+      // glucose / weight: digits + user-typed dot only, no auto-insert
+      const filtered = raw.replace(/[^\d.]/g, "");
+      const firstDot = filtered.indexOf(".");
+      if (firstDot !== -1) {
+        setVal(filtered.slice(0, firstDot + 1) + filtered.slice(firstDot + 1).replace(/\./g, ""));
+      } else {
+        setVal(filtered);
+      }
+    }
+  }
 
   async function load() {
     try {
@@ -133,6 +156,7 @@ export default function HealthMetricsPage() {
   }
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { setVal(""); }, [tab]);
 
   const d = data[tab];
 
@@ -162,8 +186,13 @@ export default function HealthMetricsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
-      <h1 className="text-2xl font-bold">건강 수치</h1>
+    <main className="mx-auto w-full max-w-md px-5 py-8 pb-8">
+      <div className="flex items-center gap-2">
+        <button onClick={() => router.push("/home")} className="rounded-full p-1 text-foreground hover:bg-muted">
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-2xl font-bold">건강 수치</h1>
+      </div>
 
       <div className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary p-4">
         <Activity className="h-6 w-6 text-primary" />
@@ -225,7 +254,7 @@ export default function HealthMetricsPage() {
         ))}
       </Card>
 
-      <div className="fixed inset-x-0 bottom-16 mx-auto max-w-md px-5">
+      <div className="fixed inset-x-0 bottom-6 mx-auto max-w-md px-5">
         <Button className="w-full" size="lg" onClick={() => setOpen(true)}>+ 수치 입력</Button>
       </div>
 
@@ -240,7 +269,7 @@ export default function HealthMetricsPage() {
             <input
               autoFocus
               value={val}
-              onChange={(e) => setVal(e.target.value)}
+              onChange={(e) => handleValChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && save()}
               placeholder={tab === "bp" ? "예: 120/80" : tab === "glucose" ? "예: 98" : "예: 75.0"}
               className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
