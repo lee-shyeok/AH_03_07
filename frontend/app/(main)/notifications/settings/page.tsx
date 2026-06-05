@@ -24,7 +24,8 @@ const REPEAT_OPTIONS = [
   { value: "weekly_sun", label: "매주 일요일" },
 ];
 
-function formatTime(value: string): string {
+function formatTime(value: string | null | undefined): string {
+  if (!value) return formatTime("09:00");
   const [h, m] = value.split(":").map(Number);
   const ampm = h < 12 ? "오전" : "오후";
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
@@ -127,7 +128,9 @@ export default function NotificationSettingsPage() {
   const [earlyReminder, setEarlyReminder] = useState(FALLBACK_SETTINGS.early_reminder);
   const [missedReminder, setMissedReminder] = useState(FALLBACK_SETTINGS.missed_reminder);
   const [locationRecord, setLocationRecord] = useState(FALLBACK_SETTINGS.location_record);
-  const [channels, setChannels] = useState(FALLBACK_SETTINGS.channels);
+  const [channels, setChannels] = useState<{ app: boolean; kakao: boolean; email: boolean }>(
+    FALLBACK_SETTINGS.channels
+  );
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -140,7 +143,7 @@ export default function NotificationSettingsPage() {
         setEarlyReminder(s.early_reminder);
         setMissedReminder(s.missed_reminder);
         setLocationRecord(s.location_record);
-        setChannels(s.channels);
+        setChannels(s.channels ?? FALLBACK_SETTINGS.channels);
       })
       .catch(() => {
         // API 실패 시 fallback 유지

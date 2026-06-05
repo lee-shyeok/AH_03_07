@@ -44,7 +44,7 @@ export async function updateNotificationSettings(
   data: NotificationSettings
 ): Promise<NotificationSettings> {
   return apiFetch<NotificationSettings>("/v1/notifications/settings", {
-    method: "PUT",
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }
