@@ -53,12 +53,9 @@ export default function NotificationsPage() {
   const { data: apiItems = [], isLoading } = useNotifications();
   const markRead = useMarkRead();
 
-  // created_at 없는 항목은 오늘 날짜로 채움
-  const rawItems = apiItems.length > 0 ? apiItems : DUMMY_NOTIFICATIONS;
-  const items = rawItems.map((n, i) => ({
-    ...n,
-    created_at: n.created_at ?? new Date(Date.now() - i * 60000).toISOString(),
-  }));
+  // 백엔드 데이터에 created_at이 있으면 사용, 없으면 DUMMY로 대체
+  const hasProperDates = apiItems.length > 0 && apiItems.some(n => n.created_at);
+  const items = hasProperDates ? apiItems : DUMMY_NOTIFICATIONS;
 
   function handleClick(n: typeof items[0]) {
     if (!n.is_read) markRead.mutate(n.id);
