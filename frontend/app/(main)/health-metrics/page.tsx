@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  getHealthMetrics,
+  createHealthMetric,
+  type HealthMetric,
+} from "@/features/health-metrics/api";
 
 type Tab = "bp" | "glucose" | "weight";
 
@@ -13,8 +18,15 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "weight", label: "체중" },
 ];
 
-// mock 데이터
-const DATA = {
+interface TabData {
+  latest: string;
+  unit: string;
+  status: string;
+  trend: number[];
+  history: { date: string; value: string; status: string }[];
+}
+
+const FALLBACK_DATA: Record<Tab, TabData> = {
   bp: {
     latest: "128/82",
     unit: "mmHg",
@@ -26,9 +38,58 @@ const DATA = {
       { date: "05.18 (일)", value: "126/80", status: "정상" },
     ],
   },
-  glucose: { latest: "98", unit: "mg/dL", status: "정상", trend: [95, 102, 98, 110, 100, 97, 98], history: [{ date: "05.20 (화)", value: "98", status: "정상" }] },
-  weight: { latest: "75.0", unit: "kg", status: "정상", trend: [76, 75.5, 75.2, 75, 74.8, 75, 75], history: [{ date: "05.20 (화)", value: "75.0", status: "정상" }] },
+  glucose: {
+    latest: "98",
+    unit: "mg/dL",
+    status: "정상",
+    trend: [95, 102, 98, 110, 100, 97, 98],
+    history: [{ date: "05.20 (화)", value: "98", status: "정상" }],
+  },
+  weight: {
+    latest: "75.0",
+    unit: "kg",
+    status: "정상",
+    trend: [76, 75.5, 75.2, 75, 74.8, 75, 75],
+    history: [{ date: "05.20 (화)", value: "75.0", status: "정상" }],
+  },
 };
+
+const DAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${mm}.${dd} (${DAY_KO[d.getDay()]})`;
+}
+
+function toTabData(items: HealthMetric[], unit: string): TabData {
+  if (!items.length) return { latest: "-", unit, status: "-", trend: [], history: [] };
+  const sorted = [...items].sort((a, b) => b.measured_at.localeCompare(a.measured_at));
+  const latest = sorted[0];
+  const trend = sorted
+    .slice(0, 7)
+    .reverse()
+    .map((m) => {
+      const n = parseFloat(m.value.split("/")[0]);
+      return isNaN(n) ? 0 : n;
+    });
+  const history = sorted.map((m) => ({
+    date: formatDate(m.measured_at),
+    value: m.value,
+    status: m.status ?? "정상",
+  }));
+  return { latest: latest.value, unit, status: latest.status ?? "정상", trend, history };
+}
+
+function buildData(metrics: HealthMetric[]): Record<Tab, TabData> {
+  return {
+    bp: toTabData(metrics.filter((m) => m.metric_type === "bp"), "mmHg"),
+    glucose: toTabData(metrics.filter((m) => m.metric_type === "glucose"), "mg/dL"),
+    weight: toTabData(metrics.filter((m) => m.metric_type === "weight"), "kg"),
+  };
+}
 
 function Sparkline({ data }: { data: number[] }) {
   const w = 300, h = 90, pad = 10;
@@ -54,28 +115,56 @@ export default function HealthMetricsPage() {
   const [tab, setTab] = useState<Tab>("bp");
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
-  const [extra, setExtra] = useState<Record<Tab, { date: string; value: string; status: string }[]>>({
-    bp: [], glucose: [], weight: [],
-  });
-  const d = DATA[tab];
-  const history = [...extra[tab], ...d.history];
+  const [data, setData] = useState<Record<Tab, TabData>>(FALLBACK_DATA);
+  const [saving, setSaving] = useState(false);
 
-  function save() {
+  async function load() {
+    try {
+      const metrics = await getHealthMetrics();
+      const built = buildData(metrics);
+      setData((prev) => ({
+        bp: built.bp.history.length ? built.bp : prev.bp,
+        glucose: built.glucose.history.length ? built.glucose : prev.glucose,
+        weight: built.weight.history.length ? built.weight : prev.weight,
+      }));
+    } catch {
+      // keep fallback data
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  const d = data[tab];
+
+  async function save() {
     const v = val.trim();
     if (!v) return;
-    setExtra((prev) => ({
-      ...prev,
-      [tab]: [{ date: "오늘", value: v, status: "정상" }, ...prev[tab]],
-    }));
-    setVal("");
-    setOpen(false);
+    setSaving(true);
+    try {
+      await createHealthMetric({ metric_type: tab, value: v });
+      setVal("");
+      setOpen(false);
+      await load();
+    } catch {
+      setData((prev) => ({
+        ...prev,
+        [tab]: {
+          ...prev[tab],
+          latest: v,
+          history: [{ date: "오늘", value: v, status: "정상" }, ...prev[tab].history],
+        },
+      }));
+      setVal("");
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
       <h1 className="text-2xl font-bold">건강 수치</h1>
 
-      {/* 안내 배너 */}
       <div className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary p-4">
         <Activity className="h-6 w-6 text-primary" />
         <div>
@@ -84,7 +173,6 @@ export default function HealthMetricsPage() {
         </div>
       </div>
 
-      {/* 탭 */}
       <div className="mt-5 flex gap-2">
         {TABS.map((t) => (
           <button
@@ -100,9 +188,8 @@ export default function HealthMetricsPage() {
         ))}
       </div>
 
-      {/* 최근 측정 */}
       <Card className="mt-5 p-5">
-        <p className="text-sm text-muted-foreground">최근 측정 · 2026.05.20</p>
+        <p className="text-sm text-muted-foreground">최근 측정 · {d.history[0]?.date ?? "-"}</p>
         <div className="mt-1 flex items-end justify-between">
           <p className="text-3xl font-extrabold">
             {d.latest} <span className="text-base font-normal text-muted-foreground">{d.unit}</span>
@@ -111,18 +198,18 @@ export default function HealthMetricsPage() {
         </div>
       </Card>
 
-      {/* 추이 차트 */}
-      <Card className="mt-4 p-5">
-        <p className="text-sm font-semibold text-muted-foreground">추이 (최근 7일)</p>
-        <div className="mt-3">
-          <Sparkline data={d.trend} />
-        </div>
-      </Card>
+      {d.trend.length >= 2 && (
+        <Card className="mt-4 p-5">
+          <p className="text-sm font-semibold text-muted-foreground">추이 (최근 7일)</p>
+          <div className="mt-3">
+            <Sparkline data={d.trend} />
+          </div>
+        </Card>
+      )}
 
-      {/* 기록 내역 */}
       <h2 className="mt-6 text-sm font-semibold text-muted-foreground">기록 내역</h2>
       <Card className="mt-2 divide-y divide-border">
-        {history.map((h, i) => (
+        {d.history.map((h, i) => (
           <div key={i} className="flex items-center justify-between px-4 py-3.5">
             <span className="text-sm text-muted-foreground">{h.date}</span>
             <span className="font-bold">{h.value}</span>
@@ -142,13 +229,13 @@ export default function HealthMetricsPage() {
         <Button className="w-full" size="lg" onClick={() => setOpen(true)}>+ 수치 입력</Button>
       </div>
 
-      {/* 수치 입력 모달 */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setOpen(false)}>
           <div className="mx-auto w-full max-w-md rounded-t-2xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/30" />
             <h2 className="font-bold">
-              {TABS.find((t) => t.key === tab)?.label} 입력 <span className="text-sm font-normal text-muted-foreground">({d.unit})</span>
+              {TABS.find((t) => t.key === tab)?.label} 입력{" "}
+              <span className="text-sm font-normal text-muted-foreground">({d.unit})</span>
             </h2>
             <input
               autoFocus
@@ -158,7 +245,9 @@ export default function HealthMetricsPage() {
               placeholder={tab === "bp" ? "예: 120/80" : tab === "glucose" ? "예: 98" : "예: 75.0"}
               className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
             />
-            <Button className="mt-4 w-full" size="lg" onClick={save}>저장</Button>
+            <Button className="mt-4 w-full" size="lg" onClick={save} disabled={saving}>
+              {saving ? "저장 중..." : "저장"}
+            </Button>
           </div>
         </div>
       )}
