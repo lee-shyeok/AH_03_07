@@ -51,7 +51,7 @@ function shortDate(dateStr?: string) {
 
 function isLatest(dateStr?: string) {
   if (!dateStr) return false;
-  return (Date.now() - new Date(dateStr).getTime()) < 7 * 24 * 60 * 60 * 1000;
+  return (Date.now() - new Date(dateStr).getTime()) < 30 * 24 * 60 * 60 * 1000;
 }
 
 export default function HomePage() {
