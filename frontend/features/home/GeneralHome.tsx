@@ -1,29 +1,58 @@
+"use client";
+
+import Link from "next/link";
 import { FileText, Stethoscope } from "lucide-react";
 import HomeHeader from "./components/HomeHeader";
 import MedicationCard, { type Medication } from "./components/MedicationCard";
 import SectionCard from "./components/SectionCard";
+import type { Guide } from "@/features/guides/api";
+import type { MedicalRecord } from "@/features/medical-records/api";
+import type { MedicalDocument } from "@/features/documents/api";
+
+const FALLBACK_OCR: MedicalDocument[] = [
+  { id: 1, file_name: "진료기록_2026-05.jpg", status: "processing" },
+];
+const FALLBACK_RECORDS: MedicalRecord[] = [
+  { id: 1, hospital_name: "서울대학교병원 내과", diagnosis: "위염", visit_date: "2026-05-20" },
+  { id: 2, hospital_name: "서울가정의학과의원", diagnosis: "상기도 감염", visit_date: "2026-05-10" },
+  { id: 3, hospital_name: "건강한약국", diagnosis: "처방전 확인", visit_date: "2026-04-25" },
+];
+const FALLBACK_GUIDES: Guide[] = [
+  { id: 1, symptom_summary: "위염 복약 가이드", created_at: "2026-05-20" },
+  { id: 2, symptom_summary: "감기 생활습관 안내", created_at: "2026-05-15" },
+  { id: 3, symptom_summary: "고혈압 관리 가이드", created_at: "2026-05-10" },
+];
+
+function shortDate(dateStr?: string) {
+  if (!dateStr) return "";
+  return dateStr.slice(5, 10).replace("-", ".");
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  return dateStr.slice(0, 10).replace(/-/g, ".");
+}
+
+function isLatest(dateStr?: string) {
+  if (!dateStr) return false;
+  return Date.now() - new Date(dateStr).getTime() < 30 * 24 * 60 * 60 * 1000;
+}
 
 interface GeneralHomeProps {
   name: string;
   medications: Medication[];
+  guides?: Guide[];
+  records?: MedicalRecord[];
+  ocrDocs?: MedicalDocument[];
 }
 
-// TODO(데이터): OCR / 진료기록 / 가이드 — 담당 API 연결 전까지 placeholder.
-const ocrJobs = [
-  { id: "o1", fileName: "진료기록_2026-05.jpg", status: "OCR 텍스트 추출중...", progress: 0.7 },
-];
-const records = [
-  { id: "r1", place: "서울대학교병원 내과", note: "위염", date: "05.20" },
-  { id: "r2", place: "서울가정의학과의원", note: "상기도 감염", date: "05.10" },
-  { id: "r3", place: "건강한약국", note: "처방전 확인", date: "04.25" },
-];
-const guides = [
-  { id: "g1", title: "위염 복약 가이드", meta: "2026.05.20 · 최신" },
-  { id: "g2", title: "감기 생활습관 안내", meta: "2026.05.15" },
-  { id: "g3", title: "고혈압 관리 가이드", meta: "2026.05.10" },
-];
-
-export default function GeneralHome({ name, medications }: GeneralHomeProps) {
+export default function GeneralHome({
+  name,
+  medications,
+  guides = FALLBACK_GUIDES,
+  records = FALLBACK_RECORDS,
+  ocrDocs = FALLBACK_OCR,
+}: GeneralHomeProps) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-24 pt-10">
       <HomeHeader name={name} mode="general" />
@@ -32,25 +61,24 @@ export default function GeneralHome({ name, medications }: GeneralHomeProps) {
         <MedicationCard medications={medications} />
       </div>
 
-      {ocrJobs.length > 0 && (
+      {ocrDocs.length > 0 && (
         <>
           <h2 className="mb-3 mt-7 text-sm font-semibold text-muted-foreground">
             진행 중인 OCR 처리 작업
           </h2>
           <SectionCard>
-            {ocrJobs.map((job) => (
-              <div key={job.id} className="flex items-center gap-3">
+            {ocrDocs.map((doc) => (
+              <div key={doc.id} className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50">
                   <FileText className="h-6 w-6 text-amber-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{job.fileName}</p>
-                  <p className="mb-2 text-xs text-muted-foreground">{job.status}</p>
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {doc.file_name ?? `문서 #${doc.id}`}
+                  </p>
+                  <p className="mb-2 text-xs text-muted-foreground">OCR 텍스트 추출중...</p>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-amber-500"
-                      style={{ width: `${job.progress * 100}%` }}
-                    />
+                    <div className="h-full w-3/4 rounded-full bg-amber-500" />
                   </div>
                 </div>
               </div>
@@ -68,10 +96,16 @@ export default function GeneralHome({ name, medications }: GeneralHomeProps) {
                 <Stethoscope className="h-5 w-5 text-sky-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-foreground">{r.place}</p>
-                <p className="text-sm text-muted-foreground">{r.note}</p>
+                <p className="text-[15px] font-medium text-foreground">
+                  {r.hospital_name ?? "병원명 없음"}
+                </p>
+                {r.diagnosis && (
+                  <p className="text-sm text-muted-foreground">{r.diagnosis}</p>
+                )}
               </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{r.date}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {shortDate(r.visit_date)}
+              </span>
             </li>
           ))}
         </ul>
@@ -80,17 +114,25 @@ export default function GeneralHome({ name, medications }: GeneralHomeProps) {
       <h2 className="mb-3 mt-7 text-sm font-semibold text-muted-foreground">최근 가이드</h2>
       <SectionCard moreHref="/guides">
         <ul className="space-y-4">
-          {guides.map((g) => (
-            <li key={g.id} className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-foreground">{g.title}</p>
-                <p className="text-sm text-muted-foreground">{g.meta}</p>
-              </div>
-            </li>
-          ))}
+          {guides.map((g) => {
+            const title = g.symptom_summary ?? g.medication_general ?? `가이드 #${g.id}`;
+            const date = formatDate(g.created_at);
+            const latest = isLatest(g.created_at);
+            return (
+              <li key={g.id} className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <Link href={`/guides/${g.id}`} className="min-w-0 flex-1">
+                  <p className="text-[15px] font-medium text-foreground">{title}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {date}
+                    {latest && <span> · 최신</span>}
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </SectionCard>
     </main>

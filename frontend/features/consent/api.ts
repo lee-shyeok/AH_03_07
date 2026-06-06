@@ -7,7 +7,7 @@ import type { ConsentItem, ConsentType } from "./types";
 // 동의 현황/이력 조회
 export async function getConsents(): Promise<ConsentItem[]> {
   const res = await apiFetch<{ items?: ConsentItem[] } | ConsentItem[]>(
-    "/v1/consents"
+    "/v1/users/me/consents"
   );
   return Array.isArray(res) ? res : (res.items ?? []);
 }
@@ -17,7 +17,7 @@ export async function updateConsent(
   type: ConsentType,
   agreed: boolean
 ): Promise<void> {
-  await apiFetch(`/v1/consents/${type}`, {
+  await apiFetch(`/v1/users/me/consents/${type}`, {
     method: "PUT",
     body: { agreed },
   });

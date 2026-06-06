@@ -15,13 +15,15 @@ export default function ModeSelectPage() {
   const updateModeMutation = useUpdateMode();
 
   function select(mode: Mode) {
+    // 로컬에 즉시 저장 (API 응답 대기 없이 이동)
+    import("@/features/auth/mode").then(({ setMode }) => setMode(mode));
     if (mode === "autoimmune") {
       router.replace("/mode-consent");
       return;
     }
-    updateModeMutation.mutate("general", {
-      onSuccess: () => router.replace("/home"),
-    });
+    // 백엔드 동기화는 백그라운드로 (실패해도 이동)
+    updateModeMutation.mutate("general");
+    router.replace("/home");
   }
 
   const cards: { key: Mode; title: string; lines: string[]; color: string; image: string }[] = [
