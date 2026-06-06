@@ -71,7 +71,7 @@ export default function DiseaseNewPage() {
                   className={`flex h-12 w-full items-center gap-3 rounded-xl border px-4 text-sm transition-colors ${
                     selectedCodes.includes(code)
                       ? "border-[#7C5CCF] bg-[#7C5CCF]/10 font-medium"
-                      : "border-input bg-background"
+                      : "border-input bg-white"
                   }`}
                 >
                   <span
@@ -101,7 +101,7 @@ export default function DiseaseNewPage() {
             <input
               id="diagnosed_date"
               type="date"
-              className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-4 text-sm"
+              className="mt-2 h-12 w-full rounded-xl border border-input bg-white px-4 text-sm"
               {...register("diagnosed_date")}
             />
           </div>
@@ -111,7 +111,7 @@ export default function DiseaseNewPage() {
             <input
               id="note"
               placeholder="입력하세요"
-              className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-4 text-sm"
+              className="mt-2 h-12 w-full rounded-xl border border-input bg-white px-4 text-sm"
               {...register("note")}
             />
           </div>
