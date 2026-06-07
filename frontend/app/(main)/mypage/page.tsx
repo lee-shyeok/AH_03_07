@@ -39,7 +39,7 @@ export default function MyPage() {
         { href: "/disease/new", label: "질환 정보", icon: FileText },
         { href: "/medication", label: "약물 목록", icon: Pill },
         { href: "/risk-profile", label: "위험요인 프로필", icon: ShieldCheck },
-        { href: "/activity-trend", label: "활성도 추이", icon: BarChart3 },
+        { href: "/activity/trend", label: "활성도 추이", icon: BarChart3 },
         { href: "/lab", label: "검사 결과", icon: FlaskConical },
         { href: "/schedule", label: "검사·진료 일정", icon: CalendarDays },
         { href: "/risk-flags", label: "의료진 확인 신호", icon: AlertTriangle },
