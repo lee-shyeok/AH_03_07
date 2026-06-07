@@ -8,6 +8,8 @@ import {
   upsertActivityLog,
   getActivityLog,
 } from "@/features/activity/api";
+import JointPicker from "@/features/activity/JointPicker";
+import { DIAGRAM_META, type DiagramKind } from "@/features/activity/jointDiagram";
 
 const PURPLE = "#7C5CCF";
 
@@ -89,6 +91,7 @@ export default function ActivityNewPage() {
   const [memo, setMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [diagramOpen, setDiagramOpen] = useState<DiagramKind | null>(null);
 
   // 쿼리(?date=)로 진입 시 해당 날짜로 시작 (수정 모드)
   useEffect(() => {
@@ -137,6 +140,32 @@ export default function ActivityNewPage() {
       setIsSubmitting(false);
     }
   }
+
+  const diagramKindFor = (area: string): DiagramKind | null =>
+    area === "손가락" ? "hand" : area === "발가락" ? "foot" : null;
+
+  const jointCountFor = (area: string): number => {
+    const k = diagramKindFor(area);
+    if (!k) return 0;
+    return swellingAreas.filter((s) => s.startsWith(DIAGRAM_META[k].prefix)).length;
+  };
+
+  const isChipSelected = (area: string): boolean => {
+    const k = diagramKindFor(area);
+    if (k) return swellingAreas.some((s) => s.startsWith(DIAGRAM_META[k].prefix));
+    return swellingAreas.includes(area);
+  };
+
+  const onChipClick = (area: string) => {
+    const k = diagramKindFor(area);
+    if (k) {
+      setDiagramOpen(k);
+      return;
+    }
+    setSwellingAreas((prev) =>
+      prev.includes(area) ? prev.filter((x) => x !== area) : [...prev, area]
+    );
+  };
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-32 pt-6">
@@ -206,18 +235,13 @@ export default function ActivityNewPage() {
               <span className="font-semibold">관절 부종 부위</span>
               <div className="mt-3 flex flex-wrap gap-2">
                 {SWELLING_AREAS.map((area) => {
-                  const selected = swellingAreas.includes(area);
+                  const selected = isChipSelected(area);
+                  const count = jointCountFor(area);
                   return (
                     <button
                       key={area}
                       type="button"
-                      onClick={() =>
-                        setSwellingAreas((prev) =>
-                          prev.includes(area)
-                            ? prev.filter((a) => a !== area)
-                            : [...prev, area]
-                        )
-                      }
+                      onClick={() => onChipClick(area)}
                       className="rounded-full border px-3 py-1.5 text-sm"
                       style={
                         selected
@@ -226,6 +250,9 @@ export default function ActivityNewPage() {
                       }
                     >
                       {area}
+                      {count > 0 && (
+                        <span className="ml-1 text-xs font-semibold">{count}</span>
+                      )}
                     </button>
                   );
                 })}
@@ -276,6 +303,15 @@ export default function ActivityNewPage() {
           {isSubmitting ? "저장 중..." : "저장하기"}
         </button>
       </div>
+
+      {diagramOpen && (
+        <JointPicker
+          kind={diagramOpen}
+          selected={swellingAreas}
+          onSave={setSwellingAreas}
+          onClose={() => setDiagramOpen(null)}
+        />
+      )}
     </main>
   );
 }
