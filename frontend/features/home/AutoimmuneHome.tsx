@@ -23,6 +23,7 @@ interface AutoimmuneHomeProps {
   recentActivity: unknown[];
   riskFlags: unknown[];
   pendingSchedules: unknown[];
+  isLupus?: boolean;
 }
 
 // ⑥ 빠른 진입점 — TODO(라우트): /lab-results, /chat 실제 경로 확정 필요
@@ -40,6 +41,7 @@ export default function AutoimmuneHome({
   recentActivity,
   riskFlags,
   pendingSchedules,
+  isLupus,
 }: AutoimmuneHomeProps) {
   const hasActivity = recentActivity.length > 0;
   const riskCount = riskFlags.length;
@@ -69,6 +71,26 @@ export default function AutoimmuneHome({
             활성도 기록하기
           </Link>
         </Card>
+
+        {/* ①-B 루푸스 기록 (SLE 환자만) */}
+        {isLupus && (
+          <Card className="p-5">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" style={{ color: PURPLE }} />
+              <h2 className="text-base font-bold">루푸스 기록</h2>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              햇빛 노출·수면·피부 증상 등 오늘의 루푸스 상태를 기록해요.
+            </p>
+            <Link
+              href="/lupus"
+              className="mt-4 block w-full rounded-xl py-3 text-center font-bold text-white"
+              style={{ background: PURPLE }}
+            >
+              루푸스 기록하기
+            </Link>
+          </Card>
+        )}
 
         {/* ② 의료진 확인 필요 신호 (v2) */}
         {riskCount > 0 ? (
