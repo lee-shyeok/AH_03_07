@@ -19,6 +19,7 @@ TORTOISE_APP_MODELS = [
     "app.models.medical_schedule",
     "app.models.lab_result",
     "app.models.lupus_skin_log",
+    "app.models.lupus_daily_context",
     "app.models.chat_session",
     "app.models.chat_message",
     "app.models.chat_feedback",

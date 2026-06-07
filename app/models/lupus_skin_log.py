@@ -9,6 +9,7 @@ class LupusSkinSymptomType(StrEnum):
     RASH = "RASH"
     ORAL_ULCER = "ORAL_ULCER"
     HAIR_LOSS = "HAIR_LOSS"
+    RAYNAUD = "RAYNAUD"
 
 
 class LupusSkinLog(models.Model):
