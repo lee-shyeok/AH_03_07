@@ -1,15 +1,29 @@
+from datetime import datetime
 from uuid import UUID
 
+from app.core import config
+from app.dtos.autoimmune_log import ActivityLogResponse
 from app.dtos.dashboard import DashboardResponse
+from app.models.disease_activity_log import DiseaseActivityLog
 from app.services.medications import MedicationService
 
 
 class DashboardService:
     async def get_dashboard(self, user_id: UUID) -> DashboardResponse:
         medications = await MedicationService().get_my_medications(user_id=user_id)
+
+        # 오늘의 활성도 기록 (있으면 1건 → 홈 ①카드가 "오늘 기록 여부" 판단)
+        today = datetime.now(config.TIMEZONE).date()
+        today_log = await DiseaseActivityLog.get_or_none(user_id=user_id, log_date=today)
+        recent_activity = (
+            [ActivityLogResponse.model_validate(today_log).model_dump(mode="json")]
+            if today_log is not None
+            else []
+        )
+
         return DashboardResponse(
             today_medications=medications.medications,
-            recent_activity=[],
+            recent_activity=recent_activity,
             pending_schedules=[],
             active_risk_flags=[],
         )
