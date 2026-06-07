@@ -12,10 +12,10 @@ from app.apis.v1.autoimmune_care_routers import (
 )
 from app.apis.v1.autoimmune_profile_routers import autoimmune_profile_router
 from app.apis.v1.care_routers import care_router
-from app.apis.v1.dashboard_routers import dashboard_router
 from app.apis.v1.chat_routers import chat_router
 from app.apis.v1.chat_stream_routers import chat_stream_router
 from app.apis.v1.content_conversion_routers import content_router
+from app.apis.v1.dashboard_routers import dashboard_router
 from app.apis.v1.diary_log_routers import diary_log_router
 from app.apis.v1.diet_info_routers import diet_info_router
 from app.apis.v1.disease_routers import disease_router
