@@ -4,7 +4,9 @@ from uuid import UUID
 from app.core import config
 from app.dtos.autoimmune_log import ActivityLogResponse
 from app.dtos.dashboard import DashboardResponse
+from app.dtos.risk_flag import RiskFlagItem
 from app.models.disease_activity_log import DiseaseActivityLog
+from app.models.risk_flag import RiskFlag, RiskFlagStatus
 from app.services.medications import MedicationService
 
 
@@ -19,9 +21,12 @@ class DashboardService:
             [ActivityLogResponse.model_validate(today_log).model_dump(mode="json")] if today_log is not None else []
         )
 
+        active_flags = await RiskFlag.filter(user_id=user_id, status=RiskFlagStatus.ACTIVE).order_by("-created_at")
+        active_risk_flags = [RiskFlagItem.model_validate(f).model_dump(mode="json") for f in active_flags]
+
         return DashboardResponse(
             today_medications=medications.medications,
             recent_activity=recent_activity,
             pending_schedules=[],
-            active_risk_flags=[],
+            active_risk_flags=active_risk_flags,
         )
