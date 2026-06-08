@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getActivityLog, type ActivityLogResponse } from "@/features/activity/api";
 
@@ -59,6 +59,13 @@ export default function ActivityViewPage() {
           <ChevronLeft className="h-6 w-6" />
         </button>
         <h1 className="text-xl font-bold">활성도 기록</h1>
+        <button
+          onClick={() => router.push("/activity/trend")}
+          className="ml-auto flex items-center gap-1 text-sm font-semibold"
+          style={{ color: PURPLE }}
+        >
+          <TrendingUp className="h-4 w-4" /> 추이
+        </button>
       </div>
 
       {/* 날짜 네비 */}
