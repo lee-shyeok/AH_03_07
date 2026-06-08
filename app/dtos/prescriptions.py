@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from app.models.medical_documents import DocumentType, UploadStatus
 from pydantic import BaseModel
 
+from app.models.medical_documents import DocumentType, UploadStatus
 from app.models.prescriptions import OCRStatus
 
 

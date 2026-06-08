@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from app.models.medical_documents import DocumentType, MedicalDocument, UploadStatus
-
 from app.models.prescriptions import OCRStatus, Prescription
 
 
