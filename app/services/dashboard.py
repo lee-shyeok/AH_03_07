@@ -3,9 +3,11 @@ from uuid import UUID
 
 from app.core import config
 from app.dtos.autoimmune_log import ActivityLogResponse
+from app.dtos.autoimmune_medical import MedicalScheduleResponse
 from app.dtos.dashboard import DashboardResponse
 from app.dtos.risk_flag import RiskFlagItem
 from app.models.disease_activity_log import DiseaseActivityLog
+from app.models.medical_schedule import MedicalSchedule
 from app.models.risk_flag import RiskFlag, RiskFlagStatus
 from app.services.medications import MedicationService
 
@@ -24,9 +26,15 @@ class DashboardService:
         active_flags = await RiskFlag.filter(user_id=user_id, status=RiskFlagStatus.ACTIVE).order_by("-created_at")
         active_risk_flags = [RiskFlagItem.model_validate(f).model_dump(mode="json") for f in active_flags]
 
+        pending = await MedicalSchedule.filter(
+            user_id=user_id,
+            scheduled_date__gte=today,
+        ).order_by("scheduled_date")
+        pending_schedules = [MedicalScheduleResponse.model_validate(s).model_dump(mode="json") for s in pending]
+
         return DashboardResponse(
             today_medications=medications.medications,
             recent_activity=recent_activity,
-            pending_schedules=[],
+            pending_schedules=pending_schedules,
             active_risk_flags=active_risk_flags,
         )
