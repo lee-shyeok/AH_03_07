@@ -35,6 +35,7 @@ TORTOISE_APP_MODELS = [
     "app.models.pharmacies",
     "app.models.favorite_places",
     "app.models.medical_appointments",
+    "app.models.medical_documents",
     "app.models.guardians",
     "app.models.share_links",
     "app.models.share_logs",

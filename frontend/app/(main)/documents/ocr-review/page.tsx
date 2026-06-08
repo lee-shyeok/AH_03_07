@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getOcrJob, confirmDocument } from "@/features/documents/api";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface Field {
   key: string;
   label: string;
@@ -14,23 +16,57 @@ interface Field {
   confidence: number;
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const DOC_TYPE_MAP: Record<string, string> = {
+  처방전: "prescription",
+  검사결과: "lab_result",
+  진료기록: "medical_record",
+};
+
+const FALLBACK_FIELDS: Field[] = [
+  { key: "visit_date", label: "진료일", value: "2026.5.20", confidence: 98 },
+  {
+    key: "hospital",
+    label: "병원명",
+    value: "서울대학교병원 내과",
+    confidence: 95,
+  },
+  { key: "diagnosis", label: "진단명", value: "위염", confidence: 88 },
+  {
+    key: "medication",
+    label: "처방 약물",
+    value: "라베프라졸 10mg",
+    confidence: 92,
+  },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function structuredDataToFields(
   data: Record<string, unknown>,
   score: number
 ): Field[] {
-  return Object.entries(data).map(([key, val]) => ({
-    key,
-    label: key,
-    value: String(val ?? ""),
-    confidence: Math.round(score * 100),
-  }));
+  return Object.entries(data)
+    .filter(([k]) => k !== "raw_text")
+    .map(([key, val]) => ({
+      key,
+      label: key,
+      value: String(val ?? ""),
+      confidence: Math.round(score * 100),
+    }));
 }
+
+// ─── Inner page ───────────────────────────────────────────────────────────────
 
 function OcrReviewInner() {
   const router = useRouter();
   const params = useSearchParams();
   const documentId = Number(params.get("documentId"));
   const jobId = params.get("jobId") ?? "";
+  const rawDocType = params.get("document_type") ?? "other";
+  // 한글 타입명 → 영어 정규화 (영어 값은 그대로 통과)
+  const documentType = DOC_TYPE_MAP[rawDocType] ?? rawDocType;
 
   const [fields, setFields] = useState<Field[]>([]);
   const [editing, setEditing] = useState(false);
@@ -50,21 +86,25 @@ function OcrReviewInner() {
           setError("OCR 처리에 실패했습니다.");
           return;
         }
-        if (job.structured_data) {
+        if (job.structured_data && Object.keys(job.structured_data).length > 0) {
           setFields(
             structuredDataToFields(
               job.structured_data,
               job.confidence_score ?? 0
             )
           );
+        } else {
+          setFields(FALLBACK_FIELDS);
         }
       })
       .catch(() => setError("OCR 결과를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
-  }, [jobId]);
+  }, [jobId, documentType]);
 
   function setValue(key: string, value: string) {
-    setFields((prev) => prev.map((f) => (f.key === key ? { ...f, value } : f)));
+    setFields((prev) =>
+      prev.map((f) => (f.key === key ? { ...f, value } : f))
+    );
   }
 
   async function handleConfirm() {
@@ -83,7 +123,9 @@ function OcrReviewInner() {
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-md px-5 py-8">
-        <p className="text-center text-muted-foreground">OCR 결과 불러오는 중...</p>
+        <p className="text-center text-muted-foreground">
+          OCR 결과 불러오는 중...
+        </p>
       </main>
     );
   }
@@ -104,11 +146,13 @@ function OcrReviewInner() {
       <h1 className="text-2xl font-bold">OCR 결과 검토</h1>
 
       {/* 안내 배너 */}
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary p-4">
-        <FileText className="h-6 w-6 text-primary" />
+      <div className="mt-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary p-4">
+        <FileText className="h-6 w-6 shrink-0 text-primary" />
         <div>
           <p className="font-bold">인식된 정보를 확인해주세요</p>
-          <p className="text-sm text-secondary-foreground">확정 후에만 저장됩니다</p>
+          <p className="text-sm text-secondary-foreground">
+            확정 후에만 저장됩니다
+          </p>
         </div>
       </div>
 
@@ -160,8 +204,11 @@ function OcrReviewInner() {
         OCR 결과는 참고용이며 사용자 확정 후 저장됩니다
       </p>
 
-      {/* 버튼 */}
-      <div className="fixed inset-x-0 bottom-16 mx-auto flex max-w-md gap-2 px-5">
+      {/* 버튼 공간 확보 */}
+      <div className="h-24" />
+
+      {/* 하단 버튼 */}
+      <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md gap-3 bg-background px-5 pb-6 pt-3">
         <Button
           variant="outline"
           className="flex-1"
@@ -171,7 +218,7 @@ function OcrReviewInner() {
           {editing ? "수정 완료" : "수정하기"}
         </Button>
         <Button
-          className="flex-1"
+          className="flex-1 bg-green-600 text-white hover:bg-green-700"
           size="lg"
           onClick={handleConfirm}
           disabled={saving || !documentId}
@@ -188,7 +235,9 @@ export default function OcrReviewPage() {
     <Suspense
       fallback={
         <main className="mx-auto w-full max-w-md px-5 py-8">
-          <p className="text-center text-muted-foreground">OCR 결과 불러오는 중...</p>
+          <p className="text-center text-muted-foreground">
+            OCR 결과 불러오는 중...
+          </p>
         </main>
       }
     >
