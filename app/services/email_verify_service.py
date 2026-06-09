@@ -53,7 +53,8 @@ async def confirm_code(email: str, code: str) -> bool:
 
 def generate_email_token(email: str) -> str:
     """검증 완료 후 회원가입용 단기 토큰 (단순 구현)"""
-    import base64, time as _t
+    import base64
+    import time as _t
     raw = f"{email}:{int(_t.time()) + 600}"
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
@@ -61,7 +62,8 @@ def generate_email_token(email: str) -> str:
 def verify_email_token(token: str, email: str) -> bool:
     """회원가입 시 email_token 검증"""
     try:
-        import base64, time as _t
+        import base64
+        import time as _t
         raw = base64.urlsafe_b64decode(token.encode()).decode()
         token_email, expires = raw.rsplit(":", 1)
         return token_email == email and _t.time() < int(expires)
