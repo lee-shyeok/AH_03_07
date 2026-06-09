@@ -1,12 +1,13 @@
 """REQ-USER-002 이메일 인증 서비스 (로컬 개발용: 메모리 저장 + 콘솔 출력)"""
 from __future__ import annotations
 
+import logging
 import random
 import string
 import time
-import logging
-from app.core.config import Env
+
 from app.core import config
+from app.core.config import Env
 
 logger = logging.getLogger(__name__)
 
