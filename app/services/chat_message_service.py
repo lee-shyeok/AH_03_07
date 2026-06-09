@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from app.models.chat_message import ChatMessage, MessageRole
 from app.models.chat_session import ChatMode, ChatSession
 from app.services.chat_rag_service import ChatRAGService
@@ -43,8 +45,6 @@ class ChatMessageService:
                 }
 
             # 최근 가이드 주제 (30일 이내, 최대 3개)
-            from tortoise.expressions import Q
-            from datetime import datetime, timedelta
             cutoff = datetime.utcnow() - timedelta(days=30)
             guides = await user.auto_guides.filter(created_at__gte=cutoff).order_by("-created_at").limit(3)  # type: ignore
             if guides:
