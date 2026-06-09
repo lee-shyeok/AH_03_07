@@ -28,8 +28,7 @@ class ChatMessageService:
             meds = await user.medications.all().limit(5)  # type: ignore
             if meds:
                 profile["medications"] = [
-                    getattr(m, "drug_name_user_input", None) or getattr(m, "drug_name", None) or ""
-                    for m in meds
+                    getattr(m, "drug_name_user_input", None) or getattr(m, "drug_name", None) or "" for m in meds
                 ]
 
             # 공통: 최근 가이드 주제
@@ -37,17 +36,14 @@ class ChatMessageService:
             guides = await user.auto_guides.filter(created_at__gte=cutoff).order_by("-created_at").limit(3)  # type: ignore
             if guides:
                 profile["recent_guide_topics"] = [
-                    getattr(g, "symptom_summary", None) or getattr(g, "medication_general", None) or ""
-                    for g in guides
+                    getattr(g, "symptom_summary", None) or getattr(g, "medication_general", None) or "" for g in guides
                 ]
 
             if is_autoimmune:
                 # 자가면역 전용: 질환·활성도
                 disease = await user.diseases.filter(is_primary=True).first()  # type: ignore
                 if disease:
-                    profile["disease"] = (
-                        getattr(disease, "disease_name", None) or getattr(disease, "name", None)
-                    )
+                    profile["disease"] = getattr(disease, "disease_name", None) or getattr(disease, "name", None)
                 activity = await user.activity_logs.order_by("-log_date").first()  # type: ignore
                 if activity:
                     profile["recent_activity"] = {

@@ -61,14 +61,12 @@ class ChatRAGService:
         # 일반 모드 추가 컨텍스트
         if user_profile.get("recent_records"):
             records = ", ".join(
-                f"{r.get('hospital', '')}({r.get('diagnosis', '')})"
-                for r in user_profile["recent_records"]
+                f"{r.get('hospital', '')}({r.get('diagnosis', '')})" for r in user_profile["recent_records"]
             )
             lines.append(f"- 최근 진료 기록: {records}")
         if user_profile.get("recent_health_metrics"):
             metrics = ", ".join(
-                f"{m.get('type', '')} {m.get('value', '')}"
-                for m in user_profile["recent_health_metrics"]
+                f"{m.get('type', '')} {m.get('value', '')}" for m in user_profile["recent_health_metrics"]
             )
             lines.append(f"- 최근 건강 수치: {metrics}")
 
