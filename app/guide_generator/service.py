@@ -22,7 +22,11 @@ from app.services.safety_filter import (
 _MODEL = "gpt-4o-mini"
 _TEMPERATURE = 0.2
 
-_DISCLAIMER = "※ 이 안내문은 의료 진단·처방·치료를 대체하지 않습니다. 증상이 있으면 반드시 담당 의료진과 상담하세요."
+DEFAULT_DISCLAIMER = (
+    "본 안내문은 일반 정보 제공 목적이며, 귀하의 상태에 대한 의학적 진단·처방·치료 권고가 아닙니다. "
+    "의료적 결정은 반드시 담당 의료진과 상담하시기 바랍니다. (의료법 §27 준수)"
+)
+_DISCLAIMER = DEFAULT_DISCLAIMER
 
 _BLOCKED_HIGH_RISK_MESSAGE = (
     "담당 의료진 검토가 필요한 항목이 확인되었습니다. 자동 안내문 생성이 보류됩니다. 담당 의료진과 상담하시기 바랍니다."

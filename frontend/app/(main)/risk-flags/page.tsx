@@ -58,7 +58,7 @@ export default function RiskFlagsPage() {
 
       {/* 면책 카드 (상시) */}
       <div className="mt-4 rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
-        본 앱은 진단·예측을 수행하지 않습니다. 의료진 확인이 권고되는 사용자 기록 기반 신호만 표시합니다.
+        본 앱은 진단·예측을 수행하지 않습니다. 이 신호는 AI가 사용자의 기록 패턴을 분석한 참고 알림이며, 의학적 진단이 아닙니다. 반드시 담당 의료진과 상담하세요.
       </div>
 
       <Link
