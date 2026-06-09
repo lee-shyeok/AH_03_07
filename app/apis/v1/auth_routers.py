@@ -6,12 +6,17 @@ from fastapi.responses import JSONResponse as Response
 from app.core import config
 from app.core.config import Env
 from app.dtos.auth import (
-    LoginRequest, LoginResponse, SignUpRequest, TokenRefreshResponse,
-    EmailVerifySendRequest, EmailVerifySendResponse,
-    EmailVerifyConfirmRequest, EmailVerifyConfirmResponse,
+    EmailVerifyConfirmRequest,
+    EmailVerifyConfirmResponse,
+    EmailVerifySendRequest,
+    EmailVerifySendResponse,
+    LoginRequest,
+    LoginResponse,
+    SignUpRequest,
+    TokenRefreshResponse,
 )
 from app.services.auth import AuthService
-from app.services.email_verify_service import send_verification_code, confirm_code, generate_email_token
+from app.services.email_verify_service import confirm_code, generate_email_token, send_verification_code
 from app.services.jwt import JwtService
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
@@ -66,8 +71,8 @@ async def email_verify_send(
 ) -> dict:
     code = await send_verification_code(request.email)
     # 개발환경에서는 응답에 코드 포함 (배포 전 제거)
-    from app.core.config import Env
     from app.core import config as cfg
+    from app.core.config import Env
     dev_code = code if cfg.ENV != Env.PROD else None
     return {"message": "인증코드가 발송되었습니다.", "dev_code": dev_code}
 
