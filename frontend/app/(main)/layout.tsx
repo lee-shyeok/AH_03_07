@@ -39,12 +39,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-md items-center justify-around border-t border-border bg-card py-2">
           {tabs.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
+            const tabActiveColor = href === "/lab-results/list" ? PURPLE : activeColor;
             return (
               <Link
                 key={href}
                 href={href}
                 className={cn("flex flex-1 flex-col items-center gap-0.5 py-1 text-xs", active ? "" : "text-muted-foreground")}
-                style={active ? { color: activeColor } : undefined}
+                style={active ? { color: tabActiveColor } : undefined}
               >
                 <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
                 {label}
