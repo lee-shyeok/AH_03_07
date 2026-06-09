@@ -1,18 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Camera } from "lucide-react";
+import { ArrowRight, Camera, Activity } from "lucide-react";
 import HomeHeader from "./components/HomeHeader";
 import MedicationCard from "./components/MedicationCard";
 import SectionCard from "./components/SectionCard";
 import type { MedicationStatus } from "@/features/dashboard/api";
+import { getHealthMetrics, METRIC_LABEL, METRIC_UNIT, type HealthMetric, type MetricType } from "@/features/health-metrics/api";
 
 interface GeneralHomeProps {
   name: string;
   medications: MedicationStatus[];
+  recentMetrics?: HealthMetric[];
 }
 
-export default function GeneralHome({ name, medications }: GeneralHomeProps) {
+export default function GeneralHome({ name, medications, recentMetrics }: GeneralHomeProps) {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-24 pt-10">
       <HomeHeader name={name} mode="general" />
@@ -24,6 +27,25 @@ export default function GeneralHome({ name, medications }: GeneralHomeProps) {
             오늘 몸 상태를 일기로 기록해보세요.
           </p>
         </SectionCard>
+
+        {/* 최근 건강 수치 */}
+        {recentMetrics && recentMetrics.length > 0 && (
+          <SectionCard title="최근 건강 수치" moreHref="/health-metrics" moreLabel="전체 보기">
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              {recentMetrics.slice(0, 4).map((m) => (
+                <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2.5">
+                  <p className="text-xs text-muted-foreground">{METRIC_LABEL[m.metric_type as MetricType]}</p>
+                  <p className="mt-0.5 text-sm font-bold">
+                    {Number(m.user_recorded_value).toFixed(1)}
+                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                      {METRIC_UNIT[m.metric_type as MetricType]}
+                    </span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        )}
 
         {/* 오늘 복용약 */}
         <MedicationCard medications={medications} />

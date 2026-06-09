@@ -8,12 +8,14 @@ import type { DashboardData } from "@/features/dashboard/api";
 import GeneralHome from "@/features/home/GeneralHome";
 import AutoimmuneHome from "@/features/home/AutoimmuneHome";
 import { listMyDiseases } from "@/features/disease/api";
+import { getHealthMetrics, type HealthMetric } from "@/features/health-metrics/api";
 
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [name, setName] = useState<string>("");
   const [userType, setUserType] = useState<"general" | "autoimmune">("general");
   const [isLupus, setIsLupus] = useState(false);
+  const [recentMetrics, setRecentMetrics] = useState<HealthMetric[]>([]);
 
   useEffect(() => {
     setUserType(getMode());
@@ -22,6 +24,7 @@ export default function HomePage() {
     listMyDiseases()
       .then((ds) => setIsLupus(ds.some((d) => d.disease_code === "SLE")))
       .catch(() => {});
+    getHealthMetrics().then((m) => setRecentMetrics(m.slice(0, 4))).catch(() => {});
   }, []);
 
   const meds = (data?.today_medications ?? []).map((m) => ({
@@ -42,7 +45,7 @@ export default function HomePage() {
       />
     );
   }
-  return <GeneralHome name={displayName} medications={meds} />;
+  return <GeneralHome name={displayName} medications={meds} recentMetrics={recentMetrics} />;
 }
 
 const fallback: DashboardData = {
