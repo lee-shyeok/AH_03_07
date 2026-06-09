@@ -37,3 +37,17 @@ export async function feedbackGuide(
     body: { rating, comment },
   });
 }
+
+export async function generateCardNews(guideId: number): Promise<void> {
+  await apiFetch("/v1/contents/card-news", {
+    method: "POST",
+    body: { guide_id: guideId },
+  });
+}
+
+export async function generateTTS(guideId: number): Promise<void> {
+  await apiFetch("/v1/contents/tts", {
+    method: "POST",
+    body: { guide_id: guideId },
+  });
+}
