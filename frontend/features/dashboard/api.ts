@@ -1,5 +1,6 @@
 // 대시보드 API (REQ-MYPG-001)
 import { apiFetch } from "@/lib/api/client";
+import type { RiskFlagItem } from "@/features/risk-flag/api";
 
 export interface MedicationStatus {
   label: string;
@@ -25,7 +26,7 @@ export interface DashboardData {
   today_medications: MedicationResponse[];
   recent_activity: unknown[];
   pending_schedules: unknown[];
-  active_risk_flags: unknown[];
+  active_risk_flags: RiskFlagItem[];
 }
 
 export async function getDashboard(): Promise<DashboardData> {
