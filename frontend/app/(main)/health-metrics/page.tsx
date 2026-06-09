@@ -78,7 +78,7 @@ function toTabData(items: HealthMetric[], unit: string): TabData {
     });
   const history = sorted.map((m) => ({
     date: formatDate(m.measured_at),
-    value: m.value,
+    value: m.value ?? "0",
     status: m.status ?? "정상",
   }));
   return { latest: latest.value ?? "0", unit, status: latest.status ?? "정상", trend, history };
