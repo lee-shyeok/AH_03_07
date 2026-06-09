@@ -1,4 +1,5 @@
 """REQ-USER-002 이메일 인증 서비스 (로컬 개발용: 메모리 저장 + 콘솔 출력)"""
+
 from __future__ import annotations
 
 import logging
@@ -56,6 +57,7 @@ def generate_email_token(email: str) -> str:
     """검증 완료 후 회원가입용 단기 토큰 (단순 구현)"""
     import base64
     import time as _t
+
     raw = f"{email}:{int(_t.time()) + 600}"
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
@@ -65,6 +67,7 @@ def verify_email_token(token: str, email: str) -> bool:
     try:
         import base64
         import time as _t
+
         raw = base64.urlsafe_b64decode(token.encode()).decode()
         token_email, expires = raw.rsplit(":", 1)
         return token_email == email and _t.time() < int(expires)

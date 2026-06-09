@@ -34,14 +34,17 @@ class TokenRefreshResponse(LoginResponse): ...
 class EmailVerifySendRequest(BaseModel):
     email: EmailStr
 
+
 class EmailVerifySendResponse(BaseModel):
     message: str
     # 개발환경에서만 코드 노출 (프로덕션 배포 전 제거)
     dev_code: str | None = None
 
+
 class EmailVerifyConfirmRequest(BaseModel):
     email: EmailStr
     code: str
+
 
 class EmailVerifyConfirmResponse(BaseModel):
     email_token: str
