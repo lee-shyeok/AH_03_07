@@ -11,12 +11,12 @@ import {
   type HealthMetric,
 } from "@/features/health-metrics/api";
 
-type Tab = "bp" | "glucose" | "weight";
+type Tab = "BLOOD_PRESSURE" | "BLOOD_SUGAR" | "WEIGHT";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "bp", label: "혈압" },
-  { key: "glucose", label: "혈당" },
-  { key: "weight", label: "체중" },
+  { key: "BLOOD_PRESSURE", label: "혈압" },
+  { key: "BLOOD_SUGAR", label: "혈당" },
+  { key: "WEIGHT", label: "체중" },
 ];
 
 interface TabData {
@@ -28,7 +28,7 @@ interface TabData {
 }
 
 const FALLBACK_DATA: Record<Tab, TabData> = {
-  bp: {
+  BLOOD_PRESSURE: {
     latest: "128/82",
     unit: "mmHg",
     status: "정상",
@@ -39,14 +39,14 @@ const FALLBACK_DATA: Record<Tab, TabData> = {
       { date: "05.18 (일)", value: "126/80", status: "정상" },
     ],
   },
-  glucose: {
+  BLOOD_SUGAR: {
     latest: "98",
     unit: "mg/dL",
     status: "정상",
     trend: [95, 102, 98, 110, 100, 97, 98],
     history: [{ date: "05.20 (화)", value: "98", status: "정상" }],
   },
-  weight: {
+  WEIGHT: {
     latest: "75.0",
     unit: "kg",
     status: "정상",
@@ -86,9 +86,9 @@ function toTabData(items: HealthMetric[], unit: string): TabData {
 
 function buildData(metrics: HealthMetric[]): Record<Tab, TabData> {
   return {
-    bp: toTabData(metrics.filter((m) => m.metric_type === "bp"), "mmHg"),
-    glucose: toTabData(metrics.filter((m) => m.metric_type === "glucose"), "mg/dL"),
-    weight: toTabData(metrics.filter((m) => m.metric_type === "weight"), "kg"),
+    BLOOD_PRESSURE: toTabData(metrics.filter((m) => m.metric_type === "BLOOD_PRESSURE"), "mmHg"),
+    BLOOD_SUGAR: toTabData(metrics.filter((m) => m.metric_type === "BLOOD_SUGAR"), "mg/dL"),
+    WEIGHT: toTabData(metrics.filter((m) => m.metric_type === "WEIGHT"), "kg"),
   };
 }
 
@@ -114,14 +114,14 @@ function Sparkline({ data }: { data: number[] }) {
 
 export default function HealthMetricsPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("bp");
+  const [tab, setTab] = useState<Tab>("BLOOD_PRESSURE");
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
   const [data, setData] = useState<Record<Tab, TabData>>(FALLBACK_DATA);
   const [saving, setSaving] = useState(false);
 
   function handleValChange(raw: string) {
-    if (tab === "bp") {
+    if (tab === "BLOOD_PRESSURE") {
       const filtered = raw.replace(/[^\d/]/g, "");
       const isDeleting = filtered.length < val.length;
       if (!isDeleting && !filtered.includes("/") && filtered.length === 3) {
@@ -146,9 +146,9 @@ export default function HealthMetricsPage() {
       const metrics = await getHealthMetrics();
       const built = buildData(metrics);
       setData((prev) => ({
-        bp: built.bp.history.length ? built.bp : prev.bp,
-        glucose: built.glucose.history.length ? built.glucose : prev.glucose,
-        weight: built.weight.history.length ? built.weight : prev.weight,
+        BLOOD_PRESSURE: built.BLOOD_PRESSURE.history.length ? built.BLOOD_PRESSURE : prev.BLOOD_PRESSURE,
+        BLOOD_SUGAR: built.BLOOD_SUGAR.history.length ? built.BLOOD_SUGAR : prev.BLOOD_SUGAR,
+        WEIGHT: built.WEIGHT.history.length ? built.WEIGHT : prev.WEIGHT,
       }));
     } catch {
       // keep fallback data
@@ -271,7 +271,7 @@ export default function HealthMetricsPage() {
               value={val}
               onChange={(e) => handleValChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && save()}
-              placeholder={tab === "bp" ? "예: 120/80" : tab === "glucose" ? "예: 98" : "예: 75.0"}
+              placeholder={tab === "BLOOD_PRESSURE" ? "예: 120/80" : tab === "BLOOD_SUGAR" ? "예: 98" : "예: 75.0"}
               className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
             />
             <Button className="mt-4 w-full" size="lg" onClick={save} disabled={saving}>
