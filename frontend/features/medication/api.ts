@@ -9,6 +9,12 @@ export interface Medication {
   type?: string;
 }
 
+export interface MedicationDetail extends Medication {
+  name_en?: string;
+  dosage?: string;
+  description?: string;
+}
+
 export interface MedicationCreate {
   name: string;
   frequency?: string;
@@ -20,6 +26,20 @@ export async function getMedications(): Promise<Medication[]> {
     "/v1/medications"
   );
   return Array.isArray(res) ? res : (res.items ?? []);
+}
+
+export async function getUserMedications(): Promise<MedicationDetail[]> {
+  const res = await apiFetch<{ items?: MedicationDetail[] } | MedicationDetail[]>(
+    "/v1/user-medications"
+  );
+  return Array.isArray(res) ? res : (res.items ?? []);
+}
+
+export async function getMedication(id: number): Promise<MedicationDetail> {
+  const items = await getUserMedications();
+  const found = items.find((m) => m.id === id);
+  if (!found) throw new Error(`medication ${id} not found`);
+  return found;
 }
 
 export async function createMedication(data: MedicationCreate): Promise<void> {

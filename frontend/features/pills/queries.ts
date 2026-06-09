@@ -24,3 +24,5 @@ export function useRecognitions() {
     },
   });
 }
+
+export const usePillRecognitions = useRecognitions;

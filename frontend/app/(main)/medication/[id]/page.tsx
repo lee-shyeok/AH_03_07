@@ -1,29 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Pill, Link as LinkIcon, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { getMedication, type MedicationDetail } from "@/features/medication/api";
 
 const PURPLE = "#7C5CCF";
 const TABS = ["복약", "생활습관", "주의사항", "자가면역"] as const;
 type Tab = (typeof TABS)[number];
 
+const FALLBACK: MedicationDetail = {
+  id: 0,
+  name: "메토트렉세이트",
+  name_en: "Methotrexate",
+  type: "자가면역",
+  frequency: "매주 1회 복용",
+};
+
 export default function MedicationDetailPage() {
+  const params = useParams();
+  const id = Number(params.id);
+
   const [tab, setTab] = useState<Tab>("자가면역");
+  const [med, setMed] = useState<MedicationDetail>({ ...FALLBACK, id });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    getMedication(id)
+      .then((data) => setMed(data))
+      .catch(() => setMed({ ...FALLBACK, id }))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const nedrugsUrl = `https://nedrug.mfds.go.kr/searchDrug?searchYn=true&itemName=${encodeURIComponent(med.name)}`;
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       {/* 헤더 */}
-      <h1 className="text-3xl font-extrabold">메토트렉세이트</h1>
-      <p className="mt-1 text-muted-foreground">Methotrexate</p>
-      <span className="mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: PURPLE }}>
-        자가면역
-      </span>
-      <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Pill className="h-4 w-4" /> 매주 1회 복용
-      </p>
+      {loading ? (
+        <div className="space-y-2 animate-pulse">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="h-4 w-32 rounded bg-muted" />
+          <div className="h-6 w-20 rounded-full bg-muted mt-3" />
+        </div>
+      ) : (
+        <>
+          <h1 className="text-3xl font-extrabold">{med.name}</h1>
+          {med.name_en && <p className="mt-1 text-muted-foreground">{med.name_en}</p>}
+          {med.type && (
+            <span
+              className="mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold text-white"
+              style={{ background: PURPLE }}
+            >
+              {med.type}
+            </span>
+          )}
+          {med.frequency && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Pill className="h-4 w-4" /> {med.frequency}
+            </p>
+          )}
+        </>
+      )}
+
       <a
-        href={`https://nedrug.mfds.go.kr/searchDrug?searchYn=true&itemName=메토트렉세이트`}
+        href={nedrugsUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-3 flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-primary hover:bg-accent"
@@ -54,7 +100,7 @@ export default function MedicationDetailPage() {
             <section>
               <h2 className="text-lg font-bold">➕ 면역억제 효과</h2>
               <p className="mt-2 leading-7 text-foreground">
-                메토트렉세이트는<br />면역억제 작용이 있어<br />감염 위험이 증가할 수 있어요.
+                {med.name}는<br />면역억제 작용이 있어<br />감염 위험이 증가할 수 있어요.
               </p>
             </section>
             <section>
@@ -65,7 +111,6 @@ export default function MedicationDetailPage() {
                 <li>• 손씻기 등 위생 관리 강화</li>
               </ul>
             </section>
-            {/* 출처 */}
             <Card className="p-4">
               <p className="text-sm">📚 출처</p>
               <p className="mt-1 font-bold">대한류마티스학회 진료 가이드라인</p>
@@ -80,7 +125,11 @@ export default function MedicationDetailPage() {
         {tab === "복약" && (
           <section>
             <h2 className="text-lg font-bold">복약 방법</h2>
-            <p className="mt-2 leading-7 text-muted-foreground">매주 같은 요일에 1회 복용하세요. 정해진 용량을 지키는 것이 중요합니다.</p>
+            <p className="mt-2 leading-7 text-muted-foreground">
+              {med.frequency
+                ? `${med.frequency}. 정해진 용량을 지키는 것이 중요합니다.`
+                : "매주 같은 요일에 1회 복용하세요. 정해진 용량을 지키는 것이 중요합니다."}
+            </p>
           </section>
         )}
         {tab === "생활습관" && (
