@@ -4,12 +4,20 @@ import { apiFetch } from "@/lib/api/client";
 export type MetricType = "BLOOD_PRESSURE" | "BLOOD_SUGAR" | "WEIGHT" | "HEART_RATE";
 
 export interface HealthMetric {
-  id: string;
+  id?: string | number;
   metric_type: MetricType;
-  user_recorded_value: string;
+  user_recorded_value?: string;
+  value?: string;
   measured_at: string;
   notes?: string | null;
-  created_at: string;
+  created_at?: string;
+  status?: string;
+}
+
+export interface HealthMetricCreate {
+  metric_type: MetricType;
+  value: string;
+  measured_at?: string;
 }
 
 export const METRIC_LABEL: Record<MetricType, string> = {
@@ -30,9 +38,13 @@ export async function getHealthMetrics(metricType?: MetricType): Promise<HealthM
   const params = new URLSearchParams();
   if (metricType) params.set("metric_type", metricType);
   const qs = params.toString();
-  const res = await apiFetch<{ metrics?: HealthMetric[] } | HealthMetric[]>(
+  const res = await apiFetch<{ metrics?: HealthMetric[]; items?: HealthMetric[] } | HealthMetric[]>(
     `/v1/health-metrics${qs ? `?${qs}` : ""}`
   );
   if (Array.isArray(res)) return res;
-  return res.metrics ?? [];
+  return res.metrics ?? res.items ?? [];
+}
+
+export async function createHealthMetric(data: HealthMetricCreate): Promise<void> {
+  await apiFetch("/v1/health-metrics", { method: "POST", body: data });
 }
