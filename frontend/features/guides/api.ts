@@ -7,6 +7,7 @@ export interface GuideSource {
   source_title: string;
   source_org: string;
   source_page: number | null;
+  source_url: string | null;
   used_for_section: string | null;
 }
 

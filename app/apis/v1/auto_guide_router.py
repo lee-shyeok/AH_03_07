@@ -17,6 +17,7 @@ from app.dependencies.security import get_request_user
 from app.models.auto_guide import AutoGuide, AutoGuideStatus
 from app.models.guide_generation_job import GuideGenerationJob, GuideGenerationJobStatus
 from app.models.users import User
+from app.services.knowledge_source_validator import get_source_url
 
 auto_guide_router = APIRouter(prefix="/guides", tags=["guides"])
 
@@ -119,6 +120,7 @@ async def get_guide_sources(
             source_title=s["title"],
             source_org=s["organization"],
             source_page=s.get("page"),
+            source_url=get_source_url(s["organization"]),
             used_for_section=s.get("section"),
         )
         for i, s in enumerate(guide.sources)

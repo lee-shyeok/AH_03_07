@@ -24,6 +24,20 @@ TRUSTED_ORGANIZATIONS: frozenset[str] = frozenset(
     }
 )
 
+ORGANIZATION_URLS: dict[str, str] = {
+    "대한류마티스학회": "https://www.rheum.or.kr",
+    "EULAR": "https://www.eular.org",
+    "ACR": "https://rheumatology.org",
+    "식약처": "https://nedrug.mfds.go.kr",
+    "보건복지부": "https://www.mohw.go.kr",
+    "질병관리청": "https://www.kdca.go.kr",
+}
+
+
+def get_source_url(org: str) -> str | None:
+    return ORGANIZATION_URLS.get(org)
+
+
 MAX_YEARS_OLD = 5
 
 

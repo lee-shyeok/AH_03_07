@@ -176,7 +176,17 @@ export default function GuideDetailPage() {
                     {src.used_for_section != null && (
                       <p className="mt-1 text-muted-foreground">참고 챕터: {src.used_for_section}</p>
                     )}
-                    {/* TODO(source_url): 외부 링크 자리 — source_url 추가 시 <a> 태그로 연결 */}
+                    {src.source_url && (
+                      <a
+                        href={src.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block underline"
+                        style={{ color: PURPLE }}
+                      >
+                        공식 출처 보기
+                      </a>
+                    )}
                   </div>
                 ))
             )}

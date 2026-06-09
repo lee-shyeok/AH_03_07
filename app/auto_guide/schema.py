@@ -39,6 +39,7 @@ class GuideSourceItem(BaseModel):
     source_title: str
     source_org: str
     source_page: int | None
+    source_url: str | None = None
     used_for_section: str | None
 
 
