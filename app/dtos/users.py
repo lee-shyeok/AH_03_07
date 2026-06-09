@@ -38,3 +38,10 @@ class UserInfoResponse(BaseSerializerModel):
     birthday: date
     gender: Gender
     created_at: datetime
+
+
+class AutoimmuneOnboardingStatusResponse(BaseModel):
+    consent_done: bool
+    disease_done: bool
+    risk_profile_done: bool
+    completed: bool

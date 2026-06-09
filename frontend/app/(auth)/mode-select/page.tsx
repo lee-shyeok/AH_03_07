@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { getAutoimmuneOnboarding } from "@/features/auth/api";
 import { useUpdateMode } from "@/features/auth/queries";
 
 const GREEN = "#03C85F";
@@ -14,11 +15,25 @@ export default function ModeSelectPage() {
   const router = useRouter();
   const updateModeMutation = useUpdateMode();
 
-  function select(mode: Mode) {
+  async function select(mode: Mode) {
     // 로컬에 즉시 저장 (API 응답 대기 없이 이동)
     import("@/features/auth/mode").then(({ setMode }) => setMode(mode));
     if (mode === "autoimmune") {
-      router.replace("/mode-consent");
+      try {
+        const s = await getAutoimmuneOnboarding();
+        if (s.completed) {
+          updateModeMutation.mutate("autoimmune");
+          router.replace("/home");
+        } else if (!s.consent_done) {
+          router.replace("/mode-consent");
+        } else if (!s.disease_done) {
+          router.replace("/disease/new");
+        } else {
+          router.replace("/risk-profile");
+        }
+      } catch {
+        router.replace("/mode-consent");
+      }
       return;
     }
     // 백엔드 동기화는 백그라운드로 (실패해도 이동)
