@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Droplet, Pill, Plus, Trash2 } from "lucide-react";
+import { Pill, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useMedications, useDeleteMedication } from "@/features/medication/queries";
 import { DRUG_CLASS_LABEL, DRUG_CLASS_COLOR } from "@/features/medication/schema";
@@ -60,10 +60,7 @@ export default function MedicationPage() {
               <Card key={m.id} className="flex items-center gap-3 p-4">
                 {/* 약 아이콘 */}
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  {m.is_injection
-                    ? <Droplet className="h-5 w-5 text-primary" />
-                    : <Pill className="h-5 w-5 text-primary" />
-                  }
+                  <Pill className="h-5 w-5 text-primary" />
                 </div>
 
                 {/* 약 정보 — 클릭 시 상세 */}
@@ -72,7 +69,12 @@ export default function MedicationPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <DrugClassBadge drugClass={m.drug_class} />
                     {m.is_injection && (
-                      <span className="text-[11px] text-muted-foreground">주사제</span>
+                      <span
+                        className="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                        style={{ background: "#EF444420", color: "#EF4444" }}
+                      >
+                        주사제
+                      </span>
                     )}
                     {m.frequency && (
                       <span className="text-xs text-muted-foreground">{m.frequency}</span>
