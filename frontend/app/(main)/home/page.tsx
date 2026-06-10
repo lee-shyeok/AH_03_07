@@ -19,7 +19,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setUserType(getMode());
-    getMe().then((u) => { setName(u.name); if (u.user_type) setUserType(u.user_type); }).catch(() => {});
+    getMe().then((u) => { setName(u.name); }).catch(() => {});
     getDashboard().then((d) => setData(d)).catch(() => setData(fallback));
     listMyDiseases()
       .then((ds) => setIsLupus(ds.some((d) => d.disease_code === "SLE")))
