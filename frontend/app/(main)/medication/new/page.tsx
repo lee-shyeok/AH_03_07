@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   medicationSchema, type MedicationInput,
-  MED_CATEGORIES, MED_UNITS, MED_TIMINGS,
+  MED_CATEGORIES, MED_UNITS, MED_TIMINGS, CATEGORY_TO_DRUG_CLASS,
 } from "@/features/medication/schema";
 import { useCreateMedication } from "@/features/medication/queries";
 
@@ -23,17 +23,16 @@ export default function MedicationNewPage() {
   } = useForm<MedicationInput>({
     resolver: zodResolver(medicationSchema),
     defaultValues: {
-      name: "", category: "면역억제제", dose: "1", unit: "정",
+      name: "", category: "스테로이드", dose: "1", unit: "정",
       freq: 2, timings: ["아침", "저녁"], start: "", end: "", memo: "",
     },
   });
 
   async function onSubmit(v: MedicationInput) {
-    const timingText = v.timings.length ? ` · ${v.timings.join("·")}` : "";
     await create.mutateAsync({
       name: v.name,
-      frequency: `1일 ${v.freq}회${timingText}`,
-      type: v.category,
+      drug_class: CATEGORY_TO_DRUG_CLASS[v.category] ?? "IMMUNOSUPPRESSANT",
+      note: v.memo || undefined,
     });
     router.replace("/medication");
   }
