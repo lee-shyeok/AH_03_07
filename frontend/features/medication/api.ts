@@ -20,7 +20,7 @@ export interface MedicationDetail extends Medication {
 
 export interface MedicationCreate {
   name: string;
-  drug_class: string;
+  drug_class?: string;   // 일반 모드에서는 없어도 됨
   is_injection?: boolean;
   note?: string;
 }
