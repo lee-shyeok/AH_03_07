@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { getAutoimmuneOnboarding } from "@/features/auth/api";
-import { apiFetch } from "@/lib/api/client";
+import { getAutoimmuneOnboarding, updateMode } from "@/features/auth/api";
+import { setMode } from "@/features/auth/mode";
+import { withTimeout } from "@/lib/query/util";
 
 const GREEN = "#03C85F";
 const PURPLE = "#A83AC1";
@@ -15,22 +16,25 @@ export default function ModeSelectPage() {
   const router = useRouter();
 
   async function select(mode: Mode) {
-    try {
-      await apiFetch("/v1/users/me/mode", { method: "PUT", body: { mode } });
-    } catch {}
-    // 로컬에 즉시 저장
-    import("@/features/auth/mode").then(({ setMode }) => setMode(mode));
+    // 로컬 즉시 저장
+    setMode(mode);
+    // 백엔드 모드 동기화는 백그라운드 (실패·지연해도 이동 차단 없음)
+    updateMode(mode).catch(() => {});
+
     if (mode === "autoimmune") {
       try {
-        const s = await getAutoimmuneOnboarding();
+        // 타임아웃 3초 — 응답 없으면 consent 화면으로 바로 이동
+        const s = await withTimeout(getAutoimmuneOnboarding(), 3000);
         if (s.completed) {
           router.replace("/home");
         } else if (!s.consent_done) {
           router.replace("/mode-consent");
         } else if (!s.disease_done) {
           router.replace("/disease/new");
-        } else {
+        } else if (!s.risk_profile_done) {
           router.replace("/risk-profile");
+        } else {
+          router.replace("/home");
         }
       } catch {
         router.replace("/mode-consent");
