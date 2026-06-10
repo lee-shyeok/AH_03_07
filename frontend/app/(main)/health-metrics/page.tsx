@@ -73,15 +73,17 @@ function toTabData(items: HealthMetric[], unit: string): TabData {
     .slice(0, 7)
     .reverse()
     .map((m) => {
-      const n = parseFloat((m.value ?? "0").split("/")[0]);
+      const raw = m.user_recorded_value ?? m.value ?? "0";
+      const n = parseFloat(raw.split("/")[0]);
       return isNaN(n) ? 0 : n;
     });
   const history = sorted.map((m) => ({
     date: formatDate(m.measured_at),
-    value: m.value ?? "0",
+    value: (m.user_recorded_value ?? m.value) ?? "0",
     status: m.status ?? "정상",
   }));
-  return { latest: latest.value ?? "0", unit, status: latest.status ?? "정상", trend, history };
+  const latestVal = (latest.user_recorded_value ?? latest.value) ?? "0";
+  return { latest: latestVal, unit, status: latest.status ?? "정상", trend, history };
 }
 
 function buildData(metrics: HealthMetric[]): Record<Tab, TabData> {

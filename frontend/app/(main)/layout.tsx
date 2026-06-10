@@ -21,7 +21,12 @@ const tabs = [
   { href: "/mypage", label: "마이", icon: MyIcon },
 ];
 
-const HIDE_NAV_PATHS = ["/documents/ocr-review", "/notifications/settings", "/health-metrics", "/diary", "/emergency", "/pharmacy", "/guardian", "/schedule"];
+const HIDE_NAV_PATHS = [
+  "/documents/ocr-review", "/notifications/settings", "/health-metrics",
+  "/diary", "/emergency", "/pharmacy", "/guardian", "/schedule",
+  "/medication/alarm", "/medication/checklist", "/medication/new",
+  "/activity/new", "/records/new", "/settings", "/guides/",
+];
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,7 +45,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <nav className={cn("fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-md items-center justify-around border-t border-border bg-card py-2", hideNav && "hidden")}>
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
-          const tabActiveColor = href === "/lab-results/list" ? PURPLE : activeColor;
+          const tabActiveColor = activeColor;
           return (
             <Link
               key={href}
