@@ -83,3 +83,13 @@ export async function getMode(): Promise<ModeResponse> {
 export async function updateMode(mode: "general" | "autoimmune"): Promise<ModeResponse> {
   return apiFetch<ModeResponse>("/v1/users/me/mode", { method: "PUT", body: { mode } });
 }
+
+export interface AutoimmuneOnboardingStatus {
+  completed: boolean;
+  consent_done: boolean;
+  disease_done: boolean;
+}
+
+export async function getAutoimmuneOnboarding(): Promise<AutoimmuneOnboardingStatus> {
+  return apiFetch<AutoimmuneOnboardingStatus>("/v1/users/me/autoimmune-onboarding");
+}
