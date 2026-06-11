@@ -34,6 +34,10 @@ export async function createRecord(data: MedicalRecordCreate): Promise<void> {
   await apiFetch("/v1/medical-records", { method: "POST", body: data });
 }
 
+export async function updateRecord(id: number, data: Partial<MedicalRecordCreate>): Promise<MedicalRecord> {
+  return apiFetch<MedicalRecord>(`/v1/medical-records/${id}`, { method: "PATCH", body: data });
+}
+
 export async function deleteRecord(id: number): Promise<void> {
   await apiFetch(`/v1/medical-records/${id}`, { method: "DELETE" });
 }

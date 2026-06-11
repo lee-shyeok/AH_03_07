@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Trash2, FileText, ChevronDown } from "lucide-react";
+import { Plus, Trash2, FileText, ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useRecords, useDeleteRecord } from "@/features/medical-records/queries";
 
@@ -87,7 +87,7 @@ export default function RecordsPage() {
             {paged.map((r) => (
               <Card key={r.id} className="p-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <Link href={`/records/${r.id}`} className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">{r.hospital_name || "병원"}</p>
                       {r.department && <span className="text-xs text-muted-foreground">{r.department}</span>}
@@ -96,10 +96,13 @@ export default function RecordsPage() {
                     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       {r.visit_date && <span>📅 {r.visit_date}</span>}
                     </div>
+                  </Link>
+                  <div className="ml-2 flex shrink-0 items-center gap-1">
+                    <button onClick={() => handleDelete(r.id)} className="text-muted-foreground hover:text-destructive" aria-label="삭제">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <button onClick={() => handleDelete(r.id)} className="ml-2 text-muted-foreground hover:text-destructive" aria-label="삭제">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
               </Card>
             ))}

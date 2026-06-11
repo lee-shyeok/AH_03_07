@@ -129,8 +129,8 @@ export default function SettingsPage() {
       {/* 계정 */}
       <p className="mt-6 text-sm font-semibold text-muted-foreground">계정</p>
       <Card className="mt-2 divide-y divide-border">
-        <NavRow label="비밀번호 변경" onClick={() => alert("준비 중입니다.")} />
-        <NavRow label="회원 정보 수정" onClick={() => alert("준비 중입니다.")} />
+        <NavRow label="비밀번호 변경" onClick={() => router.push("/settings/password")} />
+        <NavRow label="회원 정보 수정" onClick={() => router.push("/settings/profile")} />
         <NavRow label="회원 탈퇴" danger onClick={() => setConfirming(true)} />
       </Card>
 

@@ -31,4 +31,6 @@ export interface UserProfile {
   height?: number;
   weight?: number;
   user_type?: "general" | "autoimmune";
+  chronic_diseases?: string;
+  allergy_info?: string;
 }

@@ -39,6 +39,17 @@ export function addLocalRecord(data: MedicalRecordCreate): MedicalRecord {
   return rec;
 }
 
+export function updateLocalRecord(id: number, data: Partial<MedicalRecordCreate>): MedicalRecord | null {
+  if (typeof window === "undefined") return null;
+  const list = getLocalRecords();
+  const idx = list.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  const updated = { ...list[idx], ...data };
+  list[idx] = updated;
+  window.localStorage.setItem(KEY, JSON.stringify(list));
+  return updated;
+}
+
 export function deleteLocalRecord(id: number) {
   if (typeof window === "undefined") return;
   const next = getLocalRecords().filter((r) => r.id !== id);

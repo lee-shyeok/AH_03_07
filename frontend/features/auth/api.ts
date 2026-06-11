@@ -62,6 +62,23 @@ export async function getMe(): Promise<UserProfile> {
   return apiFetch<UserProfile>("/v1/users/me");
 }
 
+// REQ-USER-007: 내 정보 수정
+export interface UpdateMeRequest {
+  name?: string;
+  phone_number?: string;
+  chronic_diseases?: string;
+  allergy_info?: string;
+}
+
+export async function updateMe(req: UpdateMeRequest): Promise<UserProfile> {
+  return apiFetch<UserProfile>("/v1/users/me", { method: "PATCH", body: req });
+}
+
+// REQ-USER-007: 비밀번호 변경
+export async function changePassword(current_password: string, new_password: string, new_password_confirm: string): Promise<void> {
+  await apiFetch("/v1/users/me", { method: "PATCH", body: { current_password, new_password, new_password_confirm } });
+}
+
 // REQ-USER-008: 회원탈퇴 (탈퇴 시 의료 데이터 즉시 삭제 — NFR-COMPLI-001)
 export async function withdraw(): Promise<void> {
   await apiFetch("/v1/users/me", { method: "DELETE" });
