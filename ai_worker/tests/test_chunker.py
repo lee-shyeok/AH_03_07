@@ -10,10 +10,16 @@ def test_chunk_whitespace_only():
 
 
 def test_chunk_short_text_single_chunk():
-    text = "짧은 텍스트입니다."
+    # _MIN_CHUNK_CHARS 이상의 실질 내용 → 단일 청크 반환
+    text = "루푸스 환자는 자외선 차단제를 매일 사용하는 것이 중요합니다. 정기적인 의료 검진도 필요합니다."
     chunks = chunk_text(text)
     assert len(chunks) == 1
     assert chunks[0] == text
+
+
+def test_chunk_filters_very_short_metadata():
+    # _MIN_CHUNK_CHARS 미만 → 메타성 단편으로 간주, 제외
+    assert chunk_text("PICO 12.a") == []
 
 
 def test_chunk_long_text_multiple_chunks():

@@ -37,7 +37,7 @@ def test_filter_by_threshold_keeps_above(svc: ChatRAGService) -> None:
 
 
 def test_filter_by_threshold_drops_below(svc: ChatRAGService) -> None:
-    chunks = [make_chunk(0.46), make_chunk(0.0)]
+    chunks = [make_chunk(0.41), make_chunk(0.0)]
     assert svc.filter_by_threshold(chunks) == []
 
 

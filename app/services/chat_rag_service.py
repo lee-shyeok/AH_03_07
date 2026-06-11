@@ -9,7 +9,7 @@ from app.services.knowledge_search import search_knowledge
 LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.3
 LLM_MAX_TOKENS = 1024
-RAG_SCORE_THRESHOLD = 0.47
+RAG_SCORE_THRESHOLD = 0.42
 
 SAFETY_SYSTEM_PROMPT = """당신은 자가면역 질환자를 위한 의료 정보 안내 어시스턴트입니다.
 
