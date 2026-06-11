@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Check, X, ChevronLeft } from "lucide-react";
 import {
@@ -68,6 +68,14 @@ function CheckItem({
 }
 
 export default function RiskProfilePage() {
+  return (
+    <Suspense>
+      <RiskProfileForm />
+    </Suspense>
+  );
+}
+
+function RiskProfileForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromMypage = searchParams.get("from") === "mypage";

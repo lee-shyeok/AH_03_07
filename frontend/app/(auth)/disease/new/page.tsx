@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,14 @@ import { diseaseSchema, type DiseaseInput, DISEASES } from "@/features/disease/s
 import { createDiseases } from "@/features/disease/api";
 
 export default function DiseaseNewPage() {
+  return (
+    <Suspense>
+      <DiseaseNewForm />
+    </Suspense>
+  );
+}
+
+function DiseaseNewForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromMypage = searchParams.get("from") === "mypage";
