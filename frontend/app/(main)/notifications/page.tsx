@@ -1,10 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bell, ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pill, AlertTriangle, BarChart3, CheckCircle2, Bell, BookOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useNotifications, useMarkRead } from "@/features/notifications/queries";
 import { type AppNotification } from "@/features/notifications/api";
+import { getMode } from "@/features/auth/mode";
+
+const GREEN = "#03C85F";
+const PURPLE = "#7C5CCF";
 
 function makeIso(daysAgo: number, hours: number, minutes: number): string {
   const d = new Date();
@@ -21,17 +25,26 @@ const FALLBACK_ITEMS: AppNotification[] = [
   { id: 4, title: "약 복용 완료", body: "저녁약 복용 완료", notification_type: "done", is_read: true, created_at: makeIso(1, 19, 30) },
 ];
 
-function emoji(type?: string) {
-  switch (type) {
-    case "medication": return "💊";
-    case "prescription_end":
-    case "medication_end": return "💊";
-    case "risk": return "⚠️";
-    case "activity": return "📊";
-    case "done": return "✅";
-    case "guide": return "📋";
-    default: return "🔔";
+function NotifIcon({ type, accent }: { type?: string; accent: string }) {
+  const base = "flex h-11 w-11 shrink-0 items-center justify-center rounded-full";
+  if (type === "risk") {
+    return (
+      <div className={base} style={{ background: "#FEF3C720" }}>
+        <AlertTriangle className="h-5 w-5 text-amber-500" />
+      </div>
+    );
   }
+  const Icon =
+    type === "medication" || type === "prescription_end" || type === "medication_end" ? Pill
+    : type === "activity" ? BarChart3
+    : type === "done" ? CheckCircle2
+    : type === "guide" ? BookOpen
+    : Bell;
+  return (
+    <div className={base} style={{ background: accent + "20" }}>
+      <Icon className="h-5 w-5" style={{ color: accent }} />
+    </div>
+  );
 }
 
 function makeDate(offsetDays: number, time: string) {
@@ -70,6 +83,8 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { data: apiItems = [], isLoading } = useNotifications();
   const markReadMutation = useMarkRead();
+  const isAutoimmune = getMode() === "autoimmune";
+  const accent = isAutoimmune ? PURPLE : GREEN;
 
   // 백엔드 데이터에 created_at이 있으면 사용, 없으면 DUMMY로 대체
   const hasProperDates = apiItems.length > 0 && apiItems.some(n => n.created_at);
@@ -117,22 +132,27 @@ export default function NotificationsPage() {
                   <Card
                     key={n.id}
                     onClick={() => handleClick(n)}
-                    className={
-                      "cursor-pointer rounded-2xl p-4 shadow-sm " +
-                      (n.notification_type === "risk"
-                        ? "border-2 border-amber-400 bg-amber-50/30"
-                        : "border border-border bg-card")
+                    className="cursor-pointer rounded-2xl p-4 shadow-sm transition-colors hover:bg-accent/40"
+                    style={
+                      n.notification_type === "risk"
+                        ? { border: "2px solid #F59E0B", background: "#FFFBEB" }
+                        : !n.is_read
+                        ? { borderColor: accent + "40", borderWidth: "1.5px" }
+                        : undefined
                     }
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-3xl leading-none">{emoji(n.notification_type)}</span>
+                      <NotifIcon type={n.notification_type} accent={accent} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={"text-base leading-snug " + (n.is_read ? "font-medium text-foreground" : "font-bold text-foreground")}>
+                          <p className={"text-base leading-snug " + (n.is_read ? "font-medium text-muted-foreground" : "font-bold text-foreground")}>
                             {n.title}
                           </p>
                           {!n.is_read && (
-                            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ background: accent }}
+                            />
                           )}
                         </div>
                         {n.body && (

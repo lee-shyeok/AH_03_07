@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  User, FileText, Pill, Activity, Folder, FolderOpen,
+  User, FileText, Pill, Activity, Folder,
   Bell, Settings, HelpCircle, Megaphone, LogOut, ChevronRight,
   ShieldCheck, BarChart3, FlaskConical, CalendarDays, AlertTriangle,
-  RefreshCw, Gift, Home, Gamepad2,
+  RefreshCw, Gift, Home, Gamepad2, BookOpen,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getMe, logout } from "@/features/auth/api";
@@ -50,6 +50,7 @@ export default function MyPage() {
         { href: "/medication", label: "약물 목록", icon: Pill },
         { href: "/health-metrics", label: "건강 수치 기록", icon: Activity },
         { href: "/documents", label: "문서 보관함", icon: Folder },
+        { href: "/guides", label: "다이어트", icon: BookOpen },
       ];
 
   const benefitMenus = [
@@ -72,7 +73,7 @@ export default function MyPage() {
       <h1 className="text-2xl font-extrabold">마이페이지</h1>
 
       <Card className="mt-5 p-5">
-        <div className="flex items-center gap-4">
+        <Link href="/settings" className="flex items-center gap-4">
           <div className="flex h-13 w-13 items-center justify-center rounded-full p-3" style={{ background: isAuto ? PURPLE + "20" : "hsl(var(--secondary))" }}>
             <User className="h-7 w-7" style={{ color: accent }} />
           </div>
@@ -81,7 +82,7 @@ export default function MyPage() {
             <p className="text-sm text-muted-foreground">{user?.email ?? "-"}</p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </div>
+        </Link>
         <div className="mt-4 grid grid-cols-2 gap-2.5">
           <StatBox label="키 / 몸무게" value={heightWeight} auto={isAuto} />
           <StatBox label="생년월일" value={birth} auto={isAuto} />
