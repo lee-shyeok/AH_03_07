@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "http://54.180.83.249";
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "http://54.116.226.71";
 
 // 보안 헤더 (NFR-SEC). connect-src 'self' → 브라우저는 같은 origin(/api 프록시)으로만 통신.
 const securityHeaders = [
