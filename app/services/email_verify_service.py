@@ -44,8 +44,11 @@ async def send_verification_code(email: str) -> str:
     _store[email] = (code, time.time() + CODE_TTL)
 
     if config.ENV == Env.PROD and config.GMAIL_USER and config.GMAIL_APP_PASSWORD:
-        await asyncio.to_thread(_send_gmail_sync, email, code)
-        logger.info(f"Gmail 인증코드 발송 완료 → {email}")
+        try:
+            await asyncio.to_thread(_send_gmail_sync, email, code)
+            logger.info(f"Gmail 인증코드 발송 완료 → {email}")
+        except Exception as e:
+            logger.error(f"Gmail 발송 실패 ({e}) — 콘솔 폴백 | {email} → {code}")
     else:
         logger.warning(f"[DEV] 이메일 인증코드 | {email} → {code}")
 
