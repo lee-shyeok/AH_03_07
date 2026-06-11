@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Check, X, ChevronLeft } from "lucide-react";
 import {
   upsertAutoimmuneProfile,
@@ -69,6 +69,8 @@ function CheckItem({
 
 export default function RiskProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromMypage = searchParams.get("from") === "mypage";
 
   const [selectedFactors, setSelectedFactors] = useState<RiskCode[]>([]);
   const [otherText, setOtherText] = useState("");
@@ -125,7 +127,7 @@ export default function RiskProfilePage() {
       if (res.advisory_message) {
         setAdvisoryMessage(res.advisory_message);
       } else {
-        router.replace("/home");
+        router.replace(fromMypage ? "/mypage" : "/home");
       }
     } catch (err) {
       setApiError(
@@ -149,7 +151,7 @@ export default function RiskProfilePage() {
           </p>
         </div>
         <button
-          onClick={() => router.replace("/home")}
+          onClick={() => router.replace(fromMypage ? "/mypage" : "/home")}
           className="mt-6 w-full rounded-xl py-4 text-base font-bold text-white"
           style={{ background: PURPLE }}
         >

@@ -39,6 +39,9 @@ class Config(BaseSettings):
     QDRANT_PORT: int = 6333
     MEDIA_DIR: str = "media"
 
+    GMAIL_USER: str = ""
+    GMAIL_APP_PASSWORD: str = ""
+
     COOKIE_DOMAIN: str = "localhost"
 
     JWT_ALGORITHM: str = "HS256"

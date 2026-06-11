@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import random
+import smtplib
 import string
 import time
+from email.mime.text import MIMEText
 
 from app.core import config
 from app.core.config import Env
@@ -24,17 +27,28 @@ def _generate_code() -> str:
     return "".join(random.choices(string.digits, k=CODE_LEN))
 
 
+def _send_gmail_sync(to: str, code: str) -> None:
+    msg = MIMEText(f"MediGuide 이메일 인증 코드: {code}\n\n유효시간: 5분", "plain", "utf-8")
+    msg["Subject"] = f"[MediGuide] 이메일 인증 코드: {code}"
+    msg["From"] = config.GMAIL_USER
+    msg["To"] = to
+    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login(config.GMAIL_USER, config.GMAIL_APP_PASSWORD)
+        smtp.send_message(msg)
+
+
 async def send_verification_code(email: str) -> str:
     """인증코드 생성 및 발송 (로컬: 콘솔 출력, 프로덕션: Gmail SMTP)"""
     code = _generate_code()
     _store[email] = (code, time.time() + CODE_TTL)
 
-    if config.ENV == Env.PROD:
-        # TODO: Gmail SMTP 연동
-        # await _send_gmail(email, code)
-        logger.info("PROD 모드: Gmail SMTP 미설정 — 콘솔 출력으로 대체")
+    if config.ENV == Env.PROD and config.GMAIL_USER and config.GMAIL_APP_PASSWORD:
+        await asyncio.to_thread(_send_gmail_sync, email, code)
+        logger.info(f"Gmail 인증코드 발송 완료 → {email}")
+    else:
+        logger.warning(f"[DEV] 이메일 인증코드 | {email} → {code}")
 
-    logger.warning(f"[DEV] 이메일 인증코드 | {email} → {code}")
     return code
 
 
