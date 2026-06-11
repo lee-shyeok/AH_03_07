@@ -57,6 +57,13 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
           </p>
         </SectionCard>
 
+        {/* 식단 가이드 */}
+        <SectionCard title="식단 가이드" moreHref="#" moreLabel="전체 보기">
+          <p className="mt-2 text-sm text-muted-foreground">
+            증상 관리에 참고할 권장·주의 식품 정보를 한눈에 확인하세요.
+          </p>
+        </SectionCard>
+
         {/* 약품 카메라 빠른 진입 */}
         <Link href="/documents">
           <SectionCard>
