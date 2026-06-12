@@ -32,7 +32,7 @@ async def upload_medical_document(file: UploadFile = File(...), document_type: s
     image_bytes = await file.read()
 
     documents[document_id] = {
-        "document_id": document_id,
+        "id": document_id,
         "document_type": document_type,
         "upload_status": "uploaded",
         "uploaded_at": datetime.utcnow().isoformat(),

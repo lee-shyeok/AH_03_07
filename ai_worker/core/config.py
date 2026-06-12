@@ -11,6 +11,7 @@ class Config(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
     OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
 
@@ -27,3 +28,6 @@ class Config(BaseSettings):
     CELERY_WORKER_CONCURRENCY: int = 2
 
     MEDIA_DIR: str = "media"
+
+    CLOVA_OCR_API_URL: str = ""
+    CLOVA_OCR_SECRET_KEY: str = ""

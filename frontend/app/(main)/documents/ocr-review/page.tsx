@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FileText, ImageIcon, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getOcrJob, confirmDocument, uploadDocument, startOcrJob } from "@/features/documents/api";
+import { getOcrJob, confirmDocument, uploadDocument, startOcrJob, type MedicationItem } from "@/features/documents/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,19 +23,13 @@ const FALLBACK_FIELDS: Field[] = [
   { key: "medication", label: "처방 약물", value: "라베프라졸 10mg", confidence: 92 },
 ];
 
-function structuredDataToFields(
-  data: Record<string, unknown>,
-  score: number
-): Field[] {
-  return Object.entries(data)
-    .filter(([k]) => k !== "raw_text")
-    .map(([key, val]) => ({
-      key,
-      label: key,
-      value: String(val ?? ""),
-      confidence: Math.round(score * 100),
-    }));
-}
+const MEDICATION_LABELS: Record<keyof MedicationItem, string> = {
+  drug_name_user_input: "약품명",
+  dosage: "용량",
+  frequency: "복용 횟수",
+  duration_days: "기간(일)",
+  drug_category: "약물 분류",
+};
 
 // ─── Inner page ───────────────────────────────────────────────────────────────
 
@@ -50,6 +44,7 @@ function OcrReviewInner() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,7 +59,7 @@ function OcrReviewInner() {
     setUploading(true);
     setError(null);
     try {
-      const docType = params.get("document_type") ?? "처방전";
+      const docType = params.get("document_type") ?? "prescription";
       const doc = await uploadDocument(file, docType);
       const job = await startOcrJob(doc.id);
       setLocalDocumentId(doc.id);
@@ -78,30 +73,43 @@ function OcrReviewInner() {
   }
 
   useEffect(() => {
-    if (!localJobId) {
-      setFields(FALLBACK_FIELDS);
-      setLoading(false);
-      return;
-    }
-    getOcrJob(localJobId)
-      .then((job) => {
-        if (job.status === "failed") {
-          setError("OCR 처리에 실패했습니다.");
-          return;
-        }
-        if (job.structured_data && Object.keys(job.structured_data).length > 0) {
-          setFields(
-            structuredDataToFields(
-              job.structured_data,
-              job.confidence_score ?? 0
-            )
-          );
-        } else {
+      if (!localJobId) {
           setFields(FALLBACK_FIELDS);
-        }
-      })
-      .catch(() => setError("OCR 결과를 불러오지 못했습니다."))
-      .finally(() => setLoading(false));
+          setLoading(false);
+          return;
+      }
+      const poll = setInterval(async () => {
+          try {
+              const job = await getOcrJob(String(localJobId), localDocumentId);
+              if (job.status === "completed") {
+                  clearInterval(poll);
+                  if (Array.isArray(job.structured_data) && job.structured_data.length > 0) {
+                      setMedications(job.structured_data as MedicationItem[]);
+                  } else if (job.raw_text) {
+                      const lines = job.raw_text.split("\n").filter(Boolean);
+                      setFields(lines.map((line, i) => ({
+                          key: String(i),
+                          label: String(i + 1),
+                          value: line,
+                          confidence: Math.round((job.confidence_score ?? 0) * 100),
+                      })));
+                  } else {
+                      setFields(FALLBACK_FIELDS);
+                  }
+                  setLoading(false);
+              } else if (job.status === "failed") {
+                  clearInterval(poll);
+                  setError("OCR 처리에 실패했습니다.");
+                  setLoading(false);
+              }
+          } catch {
+              clearInterval(poll);
+              setError("OCR 결과를 불러오지 못했습니다.");
+              setLoading(false);
+          }
+      }, 2000);
+
+      return () => clearInterval(poll);
   }, [localJobId]);
 
   function setValue(key: string, value: string) {
@@ -201,7 +209,25 @@ function OcrReviewInner() {
 
       {/* 인식된 정보 */}
       <p className="mt-5 text-sm text-muted-foreground">인식된 정보</p>
-      {fields.length === 0 ? (
+      {medications.length > 0 ? (
+        <div className="mt-2 space-y-3">
+          {medications.map((med, idx) => (
+            <Card key={idx} className="p-4">
+              <p className="mb-2 text-xs font-bold text-primary">약품 {idx + 1}</p>
+              {(Object.keys(MEDICATION_LABELS) as (keyof MedicationItem)[]).map((k) => {
+                const val = med[k];
+                if (val === undefined || val === null) return null;
+                return (
+                  <div key={k} className="flex justify-between border-b py-1.5 last:border-0">
+                    <span className="text-xs text-muted-foreground">{MEDICATION_LABELS[k]}</span>
+                    <span className="text-sm font-medium">{String(val)}</span>
+                  </div>
+                );
+              })}
+            </Card>
+          ))}
+        </div>
+      ) : fields.length === 0 ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           인식된 정보가 없습니다.
         </p>
@@ -245,14 +271,16 @@ function OcrReviewInner() {
 
       {/* 버튼 */}
       <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md gap-3 px-5 pb-6 pt-3 bg-background">
-        <Button
-          variant="outline"
-          className="flex-1"
-          size="lg"
-          onClick={() => setEditing((v) => !v)}
-        >
-          {editing ? "수정 완료" : "수정하기"}
-        </Button>
+        {medications.length === 0 && (
+          <Button
+            variant="outline"
+            className="flex-1"
+            size="lg"
+            onClick={() => setEditing((v) => !v)}
+          >
+            {editing ? "수정 완료" : "수정하기"}
+          </Button>
+        )}
         <Button
           className="flex-1 bg-green-600 text-white hover:bg-green-700"
           size="lg"

@@ -11,6 +11,7 @@ celery_app = Celery(
     backend=_config.CELERY_RESULT_BACKEND,
     include=[
         "ai_worker.tasks.embedding",
+        "ai_worker.tasks.ocr_tasks",
         "ai_worker.tasks.feedback_aggregation_tasks",  # REQ-FEED-002
         "ai_worker.tasks.prescription_end_alert_tasks",  # REQ-NOTI-007
     ],

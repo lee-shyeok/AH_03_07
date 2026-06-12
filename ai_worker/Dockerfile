@@ -17,4 +17,4 @@ RUN uv sync --group ai --group app --no-dev --frozen
 COPY ./app ./app
 COPY ./ai_worker ./ai_worker
 
-CMD ["uv", "run", "--no-sync", "celery", "-A", "ai_worker.core.celery_app:celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+CMD ["uv", "run", "--no-sync", "celery", "-A", "ai_worker.core.celery_app:celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=celery,ocr_queue"]
