@@ -1,7 +1,6 @@
 import os
 import uuid
 import zoneinfo
-from dataclasses import field
 from enum import StrEnum
 from pathlib import Path
 
@@ -19,7 +18,7 @@ class Config(BaseSettings):
 
     ENV: Env = Env.LOCAL
     SECRET_KEY: str = f"default-secret-key{uuid.uuid4().hex}"
-    TIMEZONE: zoneinfo.ZoneInfo = field(default_factory=lambda: zoneinfo.ZoneInfo("Asia/Seoul"))
+    TIMEZONE: zoneinfo.ZoneInfo = zoneinfo.ZoneInfo("Asia/Seoul")
     TEMPLATE_DIR: str = os.path.join(Path(__file__).resolve().parent.parent, "templates")
 
     DB_HOST: str = "localhost"

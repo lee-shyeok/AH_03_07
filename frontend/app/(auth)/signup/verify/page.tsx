@@ -106,7 +106,7 @@ export default function SignupVerifyPage() {
 
       {step === "info" && (
         <form onSubmit={infoForm.handleSubmit(onInfo)} className="mt-8 space-y-4" noValidate>
-          <Field label="비밀번호" htmlFor="password" error={infoForm.formState.errors.password?.message} hint="영문·숫자·특수문자 포함 8자 이상">
+          <Field label="비밀번호" htmlFor="password" error={infoForm.formState.errors.password?.message} hint="대문자·소문자·숫자·특수문자 포함 8자 이상">
             <Input id="password" type="password" placeholder="비밀번호 입력" {...infoForm.register("password")} />
           </Field>
           <Field label="이름" htmlFor="name" error={infoForm.formState.errors.name?.message}>

@@ -41,7 +41,8 @@ export const signupInfoSchema = z.object({
   password: z
     .string()
     .min(8, "비밀번호는 8자 이상이어야 합니다")
-    .regex(/[A-Za-z]/, "영문을 포함해야 합니다")
+    .regex(/[A-Z]/, "대문자를 포함해야 합니다")
+    .regex(/[a-z]/, "소문자를 포함해야 합니다")
     .regex(/[0-9]/, "숫자를 포함해야 합니다")
     .regex(/[^A-Za-z0-9]/, "특수문자를 포함해야 합니다"),
   name: z.string().min(1, "이름을 입력하세요").max(40),
