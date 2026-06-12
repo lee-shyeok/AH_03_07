@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, FileText, FlaskConical, Pill } from "lucide-react";
+import { Search, FileText, FlaskConical, Pill, Plus, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getDocuments, MedicalDocument } from "@/features/documents/api";
 
@@ -13,7 +13,6 @@ const FILTERS: Filter[] = ["전체", "진료기록", "검사결과", "처방전"
 const FALLBACK_DOCS: MedicalDocument[] = [
   { id: 1, document_type: "진료기록", file_name: "진료기록", created_at: "2026-05-20" },
   { id: 2, document_type: "검사결과", file_name: "검사결과", created_at: "2026-05-12" },
-  { id: 3, document_type: "처방전", file_name: "처방전", created_at: "2026-04-25" },
 ];
 
 const ICONS = { 진료기록: FileText, 검사결과: FlaskConical, 처방전: Pill } as const;
@@ -59,14 +58,21 @@ export default function DocumentsPage() {
   }, []);
 
   const filtered = docs.filter(
-    (d) => filter === "전체" || toDocType(d.document_type) === filter
+    (d) =>
+      d.document_type !== "처방전" &&
+      (filter === "전체" || filter === "처방전" || toDocType(d.document_type) === filter)
   );
   const months = Array.from(new Set(filtered.map((d) => toMonth(d.created_at))));
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">의료문서</h1>
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.back()} aria-label="뒤로 가기" className="text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <h1 className="text-2xl font-bold">의료문서</h1>
+        </div>
         <Link href="/search" aria-label="검색">
           <Search className="h-6 w-6" />
         </Link>
@@ -88,6 +94,17 @@ export default function DocumentsPage() {
         ))}
       </div>
 
+      {/* 처방전 추가 버튼 */}
+      {(filter === "전체" || filter === "처방전") && !loading && (
+        <button
+          onClick={() => router.push("/documents/ocr-review")}
+          className="mt-4 flex w-full items-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-secondary/30 px-4 py-3 text-primary"
+        >
+          <Plus className="h-4 w-4 shrink-0" />
+          <span className="text-sm font-semibold">처방전 추가</span>
+        </button>
+      )}
+
       {/* 상태 처리 */}
       {loading && (
         <p className="mt-10 text-center text-sm text-muted-foreground">불러오는 중...</p>
@@ -97,7 +114,7 @@ export default function DocumentsPage() {
       )}
 
       {/* 월별 그룹 */}
-      {!loading && !error && (
+      {!loading && !error && filter !== "처방전" && (
         <div className="mt-6 space-y-6 pb-6">
           {months.length === 0 ? (
             <p className="mt-10 text-center text-sm text-muted-foreground">문서가 없습니다</p>
