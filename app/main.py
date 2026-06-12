@@ -22,9 +22,10 @@ app.add_middleware(RateLimitMiddleware)
 app.add_middleware(LatencyMiddleware)  # NFR-PERF-001: latency 측정
 
 # static 파일 서빙 추가
-os.makedirs("/app/static/cards", exist_ok=True)
-os.makedirs("/app/static/audio", exist_ok=True)
-app.mount("/static", StaticFiles(directory="/app/static"), name="static")
+_STATIC_ROOT = os.environ.get("STATIC_ROOT", "static")
+os.makedirs(f"{_STATIC_ROOT}/cards", exist_ok=True)
+os.makedirs(f"{_STATIC_ROOT}/audio", exist_ok=True)
+app.mount("/static", StaticFiles(directory=_STATIC_ROOT), name="static")
 
 
 @app.get("/metrics", include_in_schema=False)
