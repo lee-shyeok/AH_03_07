@@ -99,7 +99,7 @@ function Sparkline({ data }: { data: number[] }) {
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
   const pts = data.map((v, i) => {
-    const x = pad + (i * (w - 2 * pad)) / (data.length - 1);
+    const x = data.length === 1 ? w / 2 : pad + (i * (w - 2 * pad)) / (data.length - 1);
     const y = h - pad - ((v - min) / range) * (h - 2 * pad);
     return { x, y };
   });
@@ -229,7 +229,7 @@ export default function HealthMetricsPage() {
         </div>
       </Card>
 
-      {d.trend.length >= 2 && (
+      {d.trend.length >= 1 && (
         <Card className="mt-4 p-5">
           <p className="text-sm font-semibold text-muted-foreground">추이 (최근 7일)</p>
           <div className="mt-3">
