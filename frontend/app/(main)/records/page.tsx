@@ -169,7 +169,7 @@ export default function RecordsPage() {
                         "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl " +
                         (isPrescription
                           ? "bg-secondary text-primary"
-                          : "bg-[#F0E8FF] text-[#7C5CCF]")
+                          : "bg-secondary text-primary")
                       }
                     >
                       {isPrescription ? (

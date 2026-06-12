@@ -10,8 +10,8 @@ import {
   updateLabResult,
   type LabResultResponse,
 } from "@/features/lab-results/api";
+import { getMode, type UserMode } from "@/features/auth/mode";
 
-const PURPLE = "#7C5CCF";
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function pad(n: number) {
@@ -39,6 +39,11 @@ export default function LabResultsListPage() {
   const [edit, setEdit] = useState<EditState | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [period, setPeriod] = useState<"6m" | "1y" | "2y">("6m");
+  const [mode, setMode] = useState<UserMode>("general");
+
+  useEffect(() => {
+    setMode(getMode());
+  }, []);
 
   useEffect(() => {
     listLabResults()
@@ -131,11 +136,10 @@ export default function LabResultsListPage() {
               key={p}
               type="button"
               onClick={() => setPeriod(p)}
-              className="rounded-full px-3 py-1 text-sm font-semibold transition"
-              style={
+              className={
                 active
-                  ? { background: PURPLE, color: "#fff" }
-                  : { color: "#9CA3AF", border: "0.5px solid #E5E7EB" }
+                  ? "rounded-full px-3 py-1 text-sm font-semibold transition bg-primary text-primary-foreground"
+                  : "rounded-full px-3 py-1 text-sm font-semibold transition text-muted-foreground border border-border"
               }
             >
               {label}
@@ -147,8 +151,12 @@ export default function LabResultsListPage() {
       {filtered.length === 0 ? (
         <p className="py-20 text-center text-sm text-muted-foreground">
           선택한 기간에 기록한 검사 결과가 없어요.
-          <br />
-          오른쪽 아래 + 버튼으로 추가하세요.
+          {mode === "autoimmune" && (
+            <>
+              <br />
+              오른쪽 아래 + 버튼으로 추가하세요.
+            </>
+          )}
         </p>
       ) : (
         <div className="mt-4">
@@ -162,7 +170,7 @@ export default function LabResultsListPage() {
             <Card key={r.id} className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <FlaskConical className="h-4 w-4" style={{ color: PURPLE }} />
+                  <FlaskConical className="h-4 w-4 text-primary" />
                   <div>
                     <p className="font-bold">{r.test_type}</p>
                   </div>
@@ -217,18 +225,19 @@ export default function LabResultsListPage() {
         </div>
       )}
 
-      {/* FAB → 입력 화면 (탭바 높이 위로 띄움) */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-20 mx-auto flex max-w-md justify-end px-5">
-        <button
-          type="button"
-          onClick={() => router.push("/lab-results")}
-          aria-label="검사 결과 추가"
-          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg"
-          style={{ background: PURPLE }}
-        >
-          <Plus className="h-6 w-6" />
-        </button>
-      </div>
+      {/* FAB → 자가면역 모드에서만 표시 */}
+      {mode === "autoimmune" && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-20 mx-auto flex max-w-md justify-end px-5">
+          <button
+            type="button"
+            onClick={() => router.push("/lab-results")}
+            aria-label="검사 결과 추가"
+            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
+      )}
 
       {/* 수정 모달 */}
       {edit && (
@@ -302,8 +311,7 @@ export default function LabResultsListPage() {
                 type="button"
                 onClick={handleEditSave}
                 disabled={editSaving || !edit.test_type.trim() || !edit.user_recorded_value.trim()}
-                className="flex-1 rounded-xl py-3 font-bold text-white disabled:opacity-50"
-                style={{ background: PURPLE }}
+                className="flex-1 rounded-xl py-3 font-bold bg-primary text-primary-foreground disabled:opacity-50"
               >
                 {editSaving ? "저장 중..." : "수정"}
               </button>
