@@ -3,6 +3,7 @@
 실행:
     DB_HOST=localhost uv run python -m app.core.db.seeds.diet_info_seed
 """
+
 import asyncio
 import sys
 
