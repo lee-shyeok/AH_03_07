@@ -1,5 +1,7 @@
 // 의료문서/OCR API (REQ-OCR-005)
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, getAccessToken } from "@/lib/api/client";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
 export interface MedicalDocument {
   id: number;
@@ -51,13 +53,21 @@ export async function uploadDocument(
   file: File,
   document_type: string
 ): Promise<MedicalDocument> {
-  const body = new FormData();
-  body.append("file", file);
-  body.append("document_type", document_type);
-  return apiFetch<MedicalDocument>("/v1/medical-documents", {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("document_type", document_type);
+  const token = getAccessToken();
+  const res = await fetch(`${BASE_URL}/v1/medical-documents`, {
     method: "POST",
-    body,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+    credentials: "include",
   });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Upload failed: ${res.status} ${text}`);
+  }
+  return res.json();
 }
 
 export async function deleteDocument(id: number): Promise<void> {

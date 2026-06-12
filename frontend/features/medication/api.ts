@@ -53,3 +53,29 @@ export async function createMedication(data: MedicationCreate): Promise<void> {
 export async function deleteMedication(id: number): Promise<void> {
   await apiFetch(`/v1/user-medications/${id}`, { method: "DELETE" });
 }
+
+// 복약 체크 로그 (REQ-NOTI-001)
+export interface MedicationLog {
+  id: number;
+  medication_id: number;
+  medication_name: string;
+  scheduled_time?: string;
+  taken: boolean;
+  taken_at?: string;
+  dosage?: string;
+  is_autoimmune_drug?: boolean;
+}
+
+export async function getMedicationLogs(date: string): Promise<MedicationLog[]> {
+  const res = await apiFetch<{ items?: MedicationLog[] } | MedicationLog[]>(
+    `/v1/medication-logs?from=${date}&to=${date}`
+  );
+  return Array.isArray(res) ? res : (res.items ?? []);
+}
+
+export async function checkMedicationLog(id: number): Promise<void> {
+  await apiFetch(`/v1/medication-logs/${id}/check`, {
+    method: "PUT",
+    body: { taken: true },
+  });
+}

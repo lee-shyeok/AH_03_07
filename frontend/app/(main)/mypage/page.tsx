@@ -50,7 +50,7 @@ export default function MyPage() {
         { href: "/medication", label: "약물 목록", icon: Pill },
         { href: "/health-metrics", label: "건강 수치 기록", icon: Activity },
         { href: "/documents", label: "문서 보관함", icon: Folder },
-        { href: "/guides", label: "다이어트", icon: BookOpen },
+        { href: "/guides", label: "식단가이드", icon: BookOpen },
       ];
 
   const benefitMenus = [
