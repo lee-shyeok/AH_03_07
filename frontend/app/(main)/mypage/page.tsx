@@ -7,7 +7,7 @@ import {
   User, FileText, Pill, Activity, Folder,
   Bell, Settings, HelpCircle, Megaphone, LogOut, ChevronRight,
   ShieldCheck, BarChart3, FlaskConical, CalendarDays, AlertTriangle,
-  RefreshCw, Gift, Home, Gamepad2, BookOpen,
+  RefreshCw, Gift, Home, Gamepad2, BookOpen, MapPin, Users,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getMe, logout } from "@/features/auth/api";
@@ -50,8 +50,9 @@ export default function MyPage() {
         { href: "/medication", label: "약물 목록", icon: Pill },
         { href: "/health-metrics", label: "건강 수치 기록", icon: Activity },
         { href: "/documents", label: "문서 보관함", icon: Folder },
-        { href: "/diet", label: "다이어트", icon: BookOpen },
-        { href: "/guides", label: "건강 가이드", icon: BookOpen },
+        { href: "/diet", label: "식단 가이드", icon: BookOpen },
+        { href: "/pharmacy", label: "약국 찾기", icon: MapPin },
+        { href: "/guardian", label: "보호자 공유", icon: Users },
       ];
 
   const benefitMenus = [

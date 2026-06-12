@@ -58,7 +58,7 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
         </SectionCard>
 
         {/* 식단 가이드 */}
-        <SectionCard title="식단 가이드" moreHref="#" moreLabel="전체 보기">
+        <SectionCard title="식단 가이드" moreHref="/diet" moreLabel="전체 보기">
           <p className="mt-2 text-sm text-muted-foreground">
             증상 관리에 참고할 권장·주의 식품 정보를 한눈에 확인하세요.
           </p>
@@ -75,13 +75,20 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
           </SectionCard>
         </Link>
 
-        {/* SOS 응급 버튼 */}
-        <Link href="/emergency">
-          <div className="flex items-center justify-center gap-3 rounded-2xl bg-red-500 px-5 py-4 text-white shadow-md active:bg-red-600">
-            <span className="text-lg font-bold">🚨 SOS 응급</span>
-            <ArrowRight className="h-5 w-5" />
-          </div>
-        </Link>
+        {/* SOS 응급 버튼 + 응급카드 */}
+        <div className="flex gap-3">
+          <Link href="/emergency" className="flex-1">
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-4 text-white shadow-md active:bg-red-600">
+              <span className="text-base font-bold">🚨 SOS 응급</span>
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </Link>
+          <Link href="/emergency/card" className="flex-1">
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-4 py-4 text-red-600 shadow-sm active:bg-red-100">
+              <span className="text-base font-bold">🪪 응급카드 +</span>
+            </div>
+          </Link>
+        </div>
       </div>
     </main>
   );
