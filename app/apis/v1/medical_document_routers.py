@@ -4,18 +4,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from ai_worker.tasks.ocr_tasks import process_ocr_task
 from fastapi import APIRouter, Depends, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel, field_validator
 
+from ai_worker.tasks.ocr_tasks import process_ocr_task
 from app.dependencies.consent import require_consent
 from app.dependencies.security import get_request_user
 from app.models.medical_documents import DocumentType, MedicalDocument, OcrJob, OcrJobStatus, UploadStatus
 from app.models.user_consents import ConsentType
 from app.models.users import User
-
-
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -146,6 +144,7 @@ async def list_ocr_jobs(
     jobs = await OcrJob.filter(document_id=document_id).order_by("-created_at").all()
     return ORJSONResponse([OcrJobResponse.model_validate(j).model_dump(mode="json") for j in jobs])
 
+
 @medical_document_router.get("/{document_id}/ocr-jobs/{job_id}", status_code=status.HTTP_200_OK)
 async def get_ocr_job(
     document_id: int,
@@ -158,6 +157,7 @@ async def get_ocr_job(
     data = OcrJobResponse.model_validate(job).model_dump(mode="json")
     data["job_id"] = str(job.id)
     return ORJSONResponse(data)
+
 
 @medical_document_router.post("/{document_id}/ocr-jobs", status_code=status.HTTP_202_ACCEPTED)
 async def create_ocr_job(
