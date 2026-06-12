@@ -102,9 +102,10 @@ async def _process_ocr_async(document_id: int) -> None:
             _EXT_TO_FORMAT.get(Path(doc.stored_filename).suffix.lower().lstrip("."), "jpeg"),
         )
 
-        raw_text, confidence_score, field_confidences_json, structured_data_json = await _call_clova_ocr(
+        raw_text, confidence_score, field_confidences_json, _ = await _call_clova_ocr(
             image_bytes, ocr_format, doc.stored_filename
         )
+        structured_data_json = await _structure_with_llm(raw_text) or "[]"
 
         ocr_job.status = OcrJobStatus.completed
         ocr_job.completed_at = datetime.now(_TZ)
@@ -126,6 +127,49 @@ async def _process_ocr_async(document_id: int) -> None:
         raise
     finally:
         await Tortoise.close_connections()
+
+
+async def _structure_with_llm(raw_text: str) -> str | None:
+    if not _cfg.OPENAI_API_KEY:
+        return None
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key=_cfg.OPENAI_API_KEY)
+    prompt = f"""다음 처방전 OCR 텍스트에서 약품 정보를 추출해서 JSON 배열로 반환해주세요.
+
+처방전 텍스트:
+{raw_text}
+
+JSON 형식:
+[
+  {{
+    "drug_name_user_input": "약 이름",
+    "dosage": "용량 (예: 500mg)",
+    "frequency": "복용 횟수 (예: 1일 3회)",
+    "duration_days": 기간_일수_정수,
+    "drug_category": "분류"
+  }}
+]
+
+JSON 배열만 반환하세요 (다른 설명 없이!)."""
+
+    try:
+        response = await client.chat.completions.create(
+            model=_cfg.OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
+        )
+        content = response.choices[0].message.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        json.loads(content)  # validate
+        return content
+    except Exception as exc:
+        logger.warning(f'{{"event": "llm_structure_failed", "error": "{exc}"}}')
+        return None
 
 
 async def _call_clova_ocr(

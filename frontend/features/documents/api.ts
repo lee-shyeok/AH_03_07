@@ -10,10 +10,19 @@ export interface MedicalDocument {
   updated_at?: string;
 }
 
+export interface MedicationItem {
+  drug_name_user_input: string;
+  dosage?: string;
+  frequency?: string;
+  duration_days?: number;
+  drug_category?: string;
+}
+
 export interface OcrJob {
   job_id: string;
   status: "pending" | "processing" | "completed" | "failed";
-  structured_data?: Record<string, unknown>;
+  raw_text?: string;
+  structured_data?: MedicationItem[];
   confidence_score?: number;
   error_message?: string;
 }
@@ -70,8 +79,8 @@ export async function startOcrJob(documentId: number): Promise<OcrJob> {
   });
 }
 
-export async function getOcrJob(jobId: string): Promise<OcrJob> {
-  return apiFetch<OcrJob>(`/v1/ocr-jobs/${jobId}`);
+export async function getOcrJob(jobId: string, documentId: number): Promise<OcrJob> {
+  return apiFetch<OcrJob>(`/v1/medical-documents/${documentId}/ocr-jobs/${jobId}`);
 }
 
 export async function confirmDocument(
