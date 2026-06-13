@@ -37,8 +37,8 @@ export default function GamesPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="rounded-full p-1.5 hover:bg-accent">
-          <ArrowLeft className="h-5 w-5" />
+        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
+          &lt;
         </button>
         <h1 className="text-2xl font-bold">건강 미니게임</h1>
       </div>

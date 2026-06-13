@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getMode } from "@/features/auth/mode";
 import {
-  ArrowLeft,
   CalendarDays,
   ChevronDown,
   ChevronLeft,
@@ -505,10 +504,10 @@ export default function SchedulePage() {
         <div className="mb-5 flex items-center gap-3">
           <button
             onClick={() => router.push("/home")}
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted text-lg font-semibold"
             aria-label="뒤로가기"
           >
-            <ArrowLeft className="h-5 w-5" />
+            &lt;
           </button>
           <h1 className="text-2xl font-bold">검사·진료 일정</h1>
         </div>

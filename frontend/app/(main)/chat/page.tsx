@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, ThumbsUp, ThumbsDown } from "lucide-react";
 import { createSession, sendMessage } from "@/features/chat/api";
 import type { ChatMessage } from "@/features/chat/api";
@@ -15,6 +16,7 @@ function hasRedFlag(text: string) {
 }
 
 export default function ChatPage() {
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -64,8 +66,13 @@ export default function ChatPage() {
   return (
     <div className="mx-auto flex h-[calc(100vh-4rem)] w-full max-w-md flex-col">
       <header className="border-b border-border px-5 py-4">
-        <h1 className="text-lg font-bold">AI 건강 챗봇</h1>
-        <p className="text-xs text-muted-foreground">복약·생활습관 등 건강 질문을 해보세요</p>
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
+            &lt;
+          </button>
+          <h1 className="text-lg font-bold">AI 건강 챗봇</h1>
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">복약·생활습관 등 건강 질문을 해보세요</p>
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
