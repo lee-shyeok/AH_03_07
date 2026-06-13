@@ -185,8 +185,12 @@ export default function SchedulePage() {
   const router = useRouter();
   const now = new Date();
   const [mode, setMode] = useState<"general" | "autoimmune">("general");
-  const ACCENT = mode === "autoimmune" ? PURPLE : "hsl(var(--primary))";
+  const ACCENT   = mode === "autoimmune" ? PURPLE : "hsl(var(--primary))";
   const ACCENT14 = mode === "autoimmune" ? PURPLE + "14" : "hsl(var(--primary) / 0.1)";
+  const ACCENT22 = mode === "autoimmune" ? PURPLE + "22" : "hsl(var(--primary) / 0.13)";
+  const ACCENT66 = mode === "autoimmune" ? PURPLE + "66" : "hsl(var(--primary) / 0.4)";
+  const ACCENT99 = mode === "autoimmune" ? PURPLE + "99" : "hsl(var(--primary) / 0.6)";
+  const ACCENT12 = mode === "autoimmune" ? PURPLE + "12" : "hsl(var(--primary) / 0.07)";
 
   useEffect(() => { setMode(getMode()); }, []);
 
@@ -591,7 +595,7 @@ export default function SchedulePage() {
                           key={m}
                           onClick={() => selectMonthFromPicker(m)}
                           className="rounded-xl py-2 text-sm font-bold transition-colors"
-                          style={isSel ? { background: PURPLE, color: "#fff" } : { color: "#333" }}
+                          style={isSel ? { background: ACCENT, color: "#fff" } : { color: "#333" }}
                         >
                           {m}월
                         </button>
@@ -619,13 +623,13 @@ export default function SchedulePage() {
                   const hasEvent   = eventDays.has(day);
                   let spanStyle: React.CSSProperties = {};
                   let spanClass = "flex h-8 w-8 items-center justify-center rounded-full cursor-pointer transition-colors ";
-                  if (isToday)     { spanClass += "font-bold text-white"; spanStyle = { background: PURPLE }; }
-                  else if (isSel)  { spanClass += "font-bold"; spanStyle = { background: PURPLE + "22", color: PURPLE, outline: `2px solid ${PURPLE}` }; }
+                  if (isToday)     { spanClass += "font-bold text-white"; spanStyle = { background: ACCENT }; }
+                  else if (isSel)  { spanClass += "font-bold"; spanStyle = { background: ACCENT22, color: ACCENT, outline: `2px solid ${ACCENT}` }; }
                   else             { spanClass += "hover:bg-muted/60"; }
                   return (
                     <div key={i} className="flex flex-col items-center" onClick={() => handleDayClick(day)}>
                       <span className={spanClass} style={spanStyle}>{day}</span>
-                      {hasEvent && !isToday && <span className="mt-0.5 h-1 w-1 rounded-full" style={{ background: isSel ? PURPLE : PURPLE + "99" }} />}
+                      {hasEvent && !isToday && <span className="mt-0.5 h-1 w-1 rounded-full" style={{ background: isSel ? ACCENT : ACCENT99 }} />}
                       {hasEvent && isToday  && <span className="mt-0.5 h-1 w-1 rounded-full bg-white opacity-80" />}
                     </div>
                   );
@@ -675,12 +679,24 @@ export default function SchedulePage() {
               <button
                 onClick={openAdd}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 text-sm font-bold transition-colors hover:bg-muted/40"
-                style={{ borderColor: PURPLE + "66", color: PURPLE }}
+                style={{ borderColor: ACCENT66, color: ACCENT }}
               >
                 <Plus className="h-5 w-5" />
                 {selectedDay !== null ? `${month.m}월 ${selectedDay}일 일정 추가` : "일정 추가"}
               </button>
             </section>
+
+            {/* FAB — calendar view */}
+            <div className="pointer-events-none fixed inset-x-0 bottom-20 mx-auto flex max-w-md justify-end px-5">
+              <button
+                onClick={openAdd}
+                aria-label="일정 추가"
+                className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg"
+                style={{ background: ACCENT }}
+              >
+                <Plus className="h-6 w-6" />
+              </button>
+            </div>
           </>
         ) : (
           /* ── 리스트 뷰 (HEAD) ── */
@@ -710,7 +726,7 @@ export default function SchedulePage() {
                     <button key={i} onClick={() => setSelected((s) => s === k ? null : k)} className="flex flex-col items-center py-1">
                       <span
                         className={"flex h-8 w-8 items-center justify-center rounded-full " + (isToday ? "font-bold text-white" : inMonth ? "" : "text-muted-foreground/40")}
-                        style={isToday ? { background: PURPLE } : isSel ? { background: PURPLE + "22", color: PURPLE } : undefined}
+                        style={isToday ? { background: ACCENT } : isSel ? { background: ACCENT22, color: ACCENT } : undefined}
                       >
                         {date.getDate()}
                       </span>
@@ -768,7 +784,7 @@ export default function SchedulePage() {
                 }}
                 aria-label="일정 추가"
                 className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg"
-                style={{ background: PURPLE }}
+                style={{ background: ACCENT }}
               >
                 <Plus className="h-6 w-6" />
               </button>
@@ -842,7 +858,7 @@ export default function SchedulePage() {
                   aria-checked={form.reminder_enabled}
                   onClick={() => setForm((f) => ({ ...f, reminder_enabled: !f.reminder_enabled }))}
                   className="relative h-6 w-11 rounded-full transition-colors"
-                  style={{ background: form.reminder_enabled ? PURPLE : "#d1d5db" }}
+                  style={{ background: form.reminder_enabled ? ACCENT : "#d1d5db" }}
                 >
                   <span
                     className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
@@ -868,7 +884,7 @@ export default function SchedulePage() {
                 onClick={handleSave}
                 disabled={saving}
                 className="flex h-12 flex-1 items-center justify-center rounded-xl font-bold text-white disabled:opacity-50"
-                style={{ background: PURPLE }}
+                style={{ background: ACCENT }}
               >
                 {saving ? "저장 중…" : sheet.mode === "add" ? "추가하기" : "저장하기"}
               </button>
@@ -932,7 +948,7 @@ export default function SchedulePage() {
                     key={d}
                     onClick={() => setCareForm((f) => ({ ...f, reminder_days_before: d }))}
                     className="flex-1 rounded-xl border py-2 text-sm font-medium"
-                    style={on ? { borderColor: PURPLE, color: PURPLE, background: PURPLE + "12" } : { borderColor: "#e5e7eb", color: "#6b7280" }}
+                    style={on ? { borderColor: ACCENT, color: ACCENT, background: ACCENT12 } : { borderColor: "#e5e7eb", color: "#6b7280" }}
                   >
                     {d}일 전
                   </button>
@@ -960,7 +976,7 @@ export default function SchedulePage() {
                 onClick={handleCareSave}
                 disabled={careSaving || !careForm.title.trim()}
                 className="flex-1 rounded-xl py-3 font-bold text-white disabled:opacity-50"
-                style={{ background: PURPLE }}
+                style={{ background: ACCENT }}
               >
                 {careSaving ? "저장 중..." : editingId !== null ? "수정" : "저장"}
               </button>
