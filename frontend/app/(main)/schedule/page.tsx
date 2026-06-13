@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -507,7 +507,7 @@ export default function SchedulePage() {
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted text-lg font-semibold"
             aria-label="뒤로가기"
           >
-            &lt;
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold">검사·진료 일정</h1>
         </div>

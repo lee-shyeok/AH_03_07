@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ClipboardCheck } from "lucide-react";
 import {
   listRiskFlags,
   updateRiskFlagStatus,
@@ -56,8 +56,8 @@ export default function RiskFlagsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-28 pt-8">
       <div className="flex items-center gap-2 mb-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
       </div>
       <h1 className="text-3xl font-extrabold leading-tight">의료진 확인이<br />필요한 신호</h1>

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pill, Plus, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, Pill, Plus, Search, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useMedications, useDeleteMedication } from "@/features/medication/queries";
 import { DRUG_CLASS_LABEL, DRUG_CLASS_COLOR } from "@/features/medication/schema";
@@ -113,10 +113,10 @@ export default function MedicationPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => router.back()}
-          className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold"
+          className="rounded-full p-1 hover:bg-accent"
           aria-label="뒤로가기"
         >
-          &lt;
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="flex-1 text-xl font-bold">내 약물 목록</h1>
         <Link

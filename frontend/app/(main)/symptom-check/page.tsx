@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
-import { AlertTriangle, Check, Info } from "lucide-react";
+import { ChevronLeft, AlertTriangle, Check, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import {
@@ -60,8 +60,8 @@ export default function SymptomCheckPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-28">
       <div className="flex items-center gap-2 mb-4">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-xl font-bold">주의 증상 체크</h1>
       </div>

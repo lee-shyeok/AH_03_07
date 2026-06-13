@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 // 내 방 꾸미기 (REQ-GAME-002) — Flutter room_page.dart 이식
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Paintbrush, Store, X } from "lucide-react";
+import { ChevronLeft, Paintbrush, Store, X } from "lucide-react";
 import { Helcy } from "@/features/gamification/Helcy";
 import {
   ALL_ITEMS, CATEGORY_COLORS, CATEGORY_LABEL, FLOORS, WALLPAPERS,
@@ -109,7 +109,7 @@ export default function RoomPage() {
       {/* 헤더 */}
       <header className="flex items-center gap-2 bg-card px-3 py-3">
         <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-accent text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="flex-1 text-base font-bold">내 방 꾸미기</h1>
         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">⭐ {points}P</span>

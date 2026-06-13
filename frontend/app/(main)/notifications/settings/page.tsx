@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Pill, Check, PlusCircle } from "lucide-react";
+import { ChevronLeft, ChevronDown, Pill, Check, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { TimePicker } from "@/components/ui/TimePicker";
@@ -218,8 +218,8 @@ export default function NotificationSettingsPage() {
     <main className="mx-auto w-full max-w-md px-5 py-6 pb-28">
       {/* 헤더 */}
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-lg font-bold">복약 알림 설정</h1>
       </div>

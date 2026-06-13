@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
-import { Activity } from "lucide-react";
+import { ChevronLeft, Activity } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -179,8 +179,8 @@ export default function HealthMetricsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-8">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold">건강 수치</h1>
       </div>

@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 // 미니게임 (REQ-GAME-002) — Flutter game_pages.dart 이식
 // 4종: 카드 맞추기 / OX 퀴즈 / 단어 맞추기 / 타이머 챌린지
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft, ArrowLeft } from "lucide-react";
 import {
   EMOJI_POOL, OX_QUESTIONS, WORD_LIST, shuffle, awardForScore,
 } from "@/features/gamification/gameData";
@@ -37,8 +37,8 @@ export default function GamesPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold">건강 미니게임</h1>
       </div>

@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TrendingUp } from "lucide-react";
+import { ChevronLeft, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getActivityLog, type ActivityLogResponse } from "@/features/activity/api";
 
@@ -55,8 +55,8 @@ export default function ActivityViewPage() {
     <main className="mx-auto w-full max-w-md px-5 pb-28 pt-6">
       {/* 헤더 */}
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-xl font-bold">활성도 기록</h1>
         <button

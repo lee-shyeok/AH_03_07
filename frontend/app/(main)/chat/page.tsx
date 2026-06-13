@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Send, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ChevronLeft, Send, ThumbsUp, ThumbsDown } from "lucide-react";
 import { createSession, sendMessage } from "@/features/chat/api";
 import type { ChatMessage } from "@/features/chat/api";
 
@@ -67,8 +67,8 @@ export default function ChatPage() {
     <div className="mx-auto flex h-[calc(100vh-4rem)] w-full max-w-md flex-col">
       <header className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2">
-          <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-            &lt;
+          <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-bold">AI 건강 챗봇</h1>
         </div>

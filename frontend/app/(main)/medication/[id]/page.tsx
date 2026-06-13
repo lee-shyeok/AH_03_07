@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { Link as LinkIcon, ArrowRight, Pill } from "lucide-react";
+import { ChevronLeft, Link as LinkIcon, ArrowRight, Pill } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useMedications } from "@/features/medication/queries";
@@ -167,10 +167,10 @@ export default function MedicationDetailPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => router.push("/medication")}
-          className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold"
+          className="rounded-full p-1 hover:bg-accent"
           aria-label="뒤로가기"
         >
-          &lt;
+          <ChevronLeft className="h-5 w-5" />
         </button>
       </div>
 

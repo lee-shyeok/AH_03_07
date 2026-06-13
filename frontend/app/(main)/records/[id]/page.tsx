@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import { ChevronLeft, Pencil, Trash2, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRecord, useDeleteRecord } from "@/features/medical-records/queries";
@@ -34,8 +34,8 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     return (
       <main className="mx-auto w-full max-w-md px-5 py-6">
         <div className="flex items-center gap-2">
-          <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-            &lt;
+          <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold">진료기록 상세</h1>
         </div>
@@ -52,8 +52,8 @@ export default function RecordDetailPage({ params }: { params: Promise<{ id: str
     <main className="mx-auto w-full max-w-md px-5 py-6 pb-32">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-            &lt;
+          <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold">진료기록 상세</h1>
         </div>

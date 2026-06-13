@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { Pill, AlertTriangle, BarChart3, CheckCircle2, Bell, BookOpen } from "lucide-react";
+import { ChevronLeft, Pill, AlertTriangle, BarChart3, CheckCircle2, Bell, BookOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useNotifications, useMarkRead } from "@/features/notifications/queries";
 import { type AppNotification } from "@/features/notifications/api";
@@ -84,8 +84,8 @@ export default function NotificationsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-6 pb-24">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-3xl font-extrabold">알림</h1>
       </div>

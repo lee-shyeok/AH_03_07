@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Home, Gamepad2, ChevronRight } from "lucide-react";
+import { ChevronLeft, Home, Gamepad2, ChevronRight } from "lucide-react";
 import {
   levelOf, levelName, progressRatio, nextLevelPoints,
 } from "@/features/gamification/types";
@@ -60,8 +60,8 @@ export default function RewardsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
-          &lt;
+        <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold">포인트 · 보상</h1>
       </div>
