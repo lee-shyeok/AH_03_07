@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Calendar as CalendarIcon,
   ChevronDown,
-  ChevronLeft,
   Info,
   Pencil,
   Plus,
@@ -108,8 +107,8 @@ export default function LabResultsPage() {
     <main className="mx-auto min-h-screen w-full max-w-md px-5 py-8">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <button type="button" onClick={() => router.back()} aria-label="뒤로가기">
-          <ChevronLeft className="h-6 w-6" />
+        <button type="button" onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
+          &lt;
         </button>
         <h1 className="text-2xl font-bold">검사 결과 입력</h1>
       </div>

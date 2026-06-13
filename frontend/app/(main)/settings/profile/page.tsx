@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getMe, updateMe } from "@/features/auth/api";
@@ -58,8 +57,8 @@ export default function ProfileEditPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 py-6 pb-32">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.back()} className="p-1 text-foreground">
-          <ChevronLeft className="h-6 w-6" />
+        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
+          &lt;
         </button>
         <h1 className="text-2xl font-bold">회원 정보 수정</h1>
       </div>
