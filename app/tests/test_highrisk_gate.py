@@ -118,3 +118,42 @@ def test_matched_item_fields_populated():
 def test_evaluated_at_is_set():
     result = evaluate_highrisk_gate(_make_input())
     assert result.evaluated_at is not None
+
+
+# ── stale recheck ─────────────────────────────────────────────
+
+
+def test_stale_only_match_returns_needs_recheck_no_emergency():
+    """stale 체크만으로 LOCKED → needs_recheck=True, trigger_emergency_modal=False."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["DYSPNEA"], checked_symptoms_is_stale=True))
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is True
+    assert result.trigger_emergency_modal is False
+
+
+def test_active_source_overrides_stale_recheck():
+    """stale 체크 + active self_report → needs_recheck=False, 기존 로직 그대로."""
+    result = evaluate_highrisk_gate(
+        _make_input(
+            checked_symptom_codes=["DYSPNEA"],
+            checked_symptoms_is_stale=True,
+            self_report_codes=["TB_HISTORY"],
+        )
+    )
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is False
+
+
+def test_stale_with_no_gate_match_returns_pass():
+    """stale 체크지만 게이트 미매칭 → PASS, needs_recheck=False."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["UNKNOWN_CODE"], checked_symptoms_is_stale=True))
+    assert result.status == GateStatus.PASS
+    assert result.needs_recheck is False
+
+
+def test_fresh_checked_symptom_not_stale():
+    """is_stale=False → 기존 동작(LOCKED, trigger_emergency_modal=True)."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["DYSPNEA"], checked_symptoms_is_stale=False))
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is False
+    assert result.trigger_emergency_modal is True

@@ -50,7 +50,11 @@ async def _run_generation_job(job_id: int) -> None:
             job.status = GuideGenerationJobStatus.COMPLETED
         elif result.orchestrator_status == OrchestratorStatus.BLOCKED_HIGH_RISK:
             job.status = GuideGenerationJobStatus.BLOCKED
-            job.blocked_reason = BlockedReason.HIGH_RISK_GATE_BLOCKED.value
+            job.blocked_reason = (
+                BlockedReason.NEEDS_RECHECK.value
+                if result.needs_recheck
+                else BlockedReason.HIGH_RISK_GATE_BLOCKED.value
+            )
         elif result.orchestrator_status == OrchestratorStatus.TRIGGER_NOT_MET:
             job.status = GuideGenerationJobStatus.FAILED
             missing = ", ".join(result.trigger_check.missing_conditions) if result.trigger_check else ""

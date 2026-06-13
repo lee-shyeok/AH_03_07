@@ -35,8 +35,8 @@ class StubDataSourceCollector:
     async def get_vaccine_infection_prevention(self, user_id: int) -> str | None:
         return None
 
-    async def get_checked_symptom_codes(self, user_id: int) -> list[str]:
-        return []
+    async def get_checked_symptom_codes(self, user_id: int) -> tuple[list[str], bool]:
+        return [], False
 
     async def get_self_report_codes(self, user_id: int) -> list[str]:
         return []

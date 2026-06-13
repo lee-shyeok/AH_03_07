@@ -31,11 +31,12 @@ def _make_guide(status: GuideStatus) -> HealthGuideOutput:
     )
 
 
-def _make_gate_result(locked: bool = False, emergency: bool = False) -> MagicMock:
+def _make_gate_result(locked: bool = False, emergency: bool = False, needs_recheck: bool = False) -> MagicMock:
     gate_result = MagicMock()
     gate_result.status.value = "LOCKED" if locked else "PASS"
     gate_result.matched_items = []
     gate_result.trigger_emergency_modal = emergency
+    gate_result.needs_recheck = needs_recheck
     return gate_result
 
 
@@ -61,7 +62,7 @@ def _make_collector(
     collector.get_lab_results_summary = AsyncMock(return_value=None)
     collector.get_pregnancy_lactation_codes = AsyncMock(return_value=pregnancy_lactation_codes or [])
     collector.get_vaccine_infection_prevention = AsyncMock(return_value=None)
-    collector.get_checked_symptom_codes = AsyncMock(return_value=checked_symptom_codes or [])
+    collector.get_checked_symptom_codes = AsyncMock(return_value=(checked_symptom_codes or [], False))
     collector.get_self_report_codes = AsyncMock(return_value=self_report_codes or [])
     collector.get_lab_threshold_exceeded = AsyncMock(return_value=lab_threshold_exceeded)
     return collector

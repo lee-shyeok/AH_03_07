@@ -75,8 +75,25 @@ export default function GuidesPage() {
         </div>
       )}
 
-      {/* 차단(BLOCKED) 안내 — REQ-AUTO-006, A안 */}
-      {jobData?.status === "BLOCKED" && !emergency && (
+      {/* 재체크 요청 — stale 증상 체크만으로 LOCKED된 경우 */}
+      {jobData?.status === "BLOCKED" && jobData.blocked_reason === "NEEDS_RECHECK" && !emergency && (
+        <div className="mt-4 rounded-lg bg-blue-50 px-4 py-3">
+          <p className="text-sm font-semibold text-blue-800">증상 체크를 다시 해주세요</p>
+          <p className="mt-1 text-xs text-blue-700">
+            마지막 증상 체크가 14일을 초과했습니다. 최신 상태를 반영하려면 증상 체크를 새로 진행해 주세요.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-3 w-full border-blue-400 text-blue-800 hover:bg-blue-100"
+            onClick={() => router.push("/symptom-check")}
+          >
+            증상 체크하러 가기
+          </Button>
+        </div>
+      )}
+
+      {/* 차단(BLOCKED) 안내 — active 소스로 LOCKED된 경우 REQ-AUTO-006 */}
+      {jobData?.status === "BLOCKED" && jobData.blocked_reason !== "NEEDS_RECHECK" && !emergency && (
         <div className="mt-4 rounded-lg bg-yellow-50 px-4 py-3">
           <p className="text-sm text-yellow-800">
             현재 입력하신 상태는 의료진 검토가 권고됩니다. 담당 의료진 상담을 권고합니다.

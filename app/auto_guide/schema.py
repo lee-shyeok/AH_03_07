@@ -28,6 +28,7 @@ class OrchestratorResult(BaseModel):
     user_id: int
     orchestrator_status: OrchestratorStatus
     trigger_emergency_modal: bool = False
+    needs_recheck: bool = False  # stale 체크만으로 LOCKED된 경우 True
     guide: HealthGuideOutput | None = None
     guide_id: int | None = None
     trigger_check: TriggerCheckResult | None = None
@@ -59,6 +60,7 @@ class GuideSectionItem(BaseModel):
 
 class BlockedReason(str, Enum):
     HIGH_RISK_GATE_BLOCKED = "HIGH_RISK_GATE_BLOCKED"
+    NEEDS_RECHECK = "NEEDS_RECHECK"  # stale 증상 체크만으로 LOCKED → 재체크 요청
     SAFETY_FILTER_BLOCKED = "SAFETY_FILTER_BLOCKED"  # 현재 미발화(휴면), 향후 안전필터 연결용
 
 
