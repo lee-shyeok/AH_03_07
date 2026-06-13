@@ -45,12 +45,15 @@ async def get_recognitions(
 ) -> Response:
     result = await service.get_recognitions(current_user, page, size)
     return Response(content=[r.model_dump(mode="json") for r in result], status_code=status.HTTP_200_OK)
+
+
 @pill_router.get("/search", status_code=status.HTTP_200_OK)
 async def search_drug(
     q: str,
     current_user: Annotated[User, Depends(get_request_user)],
 ) -> Response:
     from app.services.drug_info import DrugInfoService
+
     service = DrugInfoService()
     result = await service.search_drug(q)
     return Response(content=[d.model_dump(mode="json") for d in result.drugs], status_code=status.HTTP_200_OK)

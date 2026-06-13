@@ -61,7 +61,6 @@ class PillRecognitionService:
                         "'drug_name' (약품명 또는 특징 설명, 한국어 우선) "
                         "and 'confidence' (float 0.0–1.0). "
                         "Always return at least one candidate if any pill is visible."
-
                     ),
                 },
                 {
@@ -90,10 +89,7 @@ class PillRecognitionService:
 
         try:
             data = json.loads(raw)
-            return [
-                PillCandidate(drug_name=item["drug_name"], confidence=float(item["confidence"]))
-                for item in data
-            ]
+            return [PillCandidate(drug_name=item["drug_name"], confidence=float(item["confidence"])) for item in data]
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logger.warning("Vision API 응답 파싱 실패: %s — raw: %s", e, raw[:200])
             return []

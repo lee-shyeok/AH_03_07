@@ -26,6 +26,7 @@ class DrugInfoService:
         # 공공데이터 API는 serviceKey를 params로 전달하면 이중 인코딩되어 403 발생
         # serviceKey는 URL에 직접 삽입하고, 나머지 파라미터만 httpx params 사용
         from urllib.parse import quote
+
         url = f"{self.base_url}/getDrbEasyDrugList?serviceKey={self.api_key}&itemName={quote(drug_name)}&type=json&numOfRows={num_of_rows}&pageNo=1"
 
         async with httpx.AsyncClient(timeout=30.0) as client:
