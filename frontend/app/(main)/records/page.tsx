@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus, Trash2, FileText, ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useRecords, useDeleteRecord } from "@/features/medical-records/queries";
+import { getMode } from "@/features/auth/mode";
 
 const PAGE_SIZE = 10;
 
@@ -16,10 +17,15 @@ function isAutoimmuneDx(diagnosis?: string): boolean {
   return AUTOIMMUNE_KEYWORDS.some((k) => diagnosis.includes(k));
 }
 
+const PURPLE = "#7C5CCF";
+
 export default function RecordsPage() {
   const router = useRouter();
   const { data: records = [], isLoading } = useRecords();
   const del = useDeleteRecord();
+  const [isAuto, setIsAuto] = useState(false);
+
+  useEffect(() => { setIsAuto(getMode() === "autoimmune"); }, []);
 
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [filterHospital, setFilterHospital] = useState("");
@@ -57,7 +63,12 @@ export default function RecordsPage() {
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="flex-1 text-2xl font-bold">진료기록</h1>
-        <Link href="/records/new" className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground" aria-label="진료기록 추가">
+        <Link
+          href="/records/new"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-white"
+          style={{ background: isAuto ? PURPLE : "hsl(var(--primary))" }}
+          aria-label="진료기록 추가"
+        >
           <Plus className="h-5 w-5" />
         </Link>
       </div>
@@ -91,7 +102,7 @@ export default function RecordsPage() {
         <div className="mt-16 flex flex-col items-center text-muted-foreground">
           <FileText className="h-12 w-12 opacity-30" />
           <p className="mt-3 text-sm">진료기록이 없습니다.</p>
-          <Link href="/records/new" className="mt-2 text-sm text-primary hover:underline">첫 진료기록 추가하기</Link>
+          <Link href="/records/new" className="mt-2 text-sm hover:underline" style={{ color: isAuto ? PURPLE : "hsl(var(--primary))" }}>첫 진료기록 추가하기</Link>
         </div>
       ) : (
         <>
