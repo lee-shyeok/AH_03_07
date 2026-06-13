@@ -6,6 +6,7 @@ import { ClipboardCheck } from "lucide-react";
 import {
   listRiskFlags,
   updateRiskFlagStatus,
+  deleteRiskFlag,
   type RiskFlagItem,
   type RiskFlagStatus,
   type RiskFlagSourceType,
@@ -45,6 +46,15 @@ export default function RiskFlagsPage() {
   async function changeStatus(id: number, status: "RESOLVED" | "DISMISSED") {
     try {
       await updateRiskFlagStatus(id, status);
+      setFlags((prev) => prev.filter((f) => f.id !== id));
+    } catch {
+      /* 실패 시 유지 */
+    }
+  }
+
+  async function handleDelete(id: number) {
+    try {
+      await deleteRiskFlag(id);
       setFlags((prev) => prev.filter((f) => f.id !== id));
     } catch {
       /* 실패 시 유지 */
@@ -155,12 +165,20 @@ export default function RiskFlagsPage() {
                     <span className="text-xs font-bold text-muted-foreground">
                       {f.status === "RESOLVED" ? "상담 완료됨" : "숨김 처리됨"}
                     </span>
-                    <button
-                      onClick={() => setOpenDetail((p) => (p === f.id ? null : f.id))}
-                      className="text-xs font-semibold text-muted-foreground underline"
-                    >
-                      상세 보기
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setOpenDetail((p) => (p === f.id ? null : f.id))}
+                        className="text-xs font-semibold text-muted-foreground underline"
+                      >
+                        상세 보기
+                      </button>
+                      <button
+                        onClick={() => handleDelete(f.id)}
+                        className="text-xs font-semibold text-destructive underline"
+                      >
+                        삭제
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

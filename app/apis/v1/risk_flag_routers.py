@@ -55,3 +55,17 @@ async def update_risk_flag_status(
         RiskFlagItem.model_validate(flag).model_dump(mode="json"),
         status_code=status.HTTP_200_OK,
     )
+
+
+@risk_flag_router.delete("/{flag_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_risk_flag(
+    flag_id: int,
+    user: Annotated[User, Depends(get_request_user)],
+    service: Annotated[RiskFlagService, Depends(RiskFlagService)],
+) -> None:
+    flag = await service.get_flag(user, flag_id)
+    if flag is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="플래그를 찾을 수 없습니다")
+    if flag.status == RiskFlagStatus.ACTIVE:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="ACTIVE 플래그는 삭제할 수 없습니다")
+    await service.delete_flag(user, flag_id)

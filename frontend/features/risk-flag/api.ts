@@ -35,3 +35,7 @@ export async function updateRiskFlagStatus(
     body: { status },
   });
 }
+
+export async function deleteRiskFlag(id: number): Promise<void> {
+  return apiFetch<void>(`/v1/risk-flags/${id}`, { method: "DELETE" });
+}
