@@ -16,8 +16,8 @@ export interface HealthMetric {
 
 export interface HealthMetricCreate {
   metric_type: MetricType;
-  value: string;
-  measured_at?: string;
+  user_recorded_value: string;
+  measured_at: string;
 }
 
 export const METRIC_LABEL: Record<MetricType, string> = {

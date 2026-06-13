@@ -32,17 +32,24 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
         {recentMetrics && recentMetrics.length > 0 && (
           <SectionCard title="최근 건강 수치" moreHref="/health-metrics" moreLabel="전체 보기">
             <div className="mt-3 grid grid-cols-2 gap-2.5">
-              {recentMetrics.slice(0, 4).map((m) => (
-                <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">{METRIC_LABEL[m.metric_type as MetricType]}</p>
-                  <p className="mt-0.5 text-sm font-bold">
-                    {Number(m.user_recorded_value).toFixed(1)}
-                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                      {METRIC_UNIT[m.metric_type as MetricType]}
-                    </span>
-                  </p>
-                </div>
-              ))}
+              {(["BLOOD_PRESSURE", "BLOOD_SUGAR", "WEIGHT", "HEART_RATE"] as MetricType[])
+                .map((type) =>
+                  recentMetrics
+                    .filter((m) => m.metric_type === type)
+                    .sort((a, b) => b.measured_at.localeCompare(a.measured_at))[0]
+                )
+                .filter(Boolean)
+                .map((m) => (
+                  <Link key={m!.metric_type} href="/health-metrics" className="rounded-xl bg-muted/60 px-3 py-2.5 active:bg-muted">
+                    <p className="text-xs text-muted-foreground">{METRIC_LABEL[m!.metric_type as MetricType]}</p>
+                    <p className="mt-0.5 text-sm font-bold">
+                      {Number(m!.user_recorded_value).toFixed(1)}
+                      <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                        {METRIC_UNIT[m!.metric_type as MetricType]}
+                      </span>
+                    </p>
+                  </Link>
+                ))}
             </div>
           </SectionCard>
         )}

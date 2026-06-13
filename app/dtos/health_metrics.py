@@ -9,7 +9,7 @@ from app.models.health_metrics import MetricType
 
 class HealthMetricCreateRequest(BaseModel):
     metric_type: MetricType
-    user_recorded_value: Decimal
+    user_recorded_value: str
     measured_at: datetime
     notes: str | None = None
 

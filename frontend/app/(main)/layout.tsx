@@ -32,7 +32,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const hideNav = HIDE_NAV_PATHS.some((p) => pathname.startsWith(p));
 
   const tabs = [
-    { href: isAuto ? "/lab-results/list" : "/records", label: "기록", icon: RecordsIcon },
+    { href: isAuto ? "/lab-results/list" : "/records"
+      , label: "기록", icon: RecordsIcon },
     { href: "/chat", label: "챗봇", icon: ChatIcon },
     { href: "/home", label: "홈", icon: HomeIcon },
     { href: "/notifications", label: "알림", icon: BellIcon },
