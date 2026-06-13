@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, FileText, FlaskConical, Pill } from "lucide-react";
+import { ChevronLeft, Search, FileText, FlaskConical, Pill } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getDocuments, MedicalDocument } from "@/features/documents/api";
 
@@ -66,7 +66,12 @@ export default function DocumentsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">의료문서</h1>
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.back()} className="rounded-full p-1 hover:bg-accent" aria-label="뒤로가기">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold">의료문서</h1>
+        </div>
         <Link href="/search" aria-label="검색">
           <Search className="h-6 w-6" />
         </Link>
