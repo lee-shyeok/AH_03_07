@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronDown, Pill, Check, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { TimePicker } from "@/components/ui/TimePicker";
 import {
   getNotificationSettings,
   updateNotificationSettings,
@@ -27,14 +28,6 @@ const REPEAT_OPTIONS = [
   { value: "weekly_sat", label: "매주 토요일" },
   { value: "weekly_sun", label: "매주 일요일" },
 ];
-
-function formatTime(value: string | null | undefined): string {
-  if (!value) return formatTime("09:00");
-  const [h, m] = value.split(":").map(Number);
-  const ampm = h < 12 ? "오전" : "오후";
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${ampm} ${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
 
 // ── Sub-components ──────────────────────────────────────────
 
@@ -124,25 +117,21 @@ function CheckRow({
   );
 }
 
-const FALLBACK_SETTINGS: NotificationSettings = {
-  enabled: true,
-  time: "09:00",
-  repeat: "weekly_fri",
-  early_reminder: true,
-  missed_reminder: true,
-  location_record: false,
-  channels: { app: true, kakao: true, email: false },
-};
+const DEFAULT_TIMING_TIMES = { morning: "08:00", afternoon: "12:00", evening: "18:00", bedtime: "22:00" };
+const DEFAULT_QUIET_HOURS = { enabled: false, start: "22:00", end: "07:00" };
+const DEFAULT_CHANNELS = { app: false, kakao: false, email: false };
 
 // ── Page ─────────────────────────────────────────────────────
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
-  const timeInputRef = useRef<HTMLInputElement>(null);
 
-  const mode = getMode();
-  const isAutoimmune = mode === "autoimmune";
-  const accent = isAutoimmune ? PURPLE : GREEN;
+  // SSR 하이드레이션 불일치 방지
+  const [accent, setAccent] = useState(GREEN);
+  useEffect(() => {
+    setAccent(getMode() === "autoimmune" ? PURPLE : GREEN);
+  }, []);
+  const isAutoimmune = accent === PURPLE;
 
   // 약물 목록
   const { data: meds = [], isLoading: medsLoading } = useMedications();
@@ -157,16 +146,18 @@ export default function NotificationSettingsPage() {
   const selectedMed = meds.find((m) => m.id === selectedMedId) ?? meds[0] ?? null;
 
   // 알림 설정 상태
-  const [alertOn, setAlertOn] = useState(FALLBACK_SETTINGS.enabled);
-  const [alertTime, setAlertTime] = useState(FALLBACK_SETTINGS.time);
-  const [repeat, setRepeat] = useState(FALLBACK_SETTINGS.repeat);
+  const [alertOn, setAlertOn] = useState(false);
+  const [alertTime, setAlertTime] = useState("09:00");
+  const [repeat, setRepeat] = useState("daily");
   const [repeatOpen, setRepeatOpen] = useState(false);
-  const [earlyReminder, setEarlyReminder] = useState(FALLBACK_SETTINGS.early_reminder);
-  const [missedReminder, setMissedReminder] = useState(FALLBACK_SETTINGS.missed_reminder);
-  const [locationRecord, setLocationRecord] = useState(FALLBACK_SETTINGS.location_record);
+  const [earlyReminder, setEarlyReminder] = useState(false);
+  const [missedReminder, setMissedReminder] = useState(false);
+  const [locationRecord, setLocationRecord] = useState(false);
   const [channels, setChannels] = useState<{ app: boolean; kakao: boolean; email: boolean }>(
-    FALLBACK_SETTINGS.channels
+    DEFAULT_CHANNELS
   );
+  const [timingTimes, setTimingTimes] = useState(DEFAULT_TIMING_TIMES);
+  const [quietHours, setQuietHours] = useState(DEFAULT_QUIET_HOURS);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -179,7 +170,9 @@ export default function NotificationSettingsPage() {
         setEarlyReminder(s.early_reminder);
         setMissedReminder(s.missed_reminder);
         setLocationRecord(s.location_record);
-        setChannels(s.channels ?? FALLBACK_SETTINGS.channels);
+        setChannels(s.channels ?? DEFAULT_CHANNELS);
+        if (s.timing_times) setTimingTimes({ ...DEFAULT_TIMING_TIMES, ...s.timing_times });
+        if (s.quiet_hours) setQuietHours(s.quiet_hours);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -203,6 +196,8 @@ export default function NotificationSettingsPage() {
         missed_reminder: missedReminder,
         location_record: locationRecord,
         channels,
+        timing_times: timingTimes,
+        quiet_hours: quietHours,
       });
     } catch {
       // API 실패 시 무시
@@ -298,24 +293,9 @@ export default function NotificationSettingsPage() {
             <ToggleRow label="알림 받기" on={alertOn} onChange={setAlertOn} accent={accent} />
 
             {/* 알림 시간 */}
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between px-4 py-2 min-h-[52px]">
               <p className="text-sm font-medium">알림 시간</p>
-              <div className="relative flex items-center">
-                <button
-                  onClick={() => timeInputRef.current?.showPicker?.()}
-                  className="text-sm font-semibold"
-                  style={{ color: accent }}
-                >
-                  {formatTime(alertTime)}
-                </button>
-                <input
-                  ref={timeInputRef}
-                  type="time"
-                  value={alertTime}
-                  onChange={(e) => setAlertTime(e.target.value)}
-                  className="absolute right-0 h-0 w-0 overflow-hidden opacity-0"
-                />
-              </div>
+              <TimePicker value={alertTime} onChange={setAlertTime} accentColor={accent} />
             </div>
 
             {/* 반복 */}
@@ -396,6 +376,76 @@ export default function NotificationSettingsPage() {
               onChange={() => toggleChannel("email")}
               accent={accent}
             />
+          </Card>
+
+          {/* 시간대별 알림 시간 */}
+          <SectionLabel>시간대별 알림 시간</SectionLabel>
+          <Card className="divide-y divide-border">
+            {(
+              [
+                { key: "morning" as const, label: "아침" },
+                { key: "afternoon" as const, label: "점심" },
+                { key: "evening" as const, label: "저녁" },
+                { key: "bedtime" as const, label: "취침 전" },
+              ] as const
+            ).map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between px-4 py-2 min-h-[52px]">
+                <p className="text-sm font-medium">{label}</p>
+                <TimePicker
+                  value={timingTimes[key] ?? "08:00"}
+                  onChange={(v) => setTimingTimes((prev) => ({ ...prev, [key]: v }))}
+                  accentColor={accent}
+                />
+              </div>
+            ))}
+          </Card>
+
+          {/* 알림 본문 미리보기 */}
+          <SectionLabel>알림 본문 미리보기</SectionLabel>
+          <Card className="p-4 space-y-2">
+            <div className="rounded-xl bg-muted p-3 text-sm leading-relaxed">
+              <p className="font-semibold" style={{ color: accent }}>
+                {selectedMed?.name ?? "약품명"}님, [아침] 복약 시간입니다.
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                등록하신 약품: {selectedMed?.name ?? "메토트렉세이트 10mg"} 1정
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              본 알림은 사용자가 등록한 정보를 그대로 표시합니다 (앱 복약지도 아님)
+            </p>
+          </Card>
+
+          {/* 방해 금지 시간 */}
+          <SectionLabel>방해 금지 시간 (Quiet Hours)</SectionLabel>
+          <Card className="divide-y divide-border">
+            <ToggleRow
+              label="방해 금지 시간 사용"
+              description="해당 시간대에는 알림을 보내지 않습니다"
+              on={quietHours.enabled}
+              onChange={(v) => setQuietHours((prev) => ({ ...prev, enabled: v }))}
+              accent={accent}
+            />
+            {quietHours.enabled && (
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">시작 시간</p>
+                  <TimePicker
+                    value={quietHours.start}
+                    onChange={(v) => setQuietHours((prev) => ({ ...prev, start: v }))}
+                    accentColor={accent}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">종료 시간</p>
+                  <TimePicker
+                    value={quietHours.end}
+                    onChange={(v) => setQuietHours((prev) => ({ ...prev, end: v }))}
+                    accentColor={accent}
+                  />
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* 위치 기록 */}

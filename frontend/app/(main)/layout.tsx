@@ -13,7 +13,15 @@ import MyIcon from "@/components/icons/nav/MyIcon";
 
 const PURPLE = "#7C5CCF";
 
-const tabs = [
+const GENERAL_TABS = [
+  { href: "/records", label: "기록", icon: RecordsIcon },
+  { href: "/search", label: "검색", icon: SearchIcon },
+  { href: "/home", label: "홈", icon: HomeIcon },
+  { href: "/notifications", label: "알림", icon: BellIcon },
+  { href: "/mypage", label: "마이", icon: MyIcon },
+];
+
+const AUTOIMMUNE_TABS = [
   { href: "/lab-results/list", label: "기록", icon: RecordsIcon },
   { href: "/search", label: "검색", icon: SearchIcon },
   { href: "/home", label: "홈", icon: HomeIcon },
@@ -37,6 +45,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   const activeColor = isAuto ? PURPLE : "hsl(var(--primary))";
+  const tabs = isAuto ? AUTOIMMUNE_TABS : GENERAL_TABS;
   const hideNav = HIDE_NAV_PATHS.some((p) => pathname.startsWith(p));
 
   return (

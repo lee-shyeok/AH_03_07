@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/query/Providers";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const font = Noto_Sans_KR({
+  weight: ["400", "500", "700", "900"],
+  subsets: ["latin"],
+  preload: false,
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "MediGuide — 의료 안내·복약 관리",
@@ -35,7 +40,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" className={inter.variable}>
+    <html lang="ko" className={font.variable}>
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />

@@ -9,8 +9,11 @@ import {
   getMedicationLogs,
   checkMedicationLog,
   createMedication,
+  getUserMedications,
   type MedicationLog,
+  type MedicationDetail,
 } from "@/features/medication/api";
+import { getLocalMeds, isDeletedMed } from "@/features/medication/local";
 import { uploadDocument, startOcrJob, getOcrJob } from "@/features/documents/api";
 
 interface Slot {
@@ -56,13 +59,37 @@ function groupByTime(logs: MedicationLog[]): Slot[] {
     .map(([time, items]) => ({ time: formatSlotTime(time), items }));
 }
 
-// 백엔드 미가동 시 폴백 더미
-const DUMMY: MedicationLog[] = [
-  { id: 1, medication_id: 1, medication_name: "메토트렉세이트 7.5mg", scheduled_time: "09:00", taken: true, taken_at: "09:05", is_autoimmune_drug: true },
-  { id: 2, medication_id: 2, medication_name: "폴산 5mg", scheduled_time: "09:00", taken: true, taken_at: "09:05", is_autoimmune_drug: true },
-  { id: 3, medication_id: 3, medication_name: "아세트아미노펜 500mg", scheduled_time: "13:00", taken: false, dosage: "해열·진통 · 1정" },
-  { id: 4, medication_id: 3, medication_name: "아세트아미노펜 500mg", scheduled_time: "18:00", taken: false, dosage: "해열·진통 · 1정" },
-];
+const TIMING_KEY: Record<string, string> = {
+  "아침": "morning", "점심": "afternoon", "저녁": "evening", "취침 전": "bedtime", "취침전": "bedtime",
+};
+const TIMING_DEFAULT: Record<string, string> = {
+  morning: "08:00", afternoon: "12:00", evening: "18:00", bedtime: "22:00",
+};
+
+function medsToLogs(meds: MedicationDetail[]): MedicationLog[] {
+  const logs: MedicationLog[] = [];
+  let fakeId = 9000;
+  for (const med of meds) {
+    const timings = med.timings ?? [];
+    const slots = timings.length
+      ? timings.map((t) => {
+          const key = TIMING_KEY[t] ?? "morning";
+          return med.timing_times?.[key] ?? TIMING_DEFAULT[key] ?? "09:00";
+        })
+      : ["09:00"];
+    for (const time of slots) {
+      logs.push({
+        id: fakeId++,
+        medication_id: med.id,
+        medication_name: med.name,
+        scheduled_time: time,
+        taken: false,
+        is_autoimmune_drug: !!med.drug_class,
+      });
+    }
+  }
+  return logs;
+}
 
 export default function ChecklistPage() {
   const router = useRouter();
@@ -75,15 +102,23 @@ export default function ChecklistPage() {
   async function loadLogs() {
     try {
       const logs = await getMedicationLogs(todayISO());
-      setSlots(groupByTime(logs.length ? logs : DUMMY));
-    } catch {
-      setSlots(groupByTime(DUMMY));
-    } finally {
-      setLoading(false);
+      if (logs.length) { setSlots(groupByTime(logs)); setLoading(false); return; }
+    } catch { /* EC2 미응답 */ }
+
+    // API 빈 배열 or 실패 → 등록된 약 목록으로 체크리스트 생성
+    let meds: MedicationDetail[] = [];
+    try { meds = await getUserMedications(); } catch { /* 서버 오류 */ }
+    if (!meds.length) {
+      // 서버도 실패 → 로컬 저장 약으로 폴백
+      meds = (getLocalMeds() as MedicationDetail[]).filter((m) => !isDeletedMed(m.id, m.name));
     }
+    setSlots(groupByTime(medsToLogs(meds)));
+    setLoading(false);
   }
 
   useEffect(() => { loadLogs(); }, []);
+
+  const [locationOptIn, setLocationOptIn] = useState<Record<number, boolean>>({});
 
   async function take(logId: number) {
     const now = new Date();
@@ -97,7 +132,19 @@ export default function ChecklistPage() {
         ),
       }))
     );
-    try { await checkMedicationLog(logId); } catch {}
+    // 위치 기록 옵트인 시 geolocation 수집
+    let lat: number | undefined;
+    let lng: number | undefined;
+    if (locationOptIn[logId] && navigator.geolocation) {
+      await new Promise<void>((res) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => { lat = pos.coords.latitude; lng = pos.coords.longitude; res(); },
+          () => res(),
+          { timeout: 5000 }
+        );
+      });
+    }
+    try { await checkMedicationLog(logId, lat !== undefined ? { latitude: lat, longitude: lng } : undefined); } catch {}
   }
 
   async function handleScan(e: React.ChangeEvent<HTMLInputElement>) {
@@ -149,7 +196,7 @@ export default function ChecklistPage() {
       {/* 헤더 */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/medication")}
           className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted"
           aria-label="뒤로가기"
         >
@@ -212,6 +259,13 @@ export default function ChecklistPage() {
       {/* 시간대별 목록 */}
       {loading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
+      ) : slots.length === 0 ? (
+        <div className="mt-16 flex flex-col items-center gap-3 text-muted-foreground">
+          <p className="text-sm">등록된 약이 없습니다.</p>
+          <Link href="/medication/new" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+            약 등록하기
+          </Link>
+        </div>
       ) : (
         <div className="mt-6 space-y-5 pb-10">
           {slots.map((slot) => (
@@ -253,12 +307,28 @@ export default function ChecklistPage() {
                     </Link>
 
                     {!it.taken && (
-                      <button
-                        onClick={() => take(it.id)}
-                        className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-                      >
-                        복용
-                      </button>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <button
+                          onClick={() => take(it.id)}
+                          className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+                        >
+                          복용
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLocationOptIn((prev) => ({ ...prev, [it.id]: !prev[it.id] }))
+                          }
+                          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+                            locationOptIn[it.id]
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${locationOptIn[it.id] ? "bg-primary" : "bg-muted-foreground"}`} />
+                          여기서 약 먹기
+                        </button>
+                      </div>
                     )}
                   </Card>
                 ))}

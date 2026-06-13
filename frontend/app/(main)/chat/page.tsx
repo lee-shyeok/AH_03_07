@@ -5,11 +5,6 @@ import { Send, ThumbsUp, ThumbsDown } from "lucide-react";
 import { createSession, sendMessage } from "@/features/chat/api";
 import type { ChatMessage } from "@/features/chat/api";
 
-const FALLBACK_REPLIES = [
-  "죄송합니다, 현재 서버와 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.",
-  "네, 말씀하신 내용을 확인했습니다. 현재 서버 점검 중으로 정상 답변이 어렵습니다.",
-  "서버 연결이 불안정합니다. 긴급한 의료 문의는 담당 의료진에게 직접 연락해주세요.",
-];
 
 const DISCLAIMER = "본 답변은 정보 제공 목적이며 의료 진단·처방을 대체하지 않습니다. 증상이 심각하면 의료진에게 상담하세요.";
 
@@ -54,9 +49,7 @@ export default function ChatPage() {
         const reply = await sendMessage(sessionId, text);
         setMessages((prev) => [...prev, reply]);
       } else {
-        await new Promise((r) => setTimeout(r, 800));
-        const fallback = FALLBACK_REPLIES[Math.floor(messages.length / 2) % FALLBACK_REPLIES.length];
-        setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "서버에 연결할 수 없습니다." }]);
       }
     } catch {
       setMessages((prev) => [

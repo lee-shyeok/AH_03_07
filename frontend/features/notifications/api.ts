@@ -22,6 +22,17 @@ export interface NotificationSettings {
     kakao: boolean;
     email: boolean;
   };
+  timing_times?: {
+    morning?: string;
+    afternoon?: string;
+    evening?: string;
+    bedtime?: string;
+  };
+  quiet_hours?: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
 }
 
 export async function getNotifications(): Promise<AppNotification[]> {

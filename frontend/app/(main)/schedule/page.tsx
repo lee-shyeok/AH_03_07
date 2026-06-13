@@ -31,6 +31,10 @@ import {
   getSchedules, createSchedule, updateSchedule, deleteSchedule,
   type CareSchedule,
 } from "@/features/schedule/api";
+import {
+  getLocalCalSchedules, addLocalCalSchedule, updateLocalCalSchedule, deleteLocalCalSchedule,
+  getLocalCareSchedules, addLocalCareSchedule, updateLocalCareSchedule, deleteLocalCareSchedule,
+} from "@/features/schedule/local";
 
 const PURPLE = "#7C5CCF";
 
@@ -71,11 +75,6 @@ interface ScheduleEvent {
   raw?: CareSchedule;
 }
 
-const MOCK_EVENTS: ScheduleEvent[] = [
-  { day: 25, month: 5, year: 2026, title: "정기 혈액 검사",       date: "2026.05.25 (월) · 오전 09:30", detail: "서울대병원 류마티스내과", type: "exam",      badge: "검사" },
-  { day: 2,  month: 6, year: 2026, title: "메토트렉세이트 주사",  date: "2026.06.02 (화) · 매주 반복",  detail: "자가 주사 · 알림 ON",      type: "injection", badge: "주사" },
-  { day: 8,  month: 6, year: 2026, title: "류마티스내과 진료",    date: "2026.06.08 (월) · 오후 02:00", detail: "김의사 · 서울대병원",       type: "visit",     badge: "진료" },
-];
 
 const ICONS: Record<EventType, React.ElementType> = { exam: FlaskConical, injection: Syringe, visit: Stethoscope };
 const BADGE_BG: Record<EventType, string>         = { exam: "#EDE7FB", injection: "#FDE4E4", visit: "#E3F3E6" };
@@ -221,15 +220,30 @@ export default function SchedulePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const local = getLocalCalSchedules().map(toScheduleEvent);
     getSchedules()
-      .then((data) => setAllEvents(data.map(toScheduleEvent)))
-      .catch(() => setAllEvents(MOCK_EVENTS));
+      .then((data) => {
+        const apiEvts = data.map(toScheduleEvent);
+        const merged = [...local];
+        for (const e of apiEvts) {
+          if (!merged.some((x) => x.id === e.id)) merged.push(e);
+        }
+        setAllEvents(merged);
+      })
+      .catch(() => setAllEvents(local));
   }, []);
 
   useEffect(() => {
+    const local = getLocalCareSchedules();
     listCareSchedules()
-      .then(setEvents)
-      .catch(() => setEvents([]));
+      .then((data) => {
+        const merged = [...local];
+        for (const e of data) {
+          if (!merged.some((x) => x.id === e.id)) merged.push(e);
+        }
+        setEvents(merged);
+      })
+      .catch(() => setEvents(local));
   }, [refreshKey]);
 
   useEffect(() => {
@@ -324,6 +338,34 @@ export default function SchedulePage() {
   async function handleCareSave() {
     if (!careForm.title.trim()) return;
     setCareSaving(true);
+
+    const tempId = editingId ?? Date.now();
+    const nowISO = new Date().toISOString();
+    const localItem: MedicalScheduleResponse = {
+      id: tempId,
+      schedule_type: careForm.schedule_type,
+      title: careForm.title.trim(),
+      scheduled_date: careForm.scheduled_date,
+      reminder_days_before: careForm.reminder_days_before,
+      note: careForm.note.trim() || null,
+      created_at: nowISO,
+      updated_at: nowISO,
+    };
+
+    // 즉시 로컬 저장 + 상태 반영
+    if (editingId !== null) {
+      updateLocalCareSchedule(editingId, localItem);
+      setEvents((prev) => prev.map((e) => e.id === editingId ? localItem : e));
+    } else {
+      addLocalCareSchedule(localItem);
+      setEvents((prev) => [...prev, localItem]);
+    }
+    setModalOpen(false);
+    setEditingId(null);
+    setCareForm({ schedule_type: "APPOINTMENT", title: "", scheduled_date: keyOf(new Date()), reminder_days_before: 1, note: "" });
+    setCareSaving(false);
+
+    // 백엔드 저장 시도 (실패해도 로컬에는 저장됨)
     try {
       const body = {
         schedule_type: careForm.schedule_type,
@@ -333,29 +375,25 @@ export default function SchedulePage() {
         note: careForm.note.trim() || null,
       };
       if (editingId !== null) {
-        await updateCareSchedule(editingId, body);
+        const saved = await updateCareSchedule(editingId, body);
+        updateLocalCareSchedule(editingId, saved);
+        setEvents((prev) => prev.map((e) => e.id === editingId ? saved : e));
       } else {
-        await createCareSchedule(body);
+        const saved = await createCareSchedule(body);
+        deleteLocalCareSchedule(tempId);
+        addLocalCareSchedule(saved);
+        setEvents((prev) => prev.map((e) => e.id === tempId ? saved : e));
       }
-      setModalOpen(false);
-      setEditingId(null);
-      setCareForm({ schedule_type: "APPOINTMENT", title: "", scheduled_date: keyOf(new Date()), reminder_days_before: 1, note: "" });
-      setRefreshKey((k) => k + 1);
     } catch {
-      /* 실패 시 유지 */
-    } finally {
-      setCareSaving(false);
+      /* 백엔드 미가동 — 로컬 유지 */
     }
   }
 
   async function handleCareDelete(id: number) {
     if (!confirm("일정을 삭제할까요?")) return;
-    try {
-      await deleteCareSchedule(id);
-      setRefreshKey((k) => k + 1);
-    } catch {
-      /* 실패 시 유지 */
-    }
+    deleteLocalCareSchedule(id);
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    try { await deleteCareSchedule(id); } catch { /* 백엔드 미가동 */ }
   }
 
   // bf191aa: 캘린더뷰 월 이동 + 피커
@@ -398,41 +436,58 @@ export default function SchedulePage() {
   async function handleSave() {
     if (!form.title.trim() || !form.scheduled_at) { setError("제목과 날짜를 입력해주세요."); return; }
     setSaving(true); setError("");
+
+    const tempId = sheet.raw?.id ?? Date.now();
+    const localSchedule: CareSchedule = {
+      id: tempId,
+      title: form.title.trim(),
+      scheduled_at: new Date(form.scheduled_at).toISOString(),
+      type: form.type,
+      location: form.location || undefined,
+      reminder_enabled: form.reminder_enabled,
+    };
+
+    // 즉시 로컬 저장 + 상태 반영
+    if (sheet.mode === "add") {
+      addLocalCalSchedule(localSchedule);
+      setAllEvents((prev) => [...prev, toScheduleEvent(localSchedule)]);
+    } else if (sheet.raw?.id) {
+      updateLocalCalSchedule(sheet.raw.id, localSchedule);
+      setAllEvents((prev) => prev.map((e) => e.raw?.id === sheet.raw!.id ? toScheduleEvent(localSchedule) : e));
+    }
+    closeSheet();
+    setSaving(false);
+
+    // 백엔드 저장 시도
+    const payload = {
+      title: form.title.trim(),
+      scheduled_at: new Date(form.scheduled_at).toISOString(),
+      type: form.type,
+      ...(form.location && { location: form.location }),
+      reminder_enabled: form.reminder_enabled,
+    };
     try {
-      const payload = {
-        title: form.title.trim(),
-        scheduled_at: new Date(form.scheduled_at).toISOString(),
-        type: form.type,
-        ...(form.location && { location: form.location }),
-        reminder_enabled: form.reminder_enabled,
-      };
       if (sheet.mode === "add") {
         const created = await createSchedule(payload);
-        setAllEvents((prev) => [...prev, toScheduleEvent(created)]);
+        deleteLocalCalSchedule(tempId);
+        addLocalCalSchedule(created);
+        setAllEvents((prev) => prev.map((e) => e.id === tempId ? toScheduleEvent(created) : e));
       } else if (sheet.raw?.id) {
         const updated = await updateSchedule(sheet.raw.id, payload);
+        updateLocalCalSchedule(sheet.raw.id, updated);
         setAllEvents((prev) => prev.map((e) => e.raw?.id === sheet.raw!.id ? toScheduleEvent(updated) : e));
       }
-      closeSheet();
     } catch {
-      setError("저장에 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setSaving(false);
+      /* 백엔드 미가동 — 로컬 유지 */
     }
   }
 
   async function handleDelete() {
     if (!sheet.raw?.id) return;
-    setSaving(true);
-    try {
-      await deleteSchedule(sheet.raw.id);
-      setAllEvents((prev) => prev.filter((e) => e.raw?.id !== sheet.raw!.id));
-      closeSheet();
-    } catch {
-      setError("삭제에 실패했습니다.");
-    } finally {
-      setSaving(false);
-    }
+    deleteLocalCalSchedule(sheet.raw.id);
+    setAllEvents((prev) => prev.filter((e) => e.raw?.id !== sheet.raw!.id));
+    closeSheet();
+    try { await deleteSchedule(sheet.raw.id); } catch { /* 백엔드 미가동 */ }
   }
 
   const sectionTitle = selectedDay !== null

@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { Link as LinkIcon, ArrowRight, Pill } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Link as LinkIcon, ArrowRight, Pill } from "lucide-react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { getMedication, type MedicationDetail } from "@/features/medication/api";
+import { useMedications } from "@/features/medication/queries";
 import { DRUG_CLASS_LABEL, DRUG_CLASS_COLOR } from "@/features/medication/schema";
 
-const PURPLE = "#7C5CCF";
-const TABS = ["복약", "생활습관", "주의사항", "자가면역"] as const;
-type Tab = (typeof TABS)[number];
+const PRIMARY_GREEN = "#22C55E";
+const AUTOIMMUNE_PURPLE = "#7C5CCF";
+const ALL_TABS = ["복약", "생활습관", "주의사항", "자가면역"] as const;
+type Tab = (typeof ALL_TABS)[number];
 
-/* ────────────────────────────────────────────
-   drug_class 별 탭 콘텐츠 정의
-──────────────────────────────────────────── */
 interface TabContent {
   복약: string[];
   생활습관: string[];
@@ -147,46 +145,52 @@ const DEFAULT_CONTENT: TabContent = {
 
 export default function MedicationDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = Number(params.id);
-  const [tab, setTab] = useState<Tab>("자가면역");
-  const [med, setMed] = useState<MedicationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>("복약");
 
-  useEffect(() => {
-    if (!id) { setLoading(false); return; }
-    getMedication(id)
-      .then(setMed)
-      .catch(() => setMed(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+  // 목록 캐시(DUMMY 포함)에서 가져와 API 인코딩 오류 방지
+  const { data: meds = [], isLoading } = useMedications();
+  const med = meds.find((m) => m.id === id) ?? null;
 
   const drugClass = med?.drug_class ?? "";
   const content = CONTENT[drugClass] ?? DEFAULT_CONTENT;
   const label = DRUG_CLASS_LABEL[drugClass];
-  const color = DRUG_CLASS_COLOR[drugClass] ?? PURPLE;
+  const isAutoimmuneDrug = !!drugClass;
+  const tabs = isAutoimmuneDrug ? ALL_TABS : (ALL_TABS.filter((t) => t !== "자가면역") as Tab[]);
+  const color = DRUG_CLASS_COLOR[drugClass] ?? (isAutoimmuneDrug ? AUTOIMMUNE_PURPLE : PRIMARY_GREEN);
   const nedrugsUrl = `https://nedrug.mfds.go.kr/searchDrug?searchYn=true&itemName=${encodeURIComponent(med?.name ?? "")}`;
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pt-8 pb-10">
       {/* 헤더 */}
-      {loading ? (
-        <div className="space-y-2 animate-pulse">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => router.push("/medication")}
+          className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted"
+          aria-label="뒤로가기"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="mt-4 space-y-2 animate-pulse">
           <div className="h-8 w-48 rounded bg-muted" />
-          <div className="h-4 w-32 rounded bg-muted" />
           <div className="h-6 w-20 rounded-full bg-muted mt-3" />
         </div>
       ) : !med ? (
-        <p className="text-muted-foreground">약물 정보를 찾을 수 없습니다.</p>
+        <p className="mt-4 text-muted-foreground">약물 정보를 찾을 수 없습니다.</p>
       ) : (
         <>
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <Pill className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-2xl font-extrabold">{med.name}</h1>
+            <h1 className="text-2xl font-bold leading-tight">{med.name}</h1>
           </div>
 
-          {/* 배지 영역 */}
+          {/* 뱃지 */}
           <div className="mt-3 flex flex-wrap gap-2">
             {label && (
               <span
@@ -206,26 +210,25 @@ export default function MedicationDetailPage() {
             )}
           </div>
 
-          {/* 메모 */}
           {med.note && (
             <p className="mt-2 text-sm text-muted-foreground">{med.note}</p>
           )}
 
-          {/* 공식 정보 링크 */}
+          {/* 식약처 의약품안전나라 링크 */}
           <a
             href={nedrugsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-primary hover:bg-accent"
           >
-            <LinkIcon className="h-4 w-4" />
+            <LinkIcon className="h-4 w-4 shrink-0" />
             공식 정보 보기 (식약처 의약품안전나라)
-            <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
           </a>
 
           {/* 탭 */}
           <div className="mt-6 flex border-b border-border">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -239,15 +242,15 @@ export default function MedicationDetailPage() {
 
           {/* 탭 콘텐츠 */}
           <div className="mt-6 space-y-4 pb-6">
-            {tab === "자가면역" && (
+            {tab === "자가면역" ? (
               <>
                 {content.자가면역.map((section) => (
                   <section key={section.title}>
                     <h2 className="text-base font-bold">{section.title}</h2>
                     <ul className="mt-2 space-y-1">
                       {section.items.map((item, i) => (
-                        <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
-                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
+                        <li key={i} className="flex gap-2 text-sm leading-relaxed">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
                           {item}
                         </li>
                       ))}
@@ -260,9 +263,7 @@ export default function MedicationDetailPage() {
                   <p className="text-xs text-muted-foreground">업데이트: 2026.05.15</p>
                 </Card>
               </>
-            )}
-
-            {tab !== "자가면역" && (
+            ) : (
               <ul className="space-y-2">
                 {(content[tab] as string[]).map((item, i) => (
                   <li key={i} className="flex gap-2 rounded-xl border border-border p-3 text-sm leading-relaxed">
@@ -274,7 +275,6 @@ export default function MedicationDetailPage() {
             )}
           </div>
 
-          {/* 안내 문구 */}
           <p className="text-center text-xs text-muted-foreground leading-relaxed">
             본 정보는 일반 안내용이며 의료적 진단·처방을 대체하지 않습니다.
           </p>

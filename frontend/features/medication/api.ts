@@ -16,13 +16,40 @@ export interface MedicationDetail extends Medication {
   drug_class?: string;
   is_injection?: boolean;
   note?: string;
+  timings?: string[];
+  timing_times?: Record<string, string>;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface MedicationCreate {
   name: string;
-  drug_class?: string;   // 일반 모드에서는 없어도 됨
+  drug_class?: string;
   is_injection?: boolean;
   note?: string;
+  timings?: string[];
+  timing_times?: Record<string, string>;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface DrugReference {
+  id?: number;
+  drug_name: string;
+  ingredient?: string;
+  manufacturer?: string;
+  source?: string;
+}
+
+export async function searchDrugReferences(query: string): Promise<DrugReference[]> {
+  try {
+    const res = await apiFetch<{ items?: DrugReference[] } | DrugReference[]>(
+      `/v1/drug-references?query=${encodeURIComponent(query)}`
+    );
+    return Array.isArray(res) ? res : (res.items ?? []);
+  } catch {
+    return [];
+  }
 }
 
 export async function getMedications(): Promise<Medication[]> {
@@ -73,9 +100,12 @@ export async function getMedicationLogs(date: string): Promise<MedicationLog[]> 
   return Array.isArray(res) ? res : (res.items ?? []);
 }
 
-export async function checkMedicationLog(id: number): Promise<void> {
+export async function checkMedicationLog(
+  id: number,
+  location?: { latitude?: number; longitude?: number }
+): Promise<void> {
   await apiFetch(`/v1/medication-logs/${id}/check`, {
     method: "PUT",
-    body: { taken: true },
+    body: { taken: true, ...location },
   });
 }

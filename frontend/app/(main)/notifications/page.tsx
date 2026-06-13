@@ -10,20 +10,6 @@ import { getMode } from "@/features/auth/mode";
 const GREEN = "#03C85F";
 const PURPLE = "#7C5CCF";
 
-function makeIso(daysAgo: number, hours: number, minutes: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  d.setHours(hours, minutes, 0, 0);
-  return d.toISOString();
-}
-
-const FALLBACK_ITEMS: AppNotification[] = [
-  { id: 1, title: "복약 시간이에요", body: "아침약 복용해주세요", notification_type: "medication", is_read: false, created_at: makeIso(0, 9, 0) },
-  { id: 2, title: "의료진 확인 신호", body: "통증 점수 7점 이상", notification_type: "risk", is_read: false, created_at: makeIso(0, 7, 0) },
-  { id: 5, title: "처방 종료 예정", body: "메토트렉세이트 처방이 3일 후 종료됩니다", notification_type: "prescription_end", is_read: false, created_at: makeIso(0, 8, 0) },
-  { id: 3, title: "활성도 기록 알림", body: "오늘 컨디션을 기록해주세요", notification_type: "activity", is_read: true, created_at: makeIso(1, 21, 0) },
-  { id: 4, title: "약 복용 완료", body: "저녁약 복용 완료", notification_type: "done", is_read: true, created_at: makeIso(1, 19, 30) },
-];
 
 function NotifIcon({ type, accent }: { type?: string; accent: string }) {
   const base = "flex h-11 w-11 shrink-0 items-center justify-center rounded-full";
@@ -47,20 +33,6 @@ function NotifIcon({ type, accent }: { type?: string; accent: string }) {
   );
 }
 
-function makeDate(offsetDays: number, time: string) {
-  const d = new Date();
-  d.setDate(d.getDate() - offsetDays);
-  const [h, m] = time.split(":").map(Number);
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
-}
-
-const DUMMY_NOTIFICATIONS: AppNotification[] = [
-  { id: 1, title: "복약 시간", body: "아침약을 복용해주세요", notification_type: "medication", is_read: false, created_at: makeDate(0, "09:00") },
-  { id: 2, title: "의료진 확인 신호", body: "통증 점수 패턴 감지", notification_type: "risk", is_read: false, created_at: makeDate(0, "07:00") },
-  { id: 3, title: "활성도 기록", body: "오늘 컨디션을 기록해주세요", notification_type: "activity", is_read: true, created_at: makeDate(1, "21:00") },
-  { id: 4, title: "약 복용 완료", body: "저녁약 복용 완료", notification_type: "done", is_read: true, created_at: makeDate(1, "19:30") },
-];
 
 function dateGroup(isoStr?: string): string {
   if (!isoStr) return "이전";
@@ -86,9 +58,7 @@ export default function NotificationsPage() {
   const isAutoimmune = getMode() === "autoimmune";
   const accent = isAutoimmune ? PURPLE : GREEN;
 
-  // 백엔드 데이터에 created_at이 있으면 사용, 없으면 DUMMY로 대체
-  const hasProperDates = apiItems.length > 0 && apiItems.some(n => n.created_at);
-  const items = hasProperDates ? apiItems : DUMMY_NOTIFICATIONS;
+  const items = apiItems;
 
   function handleClick(n: AppNotification) {
     if (!n.is_read) markReadMutation.mutate(n.id);
@@ -122,6 +92,8 @@ export default function NotificationsPage() {
 
       {isLoading ? (
         <p className="mt-8 text-sm text-muted-foreground">불러오는 중...</p>
+      ) : items.length === 0 ? (
+        <p className="mt-8 text-center text-sm text-muted-foreground">알림이 없습니다.</p>
       ) : (
         <div className="mt-6 space-y-8">
           {groupKeys.map((group) => (

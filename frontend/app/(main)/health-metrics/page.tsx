@@ -27,32 +27,12 @@ interface TabData {
   history: { date: string; value: string; status: string }[];
 }
 
-const FALLBACK_DATA: Record<Tab, TabData> = {
-  BLOOD_PRESSURE: {
-    latest: "128/82",
-    unit: "mmHg",
-    status: "정상",
-    trend: [120, 124, 119, 138, 130, 133, 128],
-    history: [
-      { date: "05.20 (화)", value: "128/82", status: "정상" },
-      { date: "05.19 (월)", value: "135/88", status: "주의" },
-      { date: "05.18 (일)", value: "126/80", status: "정상" },
-    ],
-  },
-  BLOOD_SUGAR: {
-    latest: "98",
-    unit: "mg/dL",
-    status: "정상",
-    trend: [95, 102, 98, 110, 100, 97, 98],
-    history: [{ date: "05.20 (화)", value: "98", status: "정상" }],
-  },
-  WEIGHT: {
-    latest: "75.0",
-    unit: "kg",
-    status: "정상",
-    trend: [76, 75.5, 75.2, 75, 74.8, 75, 75],
-    history: [{ date: "05.20 (화)", value: "75.0", status: "정상" }],
-  },
+const EMPTY_TAB_DATA: TabData = { latest: "-", unit: "", status: "-", trend: [], history: [] };
+
+const EMPTY_DATA: Record<Tab, TabData> = {
+  BLOOD_PRESSURE: { ...EMPTY_TAB_DATA, unit: "mmHg" },
+  BLOOD_SUGAR:    { ...EMPTY_TAB_DATA, unit: "mg/dL" },
+  WEIGHT:         { ...EMPTY_TAB_DATA, unit: "kg" },
 };
 
 const DAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
@@ -119,7 +99,7 @@ export default function HealthMetricsPage() {
   const [tab, setTab] = useState<Tab>("BLOOD_PRESSURE");
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
-  const [data, setData] = useState<Record<Tab, TabData>>(FALLBACK_DATA);
+  const [data, setData] = useState<Record<Tab, TabData>>(EMPTY_DATA);
   const [saving, setSaving] = useState(false);
 
   function handleValChange(raw: string) {
@@ -153,7 +133,7 @@ export default function HealthMetricsPage() {
         WEIGHT: built.WEIGHT.history.length ? built.WEIGHT : prev.WEIGHT,
       }));
     } catch {
-      // keep fallback data
+      // 데이터 없으면 빈 상태 유지
     }
   }
 
@@ -162,12 +142,21 @@ export default function HealthMetricsPage() {
 
   const d = data[tab];
 
+  function formatSaveValue(raw: string): string {
+    if (tab !== "WEIGHT") return raw;
+    // 77 → 77.0 / 75. → 75.0 / 75.5 → 75.5
+    if (!raw.includes(".")) return raw + ".0";
+    const [int, dec] = raw.split(".");
+    return `${int}.${dec || "0"}`;
+  }
+
   async function save() {
     const v = val.trim();
     if (!v) return;
+    const formatted = formatSaveValue(v);
     setSaving(true);
     try {
-      await createHealthMetric({ metric_type: tab, value: v });
+      await createHealthMetric({ metric_type: tab, value: formatted });
       setVal("");
       setOpen(false);
       await load();
@@ -176,8 +165,8 @@ export default function HealthMetricsPage() {
         ...prev,
         [tab]: {
           ...prev[tab],
-          latest: v,
-          history: [{ date: "오늘", value: v, status: "정상" }, ...prev[tab].history],
+          latest: formatted,
+          history: [{ date: "오늘", value: formatted, status: "정상" }, ...prev[tab].history],
         },
       }));
       setVal("");

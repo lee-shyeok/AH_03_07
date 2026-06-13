@@ -24,7 +24,7 @@ export default function HomePage() {
     listMyDiseases()
       .then((ds) => setIsLupus(ds.some((d) => d.disease_code === "SLE")))
       .catch(() => {});
-    getHealthMetrics().then((m) => setRecentMetrics(m.length > 0 ? m.slice(0, 4) : FALLBACK_METRICS)).catch(() => setRecentMetrics(FALLBACK_METRICS));
+    getHealthMetrics().then((m) => setRecentMetrics(m.slice(0, 4))).catch(() => setRecentMetrics([]));
   }, []);
 
   const meds = (data?.today_medications ?? []).map((m) => ({
@@ -48,12 +48,6 @@ export default function HomePage() {
   return <GeneralHome name={displayName} medications={meds} recentMetrics={recentMetrics} />;
 }
 
-const FALLBACK_METRICS: HealthMetric[] = [
-  { id: "1", metric_type: "BLOOD_PRESSURE", user_recorded_value: "120.0", measured_at: new Date().toISOString(), created_at: new Date().toISOString() },
-  { id: "2", metric_type: "BLOOD_SUGAR", user_recorded_value: "95.0", measured_at: new Date().toISOString(), created_at: new Date().toISOString() },
-  { id: "3", metric_type: "WEIGHT", user_recorded_value: "68.5", measured_at: new Date().toISOString(), created_at: new Date().toISOString() },
-  { id: "4", metric_type: "HEART_RATE", user_recorded_value: "72.0", measured_at: new Date().toISOString(), created_at: new Date().toISOString() },
-];
 
 const fallback: DashboardData = {
   today_medications: [],
