@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pill, Plus, Search, Trash2 } from "lucide-react";
+import { Pill, Plus, Search, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useMedications, useDeleteMedication } from "@/features/medication/queries";
 import { DRUG_CLASS_LABEL, DRUG_CLASS_COLOR } from "@/features/medication/schema";
@@ -113,10 +113,10 @@ export default function MedicationPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => router.back()}
-          className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted"
+          className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold"
           aria-label="뒤로가기"
         >
-          <ArrowLeft className="h-5 w-5" />
+          &lt;
         </button>
         <h1 className="flex-1 text-xl font-bold">내 약물 목록</h1>
         <Link

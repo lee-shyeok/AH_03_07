@@ -179,7 +179,7 @@ export default function HealthMetricsPage() {
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8 pb-8">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.push("/home")} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
+        <button onClick={() => router.back()} className="flex items-center justify-center rounded-full p-1.5 hover:bg-muted text-lg font-semibold" aria-label="뒤로가기">
           &lt;
         </button>
         <h1 className="text-2xl font-bold">건강 수치</h1>
