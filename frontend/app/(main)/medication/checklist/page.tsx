@@ -163,13 +163,9 @@ export default function ChecklistPage() {
         if (result.status === "completed" || result.status === "failed") break;
       }
       if (result.status === "completed" && result.structured_data) {
-        const meds = (result.structured_data.medications ?? []) as Array<{
-          drug_name?: string;
-          name?: string;
-          dosage?: string;
-        }>;
+        const meds = result.structured_data ?? [];
         for (const med of meds) {
-          const name = med.drug_name ?? med.name;
+          const name = med.drug_name_user_input;
           if (name) {
             try { await createMedication({ name, note: med.dosage }); } catch {}
           }
