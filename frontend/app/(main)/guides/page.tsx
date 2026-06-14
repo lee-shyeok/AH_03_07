@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useGuides, useGuideJob, useGenerateGuide, guideKeys } from "@/features/guides/queries";
+import { useGuides, useGuideJob, useGenerateGuide, useDeleteGuide, guideKeys } from "@/features/guides/queries";
 import { getMode } from "@/features/auth/mode";
 
 const PURPLE = "#7C5CCF";
@@ -18,6 +18,7 @@ export default function GuidesPage() {
   const [isAutoimmune, setIsAutoimmune] = useState(false);
   const { data: guides = [], isLoading } = useGuides();
   const gen = useGenerateGuide();
+  const del = useDeleteGuide();
 
   useEffect(() => { setIsAutoimmune(getMode() === "autoimmune"); }, []);
 
@@ -93,8 +94,25 @@ export default function GuidesPage() {
         </div>
       )}
 
-      {/* 차단(BLOCKED) 안내 — REQ-AUTO-006, A안 */}
-      {isAutoimmune && jobData?.status === "BLOCKED" && !emergency && (
+      {/* 재체크 요청 — stale 증상 체크만으로 LOCKED된 경우 */}
+      {jobData?.status === "BLOCKED" && jobData.blocked_reason === "NEEDS_RECHECK" && !emergency && (
+        <div className="mt-4 rounded-lg bg-blue-50 px-4 py-3">
+          <p className="text-sm font-semibold text-blue-800">증상 체크를 다시 해주세요</p>
+          <p className="mt-1 text-xs text-blue-700">
+            마지막 증상 체크가 14일을 초과했습니다. 최신 상태를 반영하려면 증상 체크를 새로 진행해 주세요.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-3 w-full border-blue-400 text-blue-800 hover:bg-blue-100"
+            onClick={() => router.push("/symptom-check")}
+          >
+            증상 체크하러 가기
+          </Button>
+        </div>
+      )}
+
+      {/* 차단(BLOCKED) 안내 — active 소스로 LOCKED된 경우 REQ-AUTO-006 */}
+      {jobData?.status === "BLOCKED" && jobData.blocked_reason !== "NEEDS_RECHECK" && !emergency && (
         <div className="mt-4 rounded-lg bg-yellow-50 px-4 py-3">
           <p className="text-sm text-yellow-800">
             현재 입력하신 상태는 의료진 검토가 권고됩니다. 담당 의료진 상담을 권고합니다.
@@ -142,8 +160,8 @@ export default function GuidesPage() {
       ) : (
         <div className="mt-6 space-y-3">
           {guides.map((g) => (
-            <Link key={g.id} href={`/guides/${g.id}`}>
-              <Card className="p-4 hover:bg-accent">
+            <Card key={g.id} className="p-4">
+              <Link href={`/guides/${g.id}`} className="block hover:opacity-80">
                 <div className="flex items-center justify-between">
                   <span className="font-bold">맞춤 건강 안내문</span>
                   {g.status && (
@@ -162,8 +180,21 @@ export default function GuidesPage() {
                     {g.created_at.slice(0, 10)}
                   </p>
                 )}
-              </Card>
-            </Link>
+              </Link>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-destructive hover:bg-destructive/10"
+                  disabled={del.isPending}
+                  onClick={() => {
+                    if (confirm("이 안내문을 삭제할까요?")) del.mutate(g.id);
+                  }}
+                >
+                  삭제
+                </Button>
+              </div>
+            </Card>
           ))}
         </div>
       )}

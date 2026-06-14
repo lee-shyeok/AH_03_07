@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FlaskConical,
   MessageCircle,
+  Phone,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import HomeHeader from "./components/HomeHeader";
@@ -17,6 +18,7 @@ import SectionCard from "./components/SectionCard";
 import { useGuides } from "@/features/guides/queries";
 
 const PURPLE = "#7C5CCF";
+const RED = "#EF5B5B";
 
 interface AutoimmuneHomeProps {
   name: string;
@@ -53,6 +55,7 @@ export default function AutoimmuneHome({
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-32 pt-10">
       <HomeHeader name={name} mode="autoimmune" />
+
 
       <div className="mt-12 flex flex-col gap-6">
         {/* ① 오늘의 활성도 (미작성 시 보라 테두리 강조) */}
@@ -136,6 +139,29 @@ export default function AutoimmuneHome({
             내 질환에 맞춘 안내문을 확인해 보세요.
           </p>
         </SectionCard>
+
+        {/* SOS 버튼 + 응급카드 바로가기 */}
+      <div className="mt-5 flex gap-3">
+        <Link
+          href="/emergency"
+          className="flex flex-1 flex-col items-center gap-1 rounded-2xl py-5 text-white"
+          style={{ background: RED }}
+        >
+          <Phone className="h-6 w-6" />
+          <span className="mt-1 text-base font-bold">SOS</span>
+          <span className="text-xs text-white/80">응급 도움 받기</span>
+        </Link>
+        <Link
+          href="/emergency/card"
+          className="flex flex-1 flex-col items-center gap-1 rounded-2xl border py-5"
+          style={{ borderColor: RED + "55", background: RED + "0d" }}
+        >
+          <FileText className="h-6 w-6" style={{ color: RED }} />
+          <span className="mt-1 text-sm font-bold" style={{ color: RED }}>응급카드</span>
+          <span className="text-xs text-muted-foreground">정보 관리</span>
+        </Link>
+      </div>
+
 
         {/* ⑥ 빠른 진입점 (가로 스크롤) */}
         <section>

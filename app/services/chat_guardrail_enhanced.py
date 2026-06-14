@@ -36,16 +36,8 @@ _ENHANCED_KEYWORDS: dict[str, list[str]] = {
         "생물학적제제 중단",
         "류마티스 약 바꿔",
     ],
-    "SEVERE_EMERGENCY": [
-        "가슴 통증",
-        "숨이 안 쉬",
-        "호흡곤란",
-        "의식이 없",
-        "심장이 멎",
-        "쓰러졌",
-        "발작이",
-        "뇌졸중",
-    ],
+    # SEVERE_EMERGENCY 삭제: 응급은 pre-LLM classify_intent(EMERGENCY)에서 처리됨.
+    # LLM이 루푸스 증상 등 정보성 응답에 "호흡곤란", "뇌졸중" 단어를 포함할 수 있어 오탐.
     "SUICIDE_SIGNAL": [
         "사라지고 싶",
         "끝내고 싶",
@@ -80,10 +72,10 @@ _REFUSAL_MESSAGES: dict[str, str] = {
         "약물 용량 조절은 반드시 담당 류마티스 전문의와 상담하세요. "
         "임의로 약을 줄이거나 끊으면 질환이 급격히 악화될 수 있습니다."
     ),
-    "SEVERE_EMERGENCY": "즉시 119에 신고하거나 가까운 응급실로 가세요.",
     "SUICIDE_SIGNAL": (
-        "자살예방상담전화(1393) 또는 정신건강 위기상담전화(1577-0199)에 연락해 주세요. "
-        "24시간 전문 상담사가 도움을 드립니다."
+        "자살예방 상담전화 109번으로 전화하시면 24시간 전문 상담을 받으실 수 있어요. "
+        "정신건강 상담은 1577-0199도 있습니다. "
+        "지금 위급한 상황이라면 119로 바로 연락해 주세요."
     ),
     "LAB_INTERPRETATION": "검사 결과 해석은 담당 의료진과 상담하시기 바랍니다.",
     "SCORE_EVALUATION": "질환 활성도 평가는 담당 의료진과 상담하시기 바랍니다.",
@@ -121,18 +113,21 @@ def _check_keywords(text: str) -> EnhancedGuardrailResult:
 
 
 async def _check_moderation_api(text: str) -> EnhancedGuardrailResult:
-    """2단계: OpenAI Moderation API 호출."""
-    openai = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
-    resp = await openai.moderations.create(input=text)
-    result = resp.results[0]
-    if result.flagged:
-        flagged_categories = [cat for cat, flagged in result.categories.__dict__.items() if flagged]
-        return EnhancedGuardrailResult(
-            status="BLOCKED",
-            category="MODERATION_API",
-            matched_keywords=flagged_categories,
-            refusal_message=_REFUSAL_MESSAGES["MODERATION_API"],
-        )
+    """2단계: OpenAI Moderation API 호출. API 오류 시 통과 처리."""
+    try:
+        openai = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
+        resp = await openai.moderations.create(input=text)
+        result = resp.results[0]
+        if result.flagged:
+            flagged_categories = [cat for cat, flagged in result.categories.__dict__.items() if flagged]
+            return EnhancedGuardrailResult(
+                status="BLOCKED",
+                category="MODERATION_API",
+                matched_keywords=flagged_categories,
+                refusal_message=_REFUSAL_MESSAGES["MODERATION_API"],
+            )
+    except Exception:
+        logger.warning("OpenAI Moderation API unavailable — skipping 2nd-stage guardrail")
     return EnhancedGuardrailResult(status="PASSED")
 
 

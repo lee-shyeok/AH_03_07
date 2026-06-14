@@ -49,8 +49,8 @@ class DataSourceCollector(Protocol):
         """감염·예방접종 정보 (AUTO-PREV-001)."""
         ...
 
-    async def get_checked_symptom_codes(self, user_id: int) -> list[str]:
-        """증상 체크 코드 목록 (SYMP-001 → 게이트 입력)."""
+    async def get_checked_symptom_codes(self, user_id: int) -> tuple[list[str], bool]:
+        """(코드 목록, is_stale) 반환. stale=True이면 14일 초과 로그."""
         ...
 
     async def get_self_report_codes(self, user_id: int) -> list[str]:

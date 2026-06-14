@@ -1,144 +1,178 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Search, Store, Clock, Phone, ArrowLeft, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import {
-  getPharmacies,
-  getNearbyPharmacies,
-  Pharmacy,
-} from "@/features/pharmacy/api";
+import { APIProvider, useMapsLibrary } from "@vis.gl/react-google-maps";
+import type { Pharmacy } from "@/features/pharmacy/api";
 
-const FALLBACK_PHARMACIES: Pharmacy[] = [
-  {
-    id: 1,
-    name: "서울온누리약국",
-    address: "관악구 봉천동 1530",
-    phone: "02-000-0001",
-    hours: "09:00-18:00",
-  },
-  {
-    id: 2,
-    name: "건강드림약국",
-    address: "관악구 봉천동 977",
-    phone: "02-000-0002",
-    hours: "09:00-21:00",
-  },
-  {
-    id: 3,
-    name: "24시 열린약국",
-    address: "관악구 신림동 1430",
-    phone: "02-000-0003",
-    hours: "24시간",
-    is24h: true,
-  },
-  {
-    id: 4,
-    name: "행복한약국",
-    address: "관악구 신림동 240",
-    phone: "02-000-0004",
-    hours: "10:00-19:00",
-  },
-  {
-    id: 5,
-    name: "야간두리약국",
-    address: "관악구 봉천동 700",
-    phone: "02-000-0005",
-    hours: "10:00-23:00",
-    isNight: true,
-  },
-];
+const PharmacyMap = dynamic(
+  () => import("@/features/pharmacy/PharmacyMap"),
+  { ssr: false }
+);
 
-function isOpenNow(hours?: string, is24h?: boolean): boolean {
-  if (is24h) return true;
-  if (!hours || hours === "24시간") return false;
-  const now = new Date();
-  const current = now.getHours() * 60 + now.getMinutes();
-  const match = hours.match(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
-  if (!match) return false;
-  const start = parseInt(match[1]) * 60 + parseInt(match[2]);
-  const end = parseInt(match[3]) * 60 + parseInt(match[4]);
-  return current >= start && current < end;
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+function haversine(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+): string {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(to.lat - from.lat);
+  const dLng = toRad(to.lng - from.lng);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLng / 2) ** 2;
+  const d = 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return d < 1000 ? `${Math.round(d)}m` : `${(d / 1000).toFixed(1)}km`;
 }
 
-function withOpenStatus(list: Pharmacy[]): Pharmacy[] {
-  return list.map((p) => ({ ...p, open: p.is24h ? true : isOpenNow(p.hours, p.is24h) }));
+function mapPlace(
+  place: google.maps.places.PlaceResult,
+  index: number,
+  userLocation: { lat: number; lng: number } | null
+): Pharmacy {
+  const lat = place.geometry?.location?.lat();
+  const lng = place.geometry?.location?.lng();
+  return {
+    id: index + 1,
+    name: place.name ?? "",
+    address: place.vicinity ?? place.formatted_address ?? "",
+    phone: place.formatted_phone_number ?? "",
+    lat,
+    lng,
+    open: place.opening_hours?.isOpen() ?? undefined,
+    is24h: /24/.test(place.name ?? ""),
+    distance:
+      userLocation && lat != null && lng != null
+        ? haversine(userLocation, { lat, lng })
+        : undefined,
+  };
 }
 
-export default function PharmacyPage() {
+// ─── 실제 페이지 콘텐츠 (APIProvider 안에서 렌더) ─────────────────────────────
+function PharmacyContent() {
   const router = useRouter();
+  const placesLib = useMapsLibrary("places");
+
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [noLocation, setNoLocation] = useState(false);
+
   const baseRef = useRef<Pharmacy[]>([]);
+  const serviceRef = useRef<google.maps.places.PlacesService | null>(null);
 
+  // PlacesService 초기화 (placesLib 로드 후)
   useEffect(() => {
-    async function loadAllPharmacies() {
-      try {
-        const data = await getPharmacies();
-        const list = withOpenStatus(data);
-        baseRef.current = list;
-        setPharmacies(list);
-      } catch {
-        const list = withOpenStatus(FALLBACK_PHARMACIES);
-        baseRef.current = list;
-        setPharmacies(list);
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (!placesLib) return;
+    serviceRef.current = new placesLib.PlacesService(
+      document.createElement("div")
+    );
+  }, [placesLib]);
 
-    const isHttp =
-      typeof window !== "undefined" && window.location.protocol !== "https:";
-
+  // 현재 위치 획득
+  useEffect(() => {
+    const isHttp = window.location.protocol !== "https:";
     if (!navigator.geolocation || isHttp) {
-      loadAllPharmacies();
+      setNoLocation(true);
+      setLoading(false);
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const data = await getNearbyPharmacies(
-            pos.coords.latitude,
-            pos.coords.longitude
-          );
-          const list = withOpenStatus(data);
-          baseRef.current = list;
-          setPharmacies(list);
-          setLoading(false);
-        } catch {
-          loadAllPharmacies();
-        }
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
       },
       () => {
-        loadAllPharmacies();
-      }
+        setNoLocation(true);
+        setLoading(false);
+      },
+      { timeout: 10000 }
     );
   }, []);
 
+  // 주변 약국 검색 (위치 + Places 준비 완료 시)
+  useEffect(() => {
+    if (!placesLib || !serviceRef.current || !userLocation) return;
+
+    let stale = false;
+
+    serviceRef.current.nearbySearch(
+      { location: userLocation, radius: 2000, type: "pharmacy" },
+      (results, status) => {
+        if (stale) return;
+        setLoading(false);
+        if (status === placesLib.PlacesServiceStatus.OK && results) {
+          const list = results.map((p, i) => mapPlace(p, i, userLocation));
+          baseRef.current = list;
+          setPharmacies(list);
+        } else {
+          baseRef.current = [];
+          setPharmacies([]);
+        }
+      }
+    );
+
+    return () => {
+      stale = true;
+    };
+  }, [placesLib, userLocation]);
+
+  // 키워드 검색
   useEffect(() => {
     if (!query.trim()) {
       setPharmacies(baseRef.current);
       return;
     }
+    if (!placesLib || !serviceRef.current) return;
 
-    const timer = setTimeout(async () => {
+    let stale = false;
+
+    const timer = setTimeout(() => {
       setSearching(true);
-      try {
-        const data = await getPharmacies({ keyword: query.trim() });
-        setPharmacies(withOpenStatus(data));
-      } catch {
-        // 검색 실패 시 기존 목록 유지
-      } finally {
-        setSearching(false);
-      }
-    }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+      const callback = (
+        results: google.maps.places.PlaceResult[] | null,
+        status: string
+      ) => {
+        if (stale) return;
+        setSearching(false);
+        if (status === placesLib.PlacesServiceStatus.OK && results) {
+          setPharmacies(results.map((p, i) => mapPlace(p, i, userLocation)));
+        } else {
+          setPharmacies([]);
+        }
+      };
+
+      if (userLocation) {
+        serviceRef.current!.textSearch(
+          { query: query.trim() + " 약국", location: userLocation, radius: 5000 },
+          callback
+        );
+      } else {
+        serviceRef.current!.textSearch(
+          { query: query.trim() + " 약국" },
+          callback
+        );
+      }
+    }, 400);
+
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [query, placesLib, userLocation]);
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-8">
@@ -165,13 +199,18 @@ export default function PharmacyPage() {
         />
       </div>
 
-      {/* 지도 placeholder */}
-      <div className="mt-4 flex h-44 flex-col items-center justify-center rounded-2xl bg-muted">
-        <MapPin className="h-6 w-6 text-blue-500" />
-        <p className="mt-3 text-sm text-muted-foreground">현재 위치 기준 지도</p>
-      </div>
+      {/* 지도 */}
+      <PharmacyMap userLocation={userLocation} pharmacies={pharmacies} />
 
-      {/* 약국 목록 헤더 */}
+      {/* 위치 권한 없음 안내 */}
+      {noLocation && (
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+          <MapPin className="h-4 w-4 shrink-0" />
+          <span>위치 권한을 허용하면 주변 약국을 표시합니다.</span>
+        </div>
+      )}
+
+      {/* 목록 헤더 */}
       <div className="mt-6">
         <p className="font-bold">
           {query.trim() ? "검색 결과" : "내 주변 약국"}{" "}
@@ -224,19 +263,20 @@ export default function PharmacyPage() {
 
               {/* 정보 */}
               <div className="min-w-0 flex-1">
-                {/* 약국명 + 뱃지 */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <p className="font-bold">{p.name}</p>
-                  <span
-                    className={
-                      "rounded-md px-1.5 py-0.5 text-[11px] font-semibold " +
-                      (p.open
-                        ? "bg-secondary text-primary"
-                        : "bg-muted text-muted-foreground")
-                    }
-                  >
-                    {p.open ? "영업중" : "영업종료"}
-                  </span>
+                  {p.open !== undefined && (
+                    <span
+                      className={
+                        "rounded-md px-1.5 py-0.5 text-[11px] font-semibold " +
+                        (p.open
+                          ? "bg-secondary text-primary"
+                          : "bg-muted text-muted-foreground")
+                      }
+                    >
+                      {p.open ? "영업중" : "영업종료"}
+                    </span>
+                  )}
                   {p.is24h && (
                     <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-500">
                       24시
@@ -249,13 +289,11 @@ export default function PharmacyPage() {
                   )}
                 </div>
 
-                {/* 주소 · 거리 */}
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {p.distance ? `${p.distance} · ` : ""}
                   {p.address}
                 </p>
 
-                {/* 운영시간 */}
                 {p.hours && (
                   <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
@@ -263,7 +301,6 @@ export default function PharmacyPage() {
                   </p>
                 )}
 
-                {/* 전화번호 */}
                 {p.phone && (
                   <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                     <Phone className="h-3 w-3" />
@@ -275,12 +312,31 @@ export default function PharmacyPage() {
           </a>
         ))}
 
-        {!loading && !searching && pharmacies.length === 0 && (
+        {!loading && !searching && pharmacies.length === 0 && !noLocation && (
           <p className="mt-6 text-center text-sm text-muted-foreground">
             검색 결과가 없습니다.
           </p>
         )}
       </div>
     </main>
+  );
+}
+
+// ─── 진입점: API 키 확인 후 APIProvider로 감싸기 ──────────────────────────────
+export default function PharmacyPage() {
+  if (!API_KEY) {
+    return (
+      <main className="mx-auto w-full max-w-md px-5 py-20 text-center">
+        <p className="text-sm text-muted-foreground">
+          Google Maps API 키가 설정되지 않았습니다.
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <APIProvider apiKey={API_KEY}>
+      <PharmacyContent />
+    </APIProvider>
   );
 }

@@ -113,11 +113,14 @@ class DbDataSourceCollector:
             return None
         return profile.infection_history or None
 
-    async def get_checked_symptom_codes(self, user_id: int) -> list[str]:
+    async def get_checked_symptom_codes(self, user_id: int) -> tuple[list[str], bool]:
+        """(코드 목록, is_stale) 반환. 14일 초과 로그는 stale=True."""
         log = await SymptomCheckLog.filter(user_id=user_id).order_by("-created_at").first()
         if log is None:
-            return []
-        return list(log.checked_symptoms or [])
+            return [], False
+        cutoff = datetime.now(config.TIMEZONE) - timedelta(days=14)
+        is_stale = log.created_at < cutoff
+        return list(log.checked_symptoms or []), is_stale
 
     async def get_self_report_codes(self, user_id: int) -> list[str]:
         flags = await RiskFlag.filter(

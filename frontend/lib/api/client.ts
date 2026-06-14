@@ -67,17 +67,18 @@ export async function apiFetch<T = unknown>(
 ): Promise<T> {
   const { body, headers, _retry, ...rest } = options;
 
+  const isFormData = body instanceof FormData;
   const finalHeaders: Record<string, string> = {
-    ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    ...(headers as Record<string, string>),
-  };
+  ...(!isFormData && body !== undefined ? { "Content-Type": "application/json" } : {}),
+  ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  ...(headers as Record<string, string>),
+ };
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...rest,
     headers: finalHeaders,
     credentials: "include",
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   // 401 → 토큰 갱신 후 1회 재시도

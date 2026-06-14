@@ -6,28 +6,12 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { getMode } from "@/features/auth/mode";
 import RecordsIcon from "@/components/icons/nav/RecordsIcon";
-import SearchIcon from "@/components/icons/nav/SearchIcon";
+import ChatIcon from "@/components/icons/nav/ChatIcon";
 import HomeIcon from "@/components/icons/nav/HomeIcon";
 import BellIcon from "@/components/icons/nav/BellIcon";
 import MyIcon from "@/components/icons/nav/MyIcon";
 
 const PURPLE = "#7C5CCF";
-
-const GENERAL_TABS = [
-  { href: "/records", label: "기록", icon: RecordsIcon },
-  { href: "/search", label: "검색", icon: SearchIcon },
-  { href: "/home", label: "홈", icon: HomeIcon },
-  { href: "/notifications", label: "알림", icon: BellIcon },
-  { href: "/mypage", label: "마이", icon: MyIcon },
-];
-
-const AUTOIMMUNE_TABS = [
-  { href: "/lab-results/list", label: "기록", icon: RecordsIcon },
-  { href: "/search", label: "검색", icon: SearchIcon },
-  { href: "/home", label: "홈", icon: HomeIcon },
-  { href: "/notifications", label: "알림", icon: BellIcon },
-  { href: "/mypage", label: "마이", icon: MyIcon },
-];
 
 const HIDE_NAV_PATHS = [
   "/documents/ocr-review", "/notifications/settings", "/health-metrics",
@@ -45,8 +29,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   const activeColor = isAuto ? PURPLE : "hsl(var(--primary))";
-  const tabs = isAuto ? AUTOIMMUNE_TABS : GENERAL_TABS;
   const hideNav = HIDE_NAV_PATHS.some((p) => pathname.startsWith(p));
+
+  const tabs = [
+    { href: isAuto ? "/lab-results/list" : "/records"
+      , label: "기록", icon: RecordsIcon },
+    { href: "/chat", label: "챗봇", icon: ChatIcon },
+    { href: "/home", label: "홈", icon: HomeIcon },
+    { href: "/notifications", label: "알림", icon: BellIcon },
+    { href: "/mypage", label: "마이", icon: MyIcon },
+  ];
 
   return (
     <div className={cn("min-h-screen bg-background", !hideNav && "pb-16")}>

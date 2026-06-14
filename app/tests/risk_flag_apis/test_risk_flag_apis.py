@@ -167,7 +167,9 @@ class TestRiskFlagApis(TestCase):
         assert resp2.json()["risk_flag_ids"] == []
         assert len(dyspnea_flags) == 1
 
-    async def test_non_gate_symptom_returns_empty_risk_flag_ids(self):
+    async def test_non_red_flag_gate_symptom_creates_flag_without_emergency(self):
+        """gate에 등록된 non-red-flag 증상(SHINGLES_SUSPECTED)은 risk_flag를 생성하되
+        red_flag_symptoms(응급 증상 목록)에는 포함되지 않는다."""
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:
             token = await _signup_and_login(client, "rf_nomatch@example.com", "01092000010")
             headers = {"Authorization": f"Bearer {token}"}
@@ -177,7 +179,9 @@ class TestRiskFlagApis(TestCase):
                 headers=headers,
             )
         assert resp.status_code == status.HTTP_201_CREATED
-        assert resp.json()["risk_flag_ids"] == []
+        data = resp.json()
+        assert len(data["risk_flag_ids"]) > 0
+        assert "SHINGLES_SUSPECTED" not in data.get("red_flag_symptoms", [])
 
     async def test_other_users_flag_returns_404(self):
         async with AsyncClient(transport=ASGITransport(app=app), base_url=BASE_URL) as client:

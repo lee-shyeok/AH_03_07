@@ -26,18 +26,13 @@ def test_autoimmune_drug_dosage_blocked() -> None:
     assert result.matched_keywords
 
 
-def test_severe_emergency_blocked() -> None:
-    result = _check_keywords("지금 가슴 통증이 심해요.")
-    assert result.status == "BLOCKED"
-    assert result.category == "SEVERE_EMERGENCY"
-    assert "즉시 119" in (result.refusal_message or "")
-
-
 def test_suicide_signal_blocked() -> None:
     result = _check_keywords("사라지고 싶은 생각이 들어요.")
     assert result.status == "BLOCKED"
     assert result.category == "SUICIDE_SIGNAL"
-    assert "1393" in (result.refusal_message or "")
+    # SEVERE_EMERGENCY post-LLM 검사 제거됨 — 응급은 pre-LLM classify_intent(EMERGENCY)에서 처리
+    # 자살예방 번호 109 (구 1393에서 변경됨)
+    assert "109" in (result.refusal_message or "")
 
 
 def test_lab_interpretation_blocked() -> None:
@@ -113,12 +108,13 @@ async def test_moderation_api_not_flagged_passes() -> None:
 @pytest.mark.asyncio
 async def test_keyword_match_skips_moderation_api() -> None:
     """1단계 키워드에서 차단되면 Moderation API를 호출하지 않는다."""
+    # "가슴 통증"은 SEVERE_EMERGENCY 제거로 매칭 안 됨 → SUICIDE_SIGNAL 살아있는 키워드로 교체
     with patch("app.services.chat_guardrail_enhanced.AsyncOpenAI") as mock_cls:
-        result = await apply_enhanced_guardrail("가슴 통증이 심합니다.")
+        result = await apply_enhanced_guardrail("사라지고 싶은 생각이 들어요.")
 
     mock_cls.assert_not_called()
     assert result.status == "BLOCKED"
-    assert result.category == "SEVERE_EMERGENCY"
+    assert result.category == "SUICIDE_SIGNAL"
 
 
 # ── pre_save signal 핸들러 테스트 ────────────────────────────────────────────
@@ -159,7 +155,8 @@ async def test_handle_pre_save_sets_blocked_fields_on_detection() -> None:
     instance = MagicMock(spec=ChatMessage)
     instance.role = "ASSISTANT"
     instance.blocked_by_filter = False
-    instance.content = "가슴 통증이 있다면 이렇게 해보세요."
+    # "가슴 통증" SEVERE_EMERGENCY 제거로 더 이상 차단 안 됨 → SUICIDE_SIGNAL 살아있는 트리거로 교체
+    instance.content = "사라지고 싶은 생각이 들어요."
     instance.id = 1
     instance.session_id = 42
 
@@ -167,12 +164,12 @@ async def test_handle_pre_save_sets_blocked_fields_on_detection() -> None:
         await handle_pre_save(ChatMessage, instance, None, None)
 
     assert instance.blocked_by_filter is True
-    assert "SEVERE_EMERGENCY" in instance.block_reason
-    assert "119" in instance.content
+    assert "SUICIDE_SIGNAL" in instance.block_reason
+    assert "109" in instance.content  # SUICIDE_SIGNAL 거부 문구에 자살예방 109 포함
     mock_log.assert_called_once()
     _, kwargs = mock_log.call_args if mock_log.call_args.kwargs else (None, {})
     call_kwargs = mock_log.call_args.kwargs
-    assert call_kwargs.get("category") == "SEVERE_EMERGENCY"
+    assert call_kwargs.get("category") == "SUICIDE_SIGNAL"
 
 
 @pytest.mark.asyncio

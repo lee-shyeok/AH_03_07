@@ -33,6 +33,7 @@ class RiskFlag(models.Model):
     status = fields.CharEnumField(enum_type=RiskFlagStatus, default=RiskFlagStatus.ACTIVE, max_length=16)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
+    deleted_at = fields.DatetimeField(null=True)
 
     class Meta:
         table = "risk_flags"

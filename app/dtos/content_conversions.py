@@ -7,12 +7,12 @@ from app.models.content_conversions import ConversionStatus, ConversionType
 
 
 class CardNewsCreateRequest(BaseModel):
-    guide_id: UUID
+    guide_id: int
 
 
 class ContentConversionResponse(BaseModel):
     id: UUID
-    guide_id: UUID
+    guide_id: int
     conversion_type: ConversionType
     status: ConversionStatus
     file_url: str | None

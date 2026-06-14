@@ -23,9 +23,10 @@ def test_no_input_returns_pass():
     assert result.trigger_emergency_modal is False
 
 
-def test_non_red_flag_symptom_returns_locked_no_modal():
+def test_non_red_flag_symptom_returns_pass_with_matched_items():
+    """non-red-flag 증상은 안내문 생성을 차단하지 않음 — PASS, matched_items에는 기록."""
     result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["FEVER"]))
-    assert result.status == GateStatus.LOCKED
+    assert result.status == GateStatus.PASS
     assert result.trigger_emergency_modal is False
     assert any(item.code == "FEVER" for item in result.matched_items)
 
@@ -46,23 +47,26 @@ def test_mixed_red_and_non_red_flag_triggers_modal():
     assert "DYSPNEA" in codes
 
 
-def test_pregnancy_status_returns_locked():
+def test_pregnancy_status_returns_pass_with_context():
+    """임신/수유는 red_flag=False → PASS, matched_items에 기록(가이드 컨텍스트용)."""
     result = evaluate_highrisk_gate(_make_input(pregnancy_status_codes=["PREGNANT"]))
-    assert result.status == GateStatus.LOCKED
+    assert result.status == GateStatus.PASS
     assert result.trigger_emergency_modal is False
     assert any(item.code == "PREGNANT" for item in result.matched_items)
 
 
-def test_self_report_returns_locked():
+def test_self_report_returns_pass_with_context():
+    """자가 보고 이력(결핵 등)은 red_flag=False → PASS, matched_items에 기록."""
     result = evaluate_highrisk_gate(_make_input(self_report_codes=["TB_HISTORY"]))
-    assert result.status == GateStatus.LOCKED
+    assert result.status == GateStatus.PASS
     assert result.trigger_emergency_modal is False
     assert any(item.code == "TB_HISTORY" for item in result.matched_items)
 
 
-def test_lab_threshold_exceeded_returns_locked():
+def test_lab_threshold_exceeded_returns_pass():
+    """검사 기준값 초과는 red_flag=False → PASS, matched_items에 기록."""
     result = evaluate_highrisk_gate(_make_input(lab_threshold_exceeded=True))
-    assert result.status == GateStatus.LOCKED
+    assert result.status == GateStatus.PASS
     assert result.trigger_emergency_modal is False
     assert any(item.code == "LAB_THRESHOLD_EXCEEDED" for item in result.matched_items)
 
@@ -74,13 +78,15 @@ def test_unknown_code_is_ignored_returns_pass():
 
 
 def test_duplicate_codes_matched_once():
+    """동일 코드가 여러 소스에 중복 입력돼도 matched_items에 1회만 기록."""
     result = evaluate_highrisk_gate(
         _make_input(
             checked_symptom_codes=["FEVER", "FEVER"],
             self_report_codes=["FEVER"],
         )
     )
-    assert result.status == GateStatus.LOCKED
+    # FEVER는 red_flag=False → PASS
+    assert result.status == GateStatus.PASS
     fever_matches = [item for item in result.matched_items if item.code == "FEVER"]
     assert len(fever_matches) == 1
 
@@ -99,17 +105,17 @@ def test_message_and_disclaimer_contain_no_eval_expressions():
 
 
 def test_all_red_flag_codes_trigger_modal():
-    red_flag_codes = ["DYSPNEA", "ALTERED_CONSCIOUSNESS", "JAUNDICE", "ABNORMAL_BLEEDING", "CHEST_PAIN"]
+    red_flag_codes = ["DYSPNEA", "ALTERED_CONSCIOUSNESS", "JAUNDICE", "SEVERE_BLEEDING", "CHEST_PAIN"]
     for code in red_flag_codes:
         result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=[code]))
         assert result.trigger_emergency_modal is True, f"{code} should trigger modal"
 
 
 def test_matched_item_fields_populated():
-    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["ORAL_ULCER"]))
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["MOUTH_SORES"]))
     assert len(result.matched_items) == 1
     item = result.matched_items[0]
-    assert item.code == "ORAL_ULCER"
+    assert item.code == "MOUTH_SORES"
     assert item.label == "입안 헐음·구내염"
     assert item.category == "SYMPTOM_CHECK"
     assert item.red_flag is False
@@ -118,3 +124,50 @@ def test_matched_item_fields_populated():
 def test_evaluated_at_is_set():
     result = evaluate_highrisk_gate(_make_input())
     assert result.evaluated_at is not None
+
+
+# ── stale recheck ─────────────────────────────────────────────
+
+
+def test_stale_only_match_returns_needs_recheck_no_emergency():
+    """stale 체크만으로 LOCKED → needs_recheck=True, trigger_emergency_modal=False."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["DYSPNEA"], checked_symptoms_is_stale=True))
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is True
+    assert result.trigger_emergency_modal is False
+
+
+def test_stale_non_red_flag_returns_pass():
+    """stale 체크지만 red_flag=False 코드만 → PASS (차단 없음)."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["FEVER"], checked_symptoms_is_stale=True))
+    assert result.status == GateStatus.PASS
+    assert result.needs_recheck is False
+
+
+def test_active_red_flag_source_overrides_stale_needs_recheck():
+    """stale red_flag 체크 + active red_flag 소스 → needs_recheck=False, emergency=True."""
+    result = evaluate_highrisk_gate(
+        _make_input(
+            checked_symptom_codes=["DYSPNEA"],
+            checked_symptoms_is_stale=True,
+            self_report_codes=["CHEST_PAIN"],  # red_flag=True
+        )
+    )
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is False
+    assert result.trigger_emergency_modal is True
+
+
+def test_stale_with_no_gate_match_returns_pass():
+    """stale 체크지만 게이트 미매칭 → PASS, needs_recheck=False."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["UNKNOWN_CODE"], checked_symptoms_is_stale=True))
+    assert result.status == GateStatus.PASS
+    assert result.needs_recheck is False
+
+
+def test_fresh_checked_symptom_not_stale():
+    """is_stale=False → 기존 동작(LOCKED, trigger_emergency_modal=True)."""
+    result = evaluate_highrisk_gate(_make_input(checked_symptom_codes=["DYSPNEA"], checked_symptoms_is_stale=False))
+    assert result.status == GateStatus.LOCKED
+    assert result.needs_recheck is False
+    assert result.trigger_emergency_modal is True

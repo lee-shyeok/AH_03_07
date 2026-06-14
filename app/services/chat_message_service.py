@@ -84,7 +84,7 @@ class ChatMessageService:
             for m in reversed(messages):
                 history.append(
                     {
-                        "role": m.role.value if hasattr(m.role, "value") else str(m.role),
+                        "role": m.role.value.lower() if hasattr(m.role, "value") else str(m.role).lower(),
                         "content": m.content,
                     }
                 )
@@ -102,8 +102,12 @@ class ChatMessageService:
             blocked_by_filter=False,
         )
 
-        # 2. 의도 분류 → 차단 시 즉시 반환
+        # 2. 의도 분류 → SELF_HARM/EMERGENCY 전용 차단 우선, 나머지 일반 차단
         intent = self._validation.classify_intent(user_message)
+        if intent == "SELF_HARM":
+            return await self._save_blocked(session, BlockReason.SELF_HARM)
+        if intent == "EMERGENCY":
+            return await self._save_blocked(session, BlockReason.EMERGENCY)
         if intent is not None:
             return await self._save_blocked(session, BlockReason.INTENT_BLOCKED)
 

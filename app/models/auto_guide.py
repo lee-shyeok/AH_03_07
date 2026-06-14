@@ -24,6 +24,7 @@ class AutoGuide(models.Model):
     sources = fields.JSONField()
     disclaimer = fields.TextField()
     created_at = fields.DatetimeField(auto_now_add=True)
+    deleted_at = fields.DatetimeField(null=True)
 
     class Meta:
         table = "auto_guides"

@@ -31,6 +31,16 @@ def test_emergency_blocked(svc: ChatValidationService) -> None:
     assert svc.classify_intent("응급실 가야 해?") == "EMERGENCY"
 
 
+def test_emergency_breathing_combination(svc: ChatValidationService) -> None:
+    # pre-LLM 조합 규칙: 호흡 × 곤란 — SEVERE_EMERGENCY post-LLM 삭제 후 커버리지 유지
+    assert svc.classify_intent("숨 쉬기 너무 힘들어") == "EMERGENCY"
+
+
+def test_emergency_chest_pain_combination(svc: ChatValidationService) -> None:
+    # pre-LLM 조합 규칙: "가슴" × 통증 계열 — SEVERE_EMERGENCY post-LLM 삭제 후 커버리지 유지
+    assert svc.classify_intent("가슴 통증이 심해요") == "EMERGENCY"
+
+
 def test_self_harm_blocked(svc: ChatValidationService) -> None:
     assert svc.classify_intent("자살하고 싶어") == "SELF_HARM"
 

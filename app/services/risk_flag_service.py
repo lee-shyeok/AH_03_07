@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.core import config
 from app.highrisk_gate.schema import HighRiskGateInput
@@ -59,7 +59,7 @@ class RiskFlagService:
         status: RiskFlagStatus | None = None,
         source_type: RiskFlagSourceType | None = None,
     ) -> list[RiskFlag]:
-        query = RiskFlag.filter(user=user)
+        query = RiskFlag.filter(user=user, deleted_at=None)
         if status is not None:
             query = query.filter(status=status)
         if source_type is not None:
@@ -67,7 +67,17 @@ class RiskFlagService:
         return await query.order_by("-created_at")
 
     async def get_flag(self, user: User, flag_id: int) -> RiskFlag | None:
-        return await RiskFlag.filter(id=flag_id, user=user).first()
+        return await RiskFlag.filter(id=flag_id, user=user, deleted_at=None).first()
+
+    async def delete_flag(self, user: User, flag_id: int) -> RiskFlag | None:
+        flag = await self.get_flag(user, flag_id)
+        if flag is None:
+            return None
+        if flag.status == RiskFlagStatus.ACTIVE:
+            return None  # caller treats as 409
+        flag.deleted_at = datetime.now(tz=UTC)
+        await flag.save(update_fields=["deleted_at"])
+        return flag
 
     async def update_status(
         self,

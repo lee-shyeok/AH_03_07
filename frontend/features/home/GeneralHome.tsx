@@ -32,17 +32,24 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
         {recentMetrics && recentMetrics.length > 0 && (
           <SectionCard title="최근 건강 수치" moreHref="/health-metrics" moreLabel="전체 보기">
             <div className="mt-3 grid grid-cols-2 gap-2.5">
-              {recentMetrics.slice(0, 4).map((m) => (
-                <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">{METRIC_LABEL[m.metric_type as MetricType]}</p>
-                  <p className="mt-0.5 text-sm font-bold">
-                    {Number(m.user_recorded_value).toFixed(1)}
-                    <span className="ml-0.5 text-xs font-normal text-muted-foreground">
-                      {METRIC_UNIT[m.metric_type as MetricType]}
-                    </span>
-                  </p>
-                </div>
-              ))}
+              {(["BLOOD_PRESSURE", "BLOOD_SUGAR", "WEIGHT", "HEART_RATE"] as MetricType[])
+                .map((type) =>
+                  recentMetrics
+                    .filter((m) => m.metric_type === type)
+                    .sort((a, b) => b.measured_at.localeCompare(a.measured_at))[0]
+                )
+                .filter(Boolean)
+                .map((m) => (
+                  <Link key={m!.metric_type} href="/health-metrics" className="rounded-xl bg-muted/60 px-3 py-2.5 active:bg-muted">
+                    <p className="text-xs text-muted-foreground">{METRIC_LABEL[m!.metric_type as MetricType]}</p>
+                    <p className="mt-0.5 text-sm font-bold">
+                      {Number(m!.user_recorded_value).toFixed(1)}
+                      <span className="ml-0.5 text-xs font-normal text-muted-foreground">
+                        {METRIC_UNIT[m!.metric_type as MetricType]}
+                      </span>
+                    </p>
+                  </Link>
+                ))}
             </div>
           </SectionCard>
         )}
@@ -57,8 +64,15 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
           </p>
         </SectionCard>
 
+        {/* 식단 가이드 */}
+        <SectionCard title="식단 가이드" moreHref="/diet" moreLabel="전체 보기">
+          <p className="mt-2 text-sm text-muted-foreground">
+            증상 관리에 참고할 권장·주의 식품 정보를 한눈에 확인하세요.
+          </p>
+        </SectionCard>
+
         {/* 약품 카메라 빠른 진입 */}
-        <Link href="/documents">
+        <Link href="/pills">
           <SectionCard>
             <div className="flex items-center gap-3">
               <Camera className="h-5 w-5 text-primary" />
@@ -67,6 +81,21 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
             </div>
           </SectionCard>
         </Link>
+
+        {/* SOS 응급 버튼 + 응급카드 */}
+        <div className="flex gap-3">
+          <Link href="/emergency" className="flex-1">
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-4 text-white shadow-md active:bg-red-600">
+              <span className="text-base font-bold">🚨 SOS 응급</span>
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </Link>
+          <Link href="/emergency/card" className="flex-1">
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-4 py-4 text-red-600 shadow-sm active:bg-red-100">
+              <span className="text-base font-bold">🪪 응급카드 +</span>
+            </div>
+          </Link>
+        </div>
       </div>
     </main>
   );

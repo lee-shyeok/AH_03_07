@@ -1,5 +1,7 @@
 """REQ-AUTO-005/006 맞춤 안내문 엔드포인트."""
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from app.auto_guide.schema import (
@@ -50,7 +52,11 @@ async def _run_generation_job(job_id: int) -> None:
             job.status = GuideGenerationJobStatus.COMPLETED
         elif result.orchestrator_status == OrchestratorStatus.BLOCKED_HIGH_RISK:
             job.status = GuideGenerationJobStatus.BLOCKED
-            job.blocked_reason = BlockedReason.HIGH_RISK_GATE_BLOCKED.value
+            job.blocked_reason = (
+                BlockedReason.NEEDS_RECHECK.value
+                if result.needs_recheck
+                else BlockedReason.HIGH_RISK_GATE_BLOCKED.value
+            )
         elif result.orchestrator_status == OrchestratorStatus.TRIGGER_NOT_MET:
             job.status = GuideGenerationJobStatus.FAILED
             missing = ", ".join(result.trigger_check.missing_conditions) if result.trigger_check else ""
@@ -111,7 +117,7 @@ async def get_guide_sources(
     current_user: User = Depends(get_request_user),
 ) -> list[GuideSourceItem]:
     """안내문 출처 목록 조회 (REQ-AUTO-005)."""
-    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id)
+    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id, deleted_at=None)
     if guide is None:
         raise HTTPException(status_code=404, detail="Guide not found")
     return [
@@ -133,7 +139,7 @@ async def get_guide_sections(
     current_user: User = Depends(get_request_user),
 ) -> list[GuideSectionItem]:
     """안내문 섹션 목록 조회 (REQ-AUTO-006)."""
-    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id)
+    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id, deleted_at=None)
     if guide is None:
         raise HTTPException(status_code=404, detail="Guide not found")
 
@@ -195,7 +201,7 @@ async def list_my_guides(
 
     auto_guides 테이블에서 본인 것만 최신순으로 반환한다.
     """
-    guides = await AutoGuide.filter(user_id=current_user.id).order_by("-created_at").all()
+    guides = await AutoGuide.filter(user_id=current_user.id, deleted_at=None).order_by("-created_at").all()
     return {"items": [_serialize_guide(g) for g in guides]}
 
 
@@ -208,7 +214,20 @@ async def get_guide_detail(
 
     guide_id는 정수(BigInt). 본인 소유가 아니면 404.
     """
-    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id)
+    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id, deleted_at=None)
     if guide is None:
         raise HTTPException(status_code=404, detail="Guide not found")
     return _serialize_guide(guide)
+
+
+@auto_guide_router.delete("/{guide_id}", status_code=204)
+async def delete_guide(
+    guide_id: int,
+    current_user: User = Depends(get_request_user),
+) -> None:
+    """안내문 소프트 삭제 (REQ-AUTO-005)."""
+    guide = await AutoGuide.get_or_none(id=guide_id, user_id=current_user.id, deleted_at=None)
+    if guide is None:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    guide.deleted_at = datetime.now(tz=UTC)
+    await guide.save(update_fields=["deleted_at"])

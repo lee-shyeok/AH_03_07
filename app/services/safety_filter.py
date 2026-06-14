@@ -12,6 +12,15 @@ from app.core.logger import default_logger as logger
 
 STANDARD_REPLACEMENT = "담당 의료진과 상담하시기 바랍니다."
 
+# (c) 섹션별 안전 대체 문구 — 금지 패턴 매칭 후 문구만 섹션에 맞춤.
+# 매칭 자체는 apply_safety_filter가 결정하며 이 매핑은 대체 문구 선택에만 사용.
+SAFE_REPLACEMENTS: dict[str, str] = {
+    "medication_general": "약물 관련 변경은 담당 의료진과 상담하세요.",
+    "side_effect_monitoring": "부작용이 의심되면 담당 의료진과 상담하세요.",
+    "lifestyle_info": "생활습관 관련은 담당 의료진과 상담하세요.",
+    "symptom_summary": STANDARD_REPLACEMENT,
+}
+
 # (a) 금지 키워드·동의어·우회 표현 사전 + (b) 의도 분류기 통합 룰셋
 # 안전 표현("담당 의료진과 상담" 등)이 같은 텍스트에 있어도 금지 패턴이 우선한다.
 _FORBIDDEN: dict[str, list[str]] = {
@@ -87,8 +96,13 @@ def apply_safety_filter(text: str) -> SafetyFilterResult:
     return SafetyFilterResult(is_blocked=False, filtered_text=text)
 
 
-def log_block_event(user_id: int, section: str, matched_patterns: list[str]) -> None:
-    """(e) 차단 이력 감사 로그 (NFR-COMPLI-004)."""
+async def log_block_event(
+    user_id: int,
+    section: str,
+    matched_patterns: list[str],
+    original_text: str = "",
+) -> None:
+    """(e) 차단 이력 감사 로그 (NFR-COMPLI-004) — logger + DB 이중 기록."""
     logger.warning(
         json.dumps(
             {
@@ -98,4 +112,15 @@ def log_block_event(user_id: int, section: str, matched_patterns: list[str]) -> 
                 "matched_patterns": matched_patterns,
             }
         )
+    )
+    from app.models.safety_filter_log import SafetyFilterLog
+
+    await SafetyFilterLog.create(
+        user_id=user_id,
+        target_type="guide",
+        target_id=section,
+        blocked_reason=",".join(matched_patterns)[:100],
+        original_text=original_text,
+        safe_replacement_text=STANDARD_REPLACEMENT,
+        filter_stage="guide_generator",
     )

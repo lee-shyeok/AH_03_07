@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getGuides, getGuide, getSources, getSections, createGuide, getGuideJob, type GuideJob } from "./api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getGuides, getGuide, getSources, getSections, createGuide, getGuideJob, deleteGuide, type GuideJob } from "./api";
 
 export const guideKeys = {
   all: ["guides"] as const,
@@ -55,4 +55,12 @@ export function useGuideJob(jobId: number | null) {
 
 export function useGenerateGuide() {
   return useMutation({ mutationFn: createGuide });
+}
+
+export function useDeleteGuide() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteGuide(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: guideKeys.all }),
+  });
 }

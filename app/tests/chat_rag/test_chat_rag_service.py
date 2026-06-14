@@ -37,7 +37,7 @@ def test_filter_by_threshold_keeps_above(svc: ChatRAGService) -> None:
 
 
 def test_filter_by_threshold_drops_below(svc: ChatRAGService) -> None:
-    chunks = [make_chunk(0.46), make_chunk(0.0)]
+    chunks = [make_chunk(0.41), make_chunk(0.0)]
     assert svc.filter_by_threshold(chunks) == []
 
 
@@ -64,15 +64,19 @@ def test_build_context_empty(svc: ChatRAGService) -> None:
 def test_to_sources_field_mapping(svc: ChatRAGService) -> None:
     chunk = make_chunk(0.5, text="짧은 본문", source_title="제목", source_organization="기관")
     sources = svc.to_sources([chunk])
-    assert sources[0]["title"] == "제목 — 기관"
-    assert sources[0]["url"] is None
+    # RagSource 분리 필드: "제목 — 기관" 합치기 제거, source_title/source_org 각각 매핑
+    assert sources[0]["source_title"] == "제목"
+    assert sources[0]["source_org"] == "기관"
+    assert sources[0]["source_url"] is None
     assert sources[0]["snippet"] == "짧은 본문"
 
 
 def test_to_sources_missing_optional_fields(svc: ChatRAGService) -> None:
     chunk = make_chunk(0.5, text="본문", source_title="제목", source_organization="")
     sources = svc.to_sources([chunk])
-    assert sources[0]["title"] == "제목"
+    # source_organization="" → source_org="" (빈 문자열, None 아님)
+    assert sources[0]["source_title"] == "제목"
+    assert sources[0]["source_org"] == ""
 
 
 def test_to_sources_long_text_truncated(svc: ChatRAGService) -> None:

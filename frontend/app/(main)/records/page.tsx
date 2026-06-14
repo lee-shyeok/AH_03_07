@@ -3,10 +3,11 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Trash2, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, FileText, ChevronDown, ChevronRight, Pill } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useRecords, useDeleteRecord } from "@/features/medical-records/queries";
 import { getMode } from "@/features/auth/mode";
+import { getDocuments, MedicalDocument } from "@/features/documents/api";
 
 const PAGE_SIZE = 10;
 
@@ -24,6 +25,22 @@ export default function RecordsPage() {
   const [isAuto, setIsAuto] = useState(false);
 
   useEffect(() => { setIsAuto(getMode() === "autoimmune"); }, []);
+
+  const [ocrDocs, setOcrDocs] = useState<MedicalDocument[]>([]);
+  const [ocrLoading, setOcrLoading] = useState(true);
+
+  useEffect(() => {
+    getDocuments()
+      .then((docs) =>
+        setOcrDocs(
+          docs.filter(
+            (d) => d.document_type === "진료기록" || d.document_type === "처방전"
+          )
+        )
+      )
+      .catch(() => setOcrDocs([]))
+      .finally(() => setOcrLoading(false));
+  }, []);
 
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [filterHospital, setFilterHospital] = useState("");
@@ -137,6 +154,70 @@ export default function RecordsPage() {
           )}
         </>
       )}
+      {/* OCR 등록 문서 섹션 */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold">OCR 등록 문서</h2>
+          <Link href="/documents" className="text-xs text-primary hover:underline">
+            전체 보기
+          </Link>
+        </div>
+
+        {ocrLoading ? (
+          <p className="mt-3 text-sm text-muted-foreground">불러오는 중...</p>
+        ) : ocrDocs.length === 0 ? (
+          <div className="mt-3 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border py-8 text-muted-foreground">
+            <FileText className="h-8 w-8 opacity-30" />
+            <p className="text-sm">OCR로 등록된 문서가 없습니다.</p>
+            <Link href="/documents/ocr-review" className="text-xs text-primary hover:underline">
+              처방전 업로드하기
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {ocrDocs.map((doc) => {
+              const isPrescription = doc.document_type === "처방전";
+              return (
+                <Link
+                  key={doc.id}
+                  href={`/documents/ocr-review?documentId=${doc.id}&document_type=${doc.document_type ?? "진료기록"}`}
+                >
+                  <Card className="flex items-center gap-3 p-3 hover:bg-accent">
+                    <div
+                      className={
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl " +
+                        (isPrescription
+                          ? "bg-secondary text-primary"
+                          : "bg-secondary text-primary")
+                      }
+                    >
+                      {isPrescription ? (
+                        <Pill className="h-5 w-5" />
+                      ) : (
+                        <FileText className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">{doc.document_type ?? "문서"}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {doc.file_name ?? `문서 #${doc.id}`}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {doc.created_at && (
+                        <span className="text-xs text-muted-foreground">
+                          {doc.created_at.slice(0, 10)}
+                        </span>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

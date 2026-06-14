@@ -3,15 +3,17 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Camera, Pill, Search, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   recognizePill,
+  confirmPillRecognition,
   searchDrugReferences,
   type PillCandidate,
   type DrugInfo,
 } from "@/features/pills/api";
-import { usePillRecognitions } from "@/features/pills/queries";
+import { usePillRecognitions, pillKeys } from "@/features/pills/queries";
 
 interface StaticCandidate {
   name: string;
@@ -28,8 +30,11 @@ const CANDIDATES: StaticCandidate[] = [
 
 export default function PillsRecognizePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [candidates, setCandidates] = useState<PillCandidate[]>([]);
+  const [recognitionId, setRecognitionId] = useState<number | null>(null);
   const [recognizing, setRecognizing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,15 +54,32 @@ export default function PillsRecognizePage() {
     setPreview(URL.createObjectURL(file));
     setRecognizing(true);
     setCandidates([]);
+    setRecognitionId(null);
     try {
       const result = await recognizePill(file);
-      setCandidates(result);
+      setCandidates(result.candidates);
+      setRecognitionId(result.recognition_id);
     } catch {
       setCandidates([]);
     } finally {
       setRecognizing(false);
       e.target.value = "";
     }
+  };
+
+  const handleConfirm = async (drugName: string) => {
+    if (recognitionId && !confirming) {
+      setConfirming(true);
+      try {
+        await confirmPillRecognition(recognitionId, drugName);
+        queryClient.invalidateQueries({ queryKey: pillKeys.recognitions });
+      } catch {
+        // 확정 실패해도 페이지 이동은 허용
+      } finally {
+        setConfirming(false);
+      }
+    }
+    router.push(`/medication/${encodeURIComponent(drugName)}`);
   };
 
   const openSearch = () => {
@@ -181,8 +203,8 @@ export default function PillsRecognizePage() {
               return (
                 <Card
                   key={i}
-                  className="flex cursor-pointer items-center gap-3 p-4 hover:bg-accent"
-                  onClick={() => router.push(`/medication/${c.drug_name}`)}
+                  className="flex cursor-pointer items-center gap-3 p-4 hover:bg-accent disabled:opacity-50"
+                  onClick={() => handleConfirm(c.drug_name ?? c.name ?? "")}
                 >
                   <div
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colors.icon}`}
@@ -223,7 +245,7 @@ export default function PillsRecognizePage() {
                     <Pill className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold">{h.drug_name ?? "알 수 없음"}</p>
+                    <p className="font-bold">{h.selected_drug_name ?? h.drug_name ?? "알 수 없음"}</p>
                     {h.created_at && (
                       <p className="text-xs text-muted-foreground">{h.created_at}</p>
                     )}

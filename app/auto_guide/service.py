@@ -83,7 +83,7 @@ async def orchestrate(
     lab_results_summary = await collector.get_lab_results_summary(user_id)
     pregnancy_lactation_codes = await collector.get_pregnancy_lactation_codes(user_id)
     vaccine_infection_prevention = await collector.get_vaccine_infection_prevention(user_id)
-    checked_symptom_codes = await collector.get_checked_symptom_codes(user_id)
+    checked_symptom_codes, checked_symptoms_is_stale = await collector.get_checked_symptom_codes(user_id)
     self_report_codes = await collector.get_self_report_codes(user_id)
     lab_threshold_exceeded = await collector.get_lab_threshold_exceeded(user_id)
 
@@ -116,6 +116,7 @@ async def orchestrate(
     gate_input = HighRiskGateInput(
         user_id=user_id,
         checked_symptom_codes=checked_symptom_codes,
+        checked_symptoms_is_stale=checked_symptoms_is_stale,
         self_report_codes=self_report_codes,
         pregnancy_status_codes=pregnancy_lactation_codes,
         lab_threshold_exceeded=lab_threshold_exceeded,
@@ -142,8 +143,9 @@ async def orchestrate(
     # Step 5: 안내문 생성
     guide = await generate_guide(guide_input)
 
-    # Step 6: 긴급 모달 플래그
+    # Step 6: 긴급 모달 플래그 + recheck 플래그
     trigger_emergency_modal = gate_result.trigger_emergency_modal
+    needs_recheck = gate_result.needs_recheck
 
     # Step 7: 감사 로그
     logger.info(
@@ -154,6 +156,7 @@ async def orchestrate(
                 "guide_status": guide.status.value,
                 "high_risk_flag": high_risk_flag,
                 "trigger_emergency_modal": trigger_emergency_modal,
+                "needs_recheck": needs_recheck,
             }
         )
     )
@@ -164,6 +167,7 @@ async def orchestrate(
         user_id=user_id,
         orchestrator_status=orchestrator_status,
         trigger_emergency_modal=trigger_emergency_modal,
+        needs_recheck=needs_recheck,
         guide=guide,
         trigger_check=trigger,
         evaluated_at=now,

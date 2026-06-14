@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 
 from app.models.chat_message import MessageRole
 
@@ -25,8 +25,15 @@ class MessageRequest(BaseModel):
 
 
 class RagSource(BaseModel):
-    title: str
-    url: str | None = None
+    # API 명세서 /sources 네이밍과 일관성 유지 (REQ-KB-003)
+    model_config = ConfigDict(extra="ignore")  # 구 DB 레코드(title/url 키) 역호환
+
+    source_title: str | None = None
+    source_org: str | None = None
+    source_url: str | None = None  # KB payload에 url 없음 → None 고정, 적재 시 추가 예정
+    source_page: int | None = None
+    published_year: int | None = None
+    section_title: str | None = None  # 챕터명 (REQ-KB-003 "문서명+챕터")
     snippet: str | None = None
 
 
@@ -38,6 +45,10 @@ class MessageResponse(BaseModel):
     blocked_by_filter: bool
     block_reason: str | None = None
 
+    @field_serializer("role")
+    def serialize_role(self, role: MessageRole) -> str:
+        return role.value.lower()
+
 
 class MessageItem(BaseModel):
     id: int
@@ -48,6 +59,10 @@ class MessageItem(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("role")
+    def serialize_role(self, role: MessageRole) -> str:
+        return role.value.lower()
 
 
 class MessageHistoryResponse(BaseModel):

@@ -9,7 +9,7 @@ from app.services.knowledge_search import search_knowledge
 LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.3
 LLM_MAX_TOKENS = 1024
-RAG_SCORE_THRESHOLD = 0.47
+RAG_SCORE_THRESHOLD = 0.42
 
 SAFETY_SYSTEM_PROMPT = """당신은 자가면역 질환자를 위한 의료 정보 안내 어시스턴트입니다.
 
@@ -73,13 +73,21 @@ class ChatRAGService:
         return "\n".join(lines)
 
     def to_sources(self, chunks: list[KnowledgeChunk]) -> list[dict]:
+        """KnowledgeChunk → RagSource dict 1:1 매핑 (REQ-KB-003)."""
         results = []
         for c in chunks:
-            title = c.source_title
-            if c.source_organization:
-                title = f"{title} — {c.source_organization}"
             snippet = c.text[:200] + "..." if len(c.text) > 200 else c.text
-            results.append({"title": title, "url": None, "snippet": snippet})
+            results.append(
+                {
+                    "source_title": c.source_title,
+                    "source_org": c.source_organization,
+                    "source_url": None,
+                    "source_page": c.page_number,
+                    "published_year": c.published_year,
+                    "section_title": c.section_title,
+                    "snippet": snippet,
+                }
+            )
         return results
 
     async def generate_response(

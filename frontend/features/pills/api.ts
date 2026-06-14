@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api/client";
 export interface PillRecognition {
   id: number;
   drug_name?: string;
+  selected_drug_name?: string;
   confidence?: number;
   created_at?: string;
 }
@@ -14,6 +15,11 @@ export interface PillCandidate {
   ingredient?: string;
   category?: string;
   confidence: number;
+}
+
+export interface PillRecognizeResult {
+  recognition_id: number;
+  candidates: PillCandidate[];
 }
 
 export interface DrugInfo {
@@ -33,14 +39,30 @@ export async function getRecognitions(): Promise<PillRecognition[]> {
   return Array.isArray(res) ? res : (res.items ?? []);
 }
 
-export async function recognizePill(file: File): Promise<PillCandidate[]> {
+export async function recognizePill(file: File): Promise<PillRecognizeResult> {
   const form = new FormData();
   form.append("file", file);
-  const res = await apiFetch<{ candidates?: PillCandidate[] } | PillCandidate[]>(
-    "/v1/pills/recognize",
-    { method: "POST", body: form }
+  const res = await apiFetch<{
+    recognition_id?: number;
+    candidates?: PillCandidate[];
+  }>("/v1/pills/recognize", { method: "POST", body: form });
+  return {
+    recognition_id: res.recognition_id ?? 0,
+    candidates: res.candidates ?? [],
+  };
+}
+
+export async function confirmPillRecognition(
+  recognitionId: number,
+  selectedDrugName: string,
+): Promise<PillRecognition> {
+  return apiFetch<PillRecognition>(
+    `/v1/pills/recognitions/${recognitionId}/confirm`,
+    {
+      method: "PUT",
+      body: { selected_drug_name: selectedDrugName },
+    },
   );
-  return Array.isArray(res) ? res : (res.candidates ?? []);
 }
 
 export async function searchDrugReferences(query: string): Promise<DrugInfo[]> {

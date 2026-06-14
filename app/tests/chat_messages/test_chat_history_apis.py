@@ -103,7 +103,7 @@ class TestChatHistoryApis(TestCase):
         data = resp.json()
         assert data["total"] == 4  # USER + ASSISTANT 각 2개
         assert len(data["messages"]) == 4
-        assert data["messages"][0]["role"] == "USER"
+        assert data["messages"][0]["role"] == "user"  # field_serializer → 소문자 직렬화
         assert data["messages"][0]["content"] == "첫 번째 질문"
 
     async def test_list_messages_empty_session(self):

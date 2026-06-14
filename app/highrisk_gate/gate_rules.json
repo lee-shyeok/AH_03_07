@@ -21,7 +21,7 @@
     "source": "REQ-SYMP-002"
   },
   {
-    "code": "ABNORMAL_BLEEDING",
+    "code": "SEVERE_BLEEDING",
     "label": "심한 멍·비정상 출혈",
     "category": "SYMPTOM_CHECK",
     "red_flag": true,
@@ -63,14 +63,14 @@
     "source": "REQ-AUTO-006"
   },
   {
-    "code": "HERPES_ZOSTER_BLISTER",
+    "code": "SHINGLES_SUSPECTED",
     "label": "대상포진 의심 수포",
     "category": "SYMPTOM_CHECK",
     "red_flag": false,
     "source": "REQ-AUTO-006"
   },
   {
-    "code": "ORAL_ULCER",
+    "code": "MOUTH_SORES",
     "label": "입안 헐음·구내염",
     "category": "SYMPTOM_CHECK",
     "red_flag": false,
