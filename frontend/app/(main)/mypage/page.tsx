@@ -68,7 +68,7 @@ export default function MyPage() {
   ];
 
   const heightWeight = user?.height && user?.weight ? `${user.height}cm / ${user.weight}kg` : "-";
-  const birth = user?.birth_date ? user.birth_date.replaceAll("-", ".") : "-";
+  const birth = user?.birthday ? user.birthday.replaceAll("-", ".") : "-";
 
   return (
     <main className="mx-auto w-full max-w-md px-5 pb-6 pt-8">
