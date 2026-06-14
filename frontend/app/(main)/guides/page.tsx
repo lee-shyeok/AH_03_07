@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useGuides, useGuideJob, useGenerateGuide, guideKeys } from "@/features/guides/queries";
+import { useGuides, useGuideJob, useGenerateGuide, useDeleteGuide, guideKeys } from "@/features/guides/queries";
 
 const PURPLE = "#7C5CCF";
 
@@ -16,6 +16,7 @@ export default function GuidesPage() {
   const qc = useQueryClient();
   const { data: guides = [], isLoading } = useGuides();
   const gen = useGenerateGuide();
+  const del = useDeleteGuide();
 
   const [jobId, setJobId] = useState<number | null>(null);
   const [emergency, setEmergency] = useState(false);
@@ -134,8 +135,8 @@ export default function GuidesPage() {
       ) : (
         <div className="mt-6 space-y-3">
           {guides.map((g) => (
-            <Link key={g.id} href={`/guides/${g.id}`}>
-              <Card className="p-4 hover:bg-accent">
+            <Card key={g.id} className="p-4">
+              <Link href={`/guides/${g.id}`} className="block hover:opacity-80">
                 <div className="flex items-center justify-between">
                   <span className="font-bold">맞춤 건강 안내문</span>
                   {g.status && (
@@ -154,8 +155,21 @@ export default function GuidesPage() {
                     {g.created_at.slice(0, 10)}
                   </p>
                 )}
-              </Card>
-            </Link>
+              </Link>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-destructive hover:bg-destructive/10"
+                  disabled={del.isPending}
+                  onClick={() => {
+                    if (confirm("이 안내문을 삭제할까요?")) del.mutate(g.id);
+                  }}
+                >
+                  삭제
+                </Button>
+              </div>
+            </Card>
           ))}
         </div>
       )}

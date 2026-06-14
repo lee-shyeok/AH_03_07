@@ -108,3 +108,7 @@ export async function createGuide(): Promise<{ job_id: number; status: string }>
 export async function getGuideJob(jobId: number): Promise<GuideJob> {
   return apiFetch<GuideJob>(`/v1/guide-generation-jobs/${jobId}`);
 }
+
+export async function deleteGuide(id: number): Promise<void> {
+  await apiFetch(`/v1/guides/${id}`, { method: "DELETE" });
+}
