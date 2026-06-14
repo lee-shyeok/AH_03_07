@@ -16,9 +16,6 @@ _DISCLAIMER = (
 )
 
 _MSG_PASS = "등록된 검토 항목이 없습니다. 증상 변화가 있으면 담당 의료진과 상담하세요."
-_MSG_LOCKED = (
-    "담당 의료진 검토가 필요한 항목이 접수되었습니다. 자동 안내문 생성이 보류됩니다. 담당 의료진과 상담하시기 바랍니다."
-)
 _MSG_LOCKED_EMERGENCY = (
     "즉시 확인이 필요한 항목이 접수되었습니다. "
     "자동 안내문 생성이 보류됩니다. "
@@ -51,10 +48,16 @@ def evaluate_highrisk_gate(gate_input: HighRiskGateInput) -> HighRiskGateResult:
         if rule["code"] in raw_codes
     ]
 
-    if not matched_items:
+    # LOCKED 결정은 red_flag=True 항목만 사용.
+    # non-red-flag 매칭은 안내문 컨텍스트(matched_items)로만 활용하고 차단하지 않음.
+    red_flag_in_active = any(item.red_flag and item.code in active_codes for item in matched_items)
+    red_flag_in_stale = any(item.red_flag and item.code in stale_codes for item in matched_items)
+
+    if not red_flag_in_active and not red_flag_in_stale:
+        # red_flag 항목 없음 → PASS (matched_items는 가이드 생성 컨텍스트용으로 유지)
         return HighRiskGateResult(
             status=GateStatus.PASS,
-            matched_items=[],
+            matched_items=matched_items,
             trigger_emergency_modal=False,
             needs_recheck=False,
             message=_MSG_PASS,
@@ -62,11 +65,8 @@ def evaluate_highrisk_gate(gate_input: HighRiskGateInput) -> HighRiskGateResult:
             evaluated_at=datetime.now(tz=UTC),
         )
 
-    # active 소스에서 매칭된 항목이 없으면 stale-only LOCKED → 재체크 요청
-    has_active_match = any(item.code in active_codes for item in matched_items)
-    needs_recheck = not has_active_match
-
-    if needs_recheck:
+    # stale red_flag만 있고 active red_flag 없음 → 재체크 요청
+    if red_flag_in_stale and not red_flag_in_active:
         return HighRiskGateResult(
             status=GateStatus.LOCKED,
             matched_items=matched_items,
@@ -77,15 +77,13 @@ def evaluate_highrisk_gate(gate_input: HighRiskGateInput) -> HighRiskGateResult:
             evaluated_at=datetime.now(tz=UTC),
         )
 
-    trigger_emergency_modal = any(item.red_flag for item in matched_items)
-    message = _MSG_LOCKED_EMERGENCY if trigger_emergency_modal else _MSG_LOCKED
-
+    # active red_flag 있음 → LOCKED + 응급 모달
     return HighRiskGateResult(
         status=GateStatus.LOCKED,
         matched_items=matched_items,
-        trigger_emergency_modal=trigger_emergency_modal,
+        trigger_emergency_modal=True,
         needs_recheck=False,
-        message=message,
+        message=_MSG_LOCKED_EMERGENCY,
         disclaimer=_DISCLAIMER,
         evaluated_at=datetime.now(tz=UTC),
     )
