@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python packages (실수로 포함된 pip 패키지)
+/lib/site-packages/
+/Scripts/
