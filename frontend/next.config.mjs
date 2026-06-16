@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
-const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "http://localhost:8000";
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN;
+if (!BACKEND_ORIGIN) throw new Error("BACKEND_ORIGIN 환경변수가 설정되지 않았습니다.");
 
 // 보안 헤더 (NFR-SEC). connect-src 'self' → 브라우저는 같은 origin(/api 프록시)으로만 통신.
 const securityHeaders = [
