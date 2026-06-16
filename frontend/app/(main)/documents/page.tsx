@@ -43,9 +43,9 @@ function toDisplayDate(dateStr: string | undefined): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-const TAB_DOC_TYPE: Record<"처방전" | "검사", DocType> = {
-  처방전: "처방전",
-  검사: "검사결과",
+const TAB_MATCH: Record<"처방전" | "검사", (type: string) => boolean> = {
+  처방전: (t) => t === "처방전" || t === "prescription",
+  검사: (t) => t === "검사결과" || t === "lab_result",
 };
 
 export default function DocumentsPage() {
@@ -64,7 +64,7 @@ export default function DocumentsPage() {
   const filtered =
     tab === "진료기록"
       ? []
-      : docs.filter((d) => toDocType(d.document_type) === TAB_DOC_TYPE[tab]);
+      : docs.filter((d) => TAB_MATCH[tab](d.document_type ?? ""));
 
   const months = Array.from(new Set(filtered.map((d) => toMonth(d.created_at))));
 
