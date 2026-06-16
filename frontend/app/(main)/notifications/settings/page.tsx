@@ -164,7 +164,7 @@ export default function NotificationSettingsPage() {
     getNotificationSettings()
       .then((s) => {
         setAlertOn(s.enabled);
-        setAlertTime(s.time);
+        setAlertTime(s.time ?? "09:00");
         setRepeat(s.repeat);
         setEarlyReminder(s.early_reminder);
         setMissedReminder(s.missed_reminder);
@@ -288,7 +288,7 @@ export default function NotificationSettingsPage() {
 
           {/* 알림 설정 */}
           <SectionLabel>알림 설정</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             <ToggleRow label="알림 받기" on={alertOn} onChange={setAlertOn} accent={accent} />
 
             {/* 알림 시간 */}
@@ -298,7 +298,7 @@ export default function NotificationSettingsPage() {
             </div>
 
             {/* 반복 */}
-            <div className="relative px-4 py-3">
+            <div className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">반복</p>
                 <button
@@ -313,13 +313,13 @@ export default function NotificationSettingsPage() {
                 </button>
               </div>
               {repeatOpen && (
-                <div className="absolute right-4 top-full z-10 mt-1 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                <div className="mt-2 overflow-hidden rounded-xl border border-border bg-muted/50">
                   {REPEAT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => { setRepeat(opt.value); setRepeatOpen(false); }}
                       className={
-                        "flex w-full items-center justify-between px-4 py-2.5 text-sm " +
+                        "flex w-full items-center justify-between px-4 py-2.5 text-sm border-t border-border first:border-t-0 " +
                         (opt.value === repeat ? "font-semibold" : "text-foreground hover:bg-muted")
                       }
                       style={opt.value === repeat ? { color: accent } : undefined}
@@ -337,7 +337,7 @@ export default function NotificationSettingsPage() {
 
           {/* 알림 옵션 */}
           <SectionLabel>알림 옵션</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             <ToggleRow
               label="5분 전 미리 알림"
               description="복용 시간 5분 전 추가 알림"
@@ -356,7 +356,7 @@ export default function NotificationSettingsPage() {
 
           {/* 알림 채널 */}
           <SectionLabel>알림 채널</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             <CheckRow
               label="앱 푸시"
               checked={channels.app}
@@ -379,7 +379,7 @@ export default function NotificationSettingsPage() {
 
           {/* 시간대별 알림 시간 */}
           <SectionLabel>시간대별 알림 시간</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             {(
               [
                 { key: "morning" as const, label: "아침" },
@@ -417,7 +417,7 @@ export default function NotificationSettingsPage() {
 
           {/* 방해 금지 시간 */}
           <SectionLabel>방해 금지 시간 (Quiet Hours)</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             <ToggleRow
               label="방해 금지 시간 사용"
               description="해당 시간대에는 알림을 보내지 않습니다"
@@ -449,7 +449,7 @@ export default function NotificationSettingsPage() {
 
           {/* 위치 기록 */}
           <SectionLabel>위치 기록</SectionLabel>
-          <Card className="divide-y divide-border">
+          <Card className="divide-y divide-border overflow-hidden">
             <ToggleRow
               label="복약 위치 기록"
               description="복용 완료 시 현재 위치를 함께 기록합니다"

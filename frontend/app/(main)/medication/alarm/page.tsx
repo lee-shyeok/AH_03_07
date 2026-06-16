@@ -71,7 +71,7 @@ export default function MedicationAlarmPage() {
 
       {/* 알림 설정 */}
       <p className="mt-6 text-sm text-muted-foreground">알림 설정</p>
-      <Card className="mt-2 divide-y divide-border">
+      <Card className="mt-2 divide-y divide-border overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3.5">
           <span className="text-sm">알림 받기</span>
           <Toggle on={enabled} onChange={setEnabled} accent={accent} />
@@ -90,7 +90,7 @@ export default function MedicationAlarmPage() {
 
       {/* 알림 옵션 */}
       <p className="mt-6 text-sm text-muted-foreground">알림 옵션</p>
-      <Card className="mt-2 divide-y divide-border">
+      <Card className="mt-2 divide-y divide-border overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3.5">
           <div>
             <p className="text-sm">5분 전 미리 알림</p>
@@ -109,7 +109,7 @@ export default function MedicationAlarmPage() {
 
       {/* 알림 채널 */}
       <p className="mt-6 text-sm text-muted-foreground">알림 채널</p>
-      <Card className="mt-2 divide-y divide-border">
+      <Card className="mt-2 divide-y divide-border overflow-hidden">
         {([
           ["push", "앱 푸시"],
           ["kakao", "카카오톡"],

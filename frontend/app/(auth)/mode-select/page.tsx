@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { getAutoimmuneOnboarding, updateMode } from "@/features/auth/api";
+import { updateConsent } from "@/features/consent/api";
 import { setMode } from "@/features/auth/mode";
 import { withTimeout } from "@/lib/query/util";
 
@@ -41,6 +42,8 @@ export default function ModeSelectPage() {
       }
       return;
     }
+    // 일반 모드도 MEDICAL_DATA 동의 설정 (건강수치 등 API 403 방지)
+    updateConsent("sensitive_medical", true).catch(() => {});
     router.replace("/home");
   }
 

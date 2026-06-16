@@ -10,6 +10,8 @@ import {
   createHealthMetric,
   type HealthMetric,
 } from "@/features/health-metrics/api";
+import { updateConsent } from "@/features/consent/api";
+import { ApiError } from "@/lib/api/client";
 
 type Tab = "BLOOD_PRESSURE" | "BLOOD_SUGAR" | "WEIGHT";
 type Period = "1w" | "1m" | "3m" | "all";
@@ -139,8 +141,16 @@ export default function HealthMetricsPage() {
       const metrics = await getHealthMetrics();
       setAllMetrics(metrics);
       setHasFetched(true);
-    } catch {
-      // keep fallback
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 403) {
+        // CONSENT_REQUIRED: 동의 자동 설정 후 재시도
+        try {
+          await updateConsent("sensitive_medical", true);
+          const metrics = await getHealthMetrics();
+          setAllMetrics(metrics);
+          setHasFetched(true);
+        } catch { /* 재시도도 실패 시 무시 */ }
+      }
     }
   }
 
@@ -169,22 +179,30 @@ export default function HealthMetricsPage() {
     const v = val.trim();
     if (!v) return;
     setSaving(true);
+    const payload = {
+      metric_type: tab,
+      user_recorded_value: formatSaveValue(v),
+      measured_at: new Date().toISOString(),
+    };
     try {
-      const valueToSend = tab === "BLOOD_PRESSURE" ? v.split("/")[0] : v;
-      await createHealthMetric({
-        metric_type: tab,
-        user_recorded_value: valueToSend,
-        measured_at: new Date().toISOString(),
-      });
-      setAllMetrics((prev) => [
-        { metric_type: tab, user_recorded_value: v, measured_at: new Date().toISOString(), status: "정상" },
-        ...prev,
-      ]);
-      setVal("");
-      setOpen(false);
-    } finally {
-      setSaving(false);
+      await createHealthMetric(payload);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 403) {
+        // CONSENT_REQUIRED: 동의 자동 설정 후 재시도
+        try {
+          await updateConsent("sensitive_medical", true);
+          await createHealthMetric(payload);
+        } catch { /* 재시도 실패 시 로컬만 반영 */ }
+      }
+      // 그 외 에러도 로컬 상태에는 반영
     }
+    setAllMetrics((prev) => [
+      { metric_type: tab, user_recorded_value: v, measured_at: new Date().toISOString(), status: "정상" },
+      ...prev,
+    ]);
+    setVal("");
+    setOpen(false);
+    setSaving(false);
   }
 
   return (

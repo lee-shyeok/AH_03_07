@@ -6,8 +6,8 @@ interface TimePickerProps {
   accentColor?: string;
 }
 
-export function TimePicker({ value, onChange, accentColor }: TimePickerProps) {
-  const parts = value.split(":");
+export function TimePicker({ value = "08:00", onChange, accentColor }: TimePickerProps) {
+  const parts = (value ?? "08:00").split(":");
   const h = parseInt(parts[0] ?? "8", 10);
   const m = parseInt(parts[1] ?? "0", 10);
   const isAM = h < 12;
