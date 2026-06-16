@@ -118,8 +118,8 @@ export default function DiaryPage() {
         <h1 className="text-lg font-bold">건강 일기</h1>
       </div>
 
-      {/* 기간 필터 */}
-      <div className="mt-4 flex gap-2">
+      {/* 기간 필터 + 추가 버튼 */}
+      <div className="mt-4 flex items-center gap-2">
         {FILTER_OPTIONS.map(({ label, value }) => (
           <button
             key={value}
@@ -133,6 +133,13 @@ export default function DiaryPage() {
             {label}
           </button>
         ))}
+        <button
+          onClick={() => router.push("/diary/new")}
+          className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+          aria-label="새 일기 작성"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
@@ -206,13 +213,6 @@ export default function DiaryPage() {
         })}
       </div>
 
-      {/* 플로팅 + 버튼 */}
-      <button
-        onClick={() => router.push("/diary/new")}
-        className="fixed bottom-24 right-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
-      >
-        <Plus className="h-6 w-6" />
-      </button>
     </main>
   );
 }

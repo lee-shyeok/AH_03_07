@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Volume2, Loader2, X } from "lucide-react";
+import { ArrowRight, Volume2, Loader2, X, Plus } from "lucide-react";
 import HomeHeader from "./components/HomeHeader";
 import MedicationCard from "./components/MedicationCard";
 import SectionCard from "./components/SectionCard";
@@ -153,8 +153,8 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
         {/* 오늘 컨디션 */}
         <SectionCard
           title="오늘 컨디션"
-          moreHref="/diary"
-          moreLabel={condition ? "자세히 보기" : "기록하기"}
+          moreHref={condition ? "/diary" : undefined}
+          moreLabel="자세히 보기"
         >
           {condition ? (
             <div className="mt-2 flex items-center gap-3">

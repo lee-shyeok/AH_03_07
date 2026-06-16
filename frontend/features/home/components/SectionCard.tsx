@@ -10,6 +10,7 @@ interface SectionCardProps {
   moreLabel?: string;
   accentClassName?: string;
   className?: string;
+  headerAction?: ReactNode;
 }
 
 export default function SectionCard({
@@ -19,10 +20,16 @@ export default function SectionCard({
   moreLabel = "전체 보기",
   accentClassName = "text-primary",
   className = "",
+  headerAction,
 }: SectionCardProps) {
   return (
     <Card className={`p-5 ${className}`}>
-      {title && <h2 className="text-base font-bold">{title}</h2>}
+      {title && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold">{title}</h2>
+          {headerAction}
+        </div>
+      )}
       {children}
       {moreHref && (
         <Link
