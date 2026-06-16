@@ -34,6 +34,20 @@ class CareService:
         )
         return GuardianResponse.model_validate(guardian)
 
+    async def delete_guardian(self, user_id: UUID, guardian_id: UUID) -> GuardianResponse:
+        """보호자 삭제 (소프트 삭제)"""
+        guardian = await self.repo.deactivate_guardian(user_id, guardian_id)
+        if not guardian:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="보호자를 찾을 수 없습니다.")
+        return GuardianResponse.model_validate(guardian)
+
+    async def get_guardian(self, user_id: UUID, guardian_id: UUID) -> GuardianResponse:
+        """단일 보호자 조회 (본인 소유 검증 포함)"""
+        guardian = await self.repo.get_guardian_by_id(user_id, guardian_id)
+        if not guardian:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="보호자를 찾을 수 없습니다.")
+        return GuardianResponse.model_validate(guardian)
+
     async def get_my_guardians(self, user_id: UUID) -> GuardianListResponse:
         """내 보호자 목록"""
         guardians = await self.repo.get_user_guardians(user_id)

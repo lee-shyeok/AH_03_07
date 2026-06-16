@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Camera, Activity } from "lucide-react";
+import { ArrowRight, Activity } from "lucide-react";
 import HomeHeader from "./components/HomeHeader";
 import MedicationCard from "./components/MedicationCard";
 import SectionCard from "./components/SectionCard";
@@ -70,17 +70,6 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
             증상 관리에 참고할 권장·주의 식품 정보를 한눈에 확인하세요.
           </p>
         </SectionCard>
-
-        {/* 약품 카메라 빠른 진입 */}
-        <Link href="/pills">
-          <SectionCard>
-            <div className="flex items-center gap-3">
-              <Camera className="h-5 w-5 text-primary" />
-              <span className="flex-1 text-sm font-medium">약품 카메라로 빠르게 등록</span>
-              <ArrowRight className="h-4 w-4 text-primary" />
-            </div>
-          </SectionCard>
-        </Link>
 
         {/* SOS 응급 버튼 + 응급카드 */}
         <div className="flex gap-3">

@@ -17,6 +17,18 @@ class CareRepository:
         return await Guardian.filter(user_id=user_id, is_active=True).all()
 
     @staticmethod
+    async def get_guardian_by_id(user_id: UUID, guardian_id: UUID) -> Guardian | None:
+        return await Guardian.filter(id=guardian_id, user_id=user_id, is_active=True).first()
+
+    @staticmethod
+    async def deactivate_guardian(user_id: UUID, guardian_id: UUID) -> Guardian | None:
+        guardian = await Guardian.filter(id=guardian_id, user_id=user_id, is_active=True).first()
+        if guardian:
+            guardian.is_active = False
+            await guardian.save()
+        return guardian
+
+    @staticmethod
     async def create_share_link(user_id: UUID, **kwargs) -> ShareLink:
         return await ShareLink.create(user_id=user_id, **kwargs)
 

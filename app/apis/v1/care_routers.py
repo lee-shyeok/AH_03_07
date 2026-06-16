@@ -76,3 +76,23 @@ async def view_share(
     service = CareService()
     viewer_ip = request.client.host if request.client else None
     return await service.view_share_link(token, viewer_ip)
+
+
+@care_router.get("/{guardian_id}", response_model=GuardianResponse)
+async def get_guardian(
+    guardian_id: UUID,
+    user: Annotated[User, Depends(get_request_user)],
+):
+    """보호자 단건 조회 (본인 보호자만)"""
+    service = CareService()
+    return await service.get_guardian(user.id, guardian_id)
+
+
+@care_router.delete("/{guardian_id}", response_model=GuardianResponse)
+async def delete_guardian(
+    guardian_id: UUID,
+    user: Annotated[User, Depends(get_request_user)],
+):
+    """보호자 삭제 (소프트 삭제, 본인 보호자만)"""
+    service = CareService()
+    return await service.delete_guardian(user.id, guardian_id)

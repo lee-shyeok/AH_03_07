@@ -1,18 +1,19 @@
 import { apiFetch } from "@/lib/api/client";
 
 export interface Guardian {
-  id: number;
+  id: string;
   name: string;
-  contact: string;
-  contact_type: "phone" | "email";
-  relation: string;
+  phone_number: string | null;
+  email: string | null;
+  relationship: string | null;
+  is_active: boolean;
 }
 
 export interface CreateGuardianData {
   name: string;
-  contact: string;
-  contact_type: "phone" | "email";
-  relation: string;
+  phone_number?: string | null;
+  email?: string | null;
+  relationship?: string | null;
 }
 
 export type SharePeriod = "1d" | "1w" | "1m" | "unlimited";
@@ -20,7 +21,7 @@ export type ShareCategory = "medication" | "activity" | "schedule" | "side_effec
 export type ShareDetail = "summary" | "full";
 
 export interface ShareLink {
-  id: number;
+  id: string;
   period: SharePeriod;
   categories: ShareCategory[];
   detail: ShareDetail;
@@ -55,6 +56,14 @@ export async function createShareLink(data: CreateShareLinkData): Promise<ShareL
   return apiFetch<ShareLink>("/v1/guardians/shares", { method: "POST", body: data });
 }
 
-export async function deleteShareLink(id: number): Promise<void> {
+export async function deleteGuardian(id: string): Promise<void> {
+  await apiFetch<void>(`/v1/guardians/${id}`, { method: "DELETE" });
+}
+
+export async function updateGuardian(id: string, data: CreateGuardianData): Promise<Guardian> {
+  return apiFetch<Guardian>(`/v1/guardians/${id}`, { method: "PUT", body: data });
+}
+
+export async function deleteShareLink(id: string): Promise<void> {
   await apiFetch<void>(`/v1/guardians/shares/${id}`, { method: "DELETE" });
 }

@@ -2,21 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User, Settings, Plus, X, Link as LinkIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Plus, X, Link as LinkIcon, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   getGuardians,
   createGuardian,
+  deleteGuardian,
   getShareLinks,
   createShareLink,
   deleteShareLink,
 } from "@/features/guardian/api";
 import type { Guardian, ShareLink, SharePeriod, ShareCategory, ShareDetail } from "@/features/guardian/api";
-
-const MOCK_GUARDIANS: Guardian[] = [
-  { id: 1, name: "김영희", contact: "010-1234-5678", contact_type: "phone", relation: "어머니" },
-  { id: 2, name: "김철수", contact: "010-9876-5432", contact_type: "phone", relation: "배우자" },
-];
 
 const COLORS = ["#7C5CCF", "#60A5FA", "#F97316"];
 
@@ -37,7 +33,7 @@ const PERIODS: { value: SharePeriod; label: string }[] = [
 
 const RELATIONS = ["어머니", "아버지", "배우자", "자녀", "형제/자매", "기타"];
 
-const DEFAULT_ADD_FORM = { name: "", contact: "", contactType: "phone" as "phone" | "email", relation: "" };
+const DEFAULT_ADD_FORM = { name: "", contact: "", contactType: "phone" as "phone" | "email", relationship: "" };
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -47,12 +43,9 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
       onClick={() => onChange(!on)}
       className={"relative h-6 w-11 rounded-full transition-colors " + (on ? "bg-primary" : "bg-muted")}
     >
-      <span
-        className={
-          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform " +
-          (on ? "translate-x-5" : "translate-x-0.5")
-        }
-      />
+      {!on && (
+        <span className="absolute top-0.5 left-1 h-5 w-5 rounded-full bg-white shadow transition-transform" />
+      )}
     </button>
   );
 }
@@ -67,11 +60,12 @@ export default function GuardianPage() {
   const [sharePeriod, setSharePeriod] = useState<SharePeriod>("1w");
   const [shareDetail, setShareDetail] = useState<ShareDetail>("summary");
   const [creating, setCreating] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     getGuardians()
       .then(setGuardians)
-      .catch(() => setGuardians(MOCK_GUARDIANS));
+      .catch(() => {});
     getShareLinks()
       .then(setShareLinks)
       .catch(() => {});
@@ -85,21 +79,27 @@ export default function GuardianPage() {
   }
 
   async function handleAddGuardian() {
-    if (!addForm.name || !addForm.contact || !addForm.relation) return;
-    const payload = {
+    if (!addForm.name || !addForm.contact || !addForm.relationship) return;
+    const payload: Parameters<typeof createGuardian>[0] = {
       name: addForm.name,
-      contact: addForm.contact,
-      contact_type: addForm.contactType,
-      relation: addForm.relation,
+      phone_number: addForm.contactType === "phone" ? addForm.contact : null,
+      email: addForm.contactType === "email" ? addForm.contact : null,
+      relationship: addForm.relationship,
     };
     try {
       const g = await createGuardian(payload);
       setGuardians((prev) => [...prev, g]);
     } catch {
-      setGuardians((prev) => [...prev, { id: Date.now(), ...payload }]);
+      // 등록 실패 시 모달만 닫음
     }
     setAddForm(DEFAULT_ADD_FORM);
     setShowModal(false);
+  }
+
+  async function handleDeleteGuardian(id: string) {
+    await deleteGuardian(id).catch(() => {});
+    setGuardians((prev) => prev.filter((g) => g.id !== id));
+    setConfirmDeleteId(null);
   }
 
   async function handleCreateShareLink() {
@@ -114,7 +114,7 @@ export default function GuardianPage() {
     }
   }
 
-  async function handleDeleteShareLink(id: number) {
+  async function handleDeleteShareLink(id: string) {
     await deleteShareLink(id).catch(() => {});
     setShareLinks((prev) => prev.filter((l) => l.id !== id));
   }
@@ -145,25 +145,55 @@ export default function GuardianPage() {
           등록된 보호자 <span className="text-primary">{guardians.length}</span>/3
         </p>
         <div className="mt-2 space-y-3">
-          {guardians.map((g, i) => (
-            <Card key={g.id} className="flex items-center gap-3 p-4">
-              <div
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
-                style={{ background: COLORS[i % COLORS.length] + "22" }}
-              >
-                <User className="h-5 w-5" style={{ color: COLORS[i % COLORS.length] }} />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold">{g.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {g.relation} · {scopeLabel()}
+          {guardians.map((g, i) =>
+            confirmDeleteId === g.id ? (
+              <Card key={g.id} className="flex items-center justify-between gap-3 p-4 border-red-200 bg-red-50">
+                <p className="text-sm font-medium text-red-600">
+                  {g.name}을(를) 삭제할까요?
                 </p>
-              </div>
-              <button aria-label="설정">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </Card>
-          ))}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmDeleteId(null)}
+                    className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => handleDeleteGuardian(g.id)}
+                    className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </Card>
+            ) : (
+              <Card
+                key={g.id}
+                className="flex cursor-pointer items-center gap-3 p-4 hover:bg-muted/40 transition-colors"
+                onClick={() => router.push(`/guardian/${g.id}`)}
+              >
+                <div
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
+                  style={{ background: COLORS[i % COLORS.length] + "22" }}
+                >
+                  <User className="h-5 w-5" style={{ color: COLORS[i % COLORS.length] }} />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold">{g.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {g.relationship} · {scopeLabel()}
+                  </p>
+                </div>
+                <button
+                  aria-label="삭제"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(g.id); }}
+                  className="flex-shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </Card>
+            )
+          )}
         </div>
 
         {/* 보호자 추가 버튼 */}
@@ -353,10 +383,10 @@ export default function GuardianPage() {
                   {RELATIONS.map((r) => (
                     <button
                       key={r}
-                      onClick={() => setAddForm((f) => ({ ...f, relation: r }))}
+                      onClick={() => setAddForm((f) => ({ ...f, relationship: r }))}
                       className={
                         "rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
-                        (addForm.relation === r
+                        (addForm.relationship === r
                           ? "border-primary bg-primary text-white"
                           : "border-border bg-card")
                       }
@@ -370,7 +400,7 @@ export default function GuardianPage() {
 
             <button
               onClick={handleAddGuardian}
-              disabled={!addForm.name || !addForm.contact || !addForm.relation}
+              disabled={!addForm.name || !addForm.contact || !addForm.relationship}
               className="mt-5 w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-white disabled:opacity-50"
             >
               추가하기
