@@ -1,5 +1,6 @@
 import io
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import ORJSONResponse as Response
@@ -53,6 +54,20 @@ async def create_symptom_log(
     """증상 기록 생성"""
     result = await diary_service.create_symptom_log(user_id=user.id, data=request)
     return Response(result.model_dump(mode="json"), status_code=status.HTTP_201_CREATED)
+
+
+@diary_log_router.delete(
+    "/symptom-logs/{log_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_consent(ConsentType.MEDICAL_DATA))],
+)
+async def delete_symptom_log(
+    log_id: UUID,
+    user: Annotated[User, Depends(get_request_user)],
+    diary_service: Annotated[DiaryLogService, Depends(DiaryLogService)],
+) -> None:
+    """증상 기록 삭제"""
+    await diary_service.delete_symptom_log(user_id=user.id, log_id=log_id)
 
 
 # ========== 복약 기록 API ==========

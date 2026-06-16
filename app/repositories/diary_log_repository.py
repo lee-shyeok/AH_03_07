@@ -40,6 +40,12 @@ class DiaryLogRepository:
             memo=memo,
         )
 
+    @staticmethod
+    async def delete_symptom_log(user_id: UUID, log_id: UUID) -> bool:
+        """증상 기록 삭제 — 본인 소유 확인 후 삭제, 없으면 False 반환"""
+        deleted_count = await DiarySymptomLog.filter(id=log_id, user_id=user_id).delete()
+        return deleted_count > 0
+
     # ========== 복약 기록 ==========
 
     @staticmethod
