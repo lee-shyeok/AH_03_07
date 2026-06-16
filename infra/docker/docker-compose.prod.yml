@@ -51,6 +51,7 @@ services:
     volumes:
       - static_volume:/app/templates
       - media_volume:/app/media
+      - uploads_volume:/app/uploads
     restart: always
     ports:
       - "8000:8000"
@@ -68,6 +69,9 @@ services:
     image: ${DOCKER_USER}/${DOCKER_REPOSITORY}:ai-${AI_WORKER_VERSION}  # AI_WORKER_VERSION은 빌드된 이미지의 버전관리를 위함입니다. V1.0.0 형식으로 사용합니다.
     env_file: .env
     restart: always
+    volumes:
+      - media_volume:/app/media
+      - uploads_volume:/app/uploads
     mem_limit: 4G
     networks:
       - ws
@@ -77,7 +81,24 @@ services:
       redis:
         condition: service_healthy
 
-  # 5. Nginx (웹 서버 - 요청 리버스 프록시로 전달)
+  # 5. Qdrant (벡터 데이터베이스)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ws
+    healthcheck:
+      test: [ "CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/6333'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # 6. Nginx (웹 서버 - 요청 리버스 프록시로 전달)
   nginx:
     container_name: nginx
     image: nginx:latest
@@ -95,7 +116,7 @@ services:
     depends_on:
       - fastapi
 
-  # 6. certbot: SSL 인증서 발급담당
+  # 7. certbot: SSL 인증서 발급담당
   certbot:
     image: certbot/certbot
     container_name: auto-certbot
@@ -117,6 +138,10 @@ volumes:
     name: certbot-conf
   certbot-www:
     name: certbot-www
+  qdrant_data:
+    name: qdrant_data
+  uploads_volume:
+    name: uploads_volume
 
 networks:
   ws:
