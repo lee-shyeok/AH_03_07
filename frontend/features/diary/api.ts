@@ -11,11 +11,13 @@ export interface DiaryLog {
   overall_condition?: string;
   body_parts?: BodyPart[];
   feelings?: Feeling[];
+  feeling?: Record<string, boolean>;
   note?: string;
   memo?: string;
   medications?: MealTime[];
   recorded_at?: string;
   log_date?: string;
+  created_at?: string;
 }
 
 export interface DiaryLogCreate {

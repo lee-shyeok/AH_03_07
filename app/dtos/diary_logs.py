@@ -12,6 +12,7 @@ class SymptomLogCreateRequest(BaseModel):
     overall_condition: OverallCondition
     body_parts: list[str] | None = None
     feeling: dict | None = None
+    medications: list[str] | None = None
     memo: str | None = None
 
 
@@ -21,6 +22,7 @@ class SymptomLogResponse(BaseModel):
     overall_condition: OverallCondition
     body_parts: list[str] | None
     feeling: dict | None
+    medications: list[str] | None
     memo: str | None
     created_at: datetime
     updated_at: datetime

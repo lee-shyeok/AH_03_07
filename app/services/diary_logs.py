@@ -51,6 +51,7 @@ class DiaryLogService:
             body_parts=data.body_parts,
             feeling=data.feeling,
             memo=data.memo,
+            medications=data.medications,
         )
         return SymptomLogResponse.model_validate(new_log)
 

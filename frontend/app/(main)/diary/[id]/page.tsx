@@ -15,6 +15,21 @@ const CONDITION_DISPLAY: Record<string, { emoji: string; label: string; color: s
   BAD:    { emoji: "😟", label: "안좋음", color: "text-destructive" },
 };
 
+const MEAL_TIME_COLOR: Record<string, string> = {
+  아침:   "bg-amber-100 text-amber-700",
+  점심:   "bg-green-100 text-green-700",
+  저녁:   "bg-blue-100 text-blue-700",
+  취침전: "bg-purple-100 text-purple-700",
+};
+
+const FEELING_LABEL: Record<string, string> = {
+  콕콕: "콕콕 쑤심",
+  욱신: "욱신거림",
+  묵직: "묵직함",
+  화끈: "화끈거림",
+  답답: "답답함",
+};
+
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "-";
@@ -40,7 +55,15 @@ export default function DiaryDetailPage() {
   const condKey = log?.condition ?? log?.overall_condition ?? "normal";
   const cond = CONDITION_DISPLAY[condKey] ?? CONDITION_DISPLAY.normal;
   const dateStr = log?.log_date ?? log?.recorded_at ?? "";
-  const noteStr = log?.note ?? log?.memo;
+  const noteStr = log?.memo ?? log?.note;
+  const feelingList: string[] =
+    log?.feelings && log.feelings.length > 0
+      ? log.feelings
+      : log?.feeling
+      ? Object.entries(log.feeling).filter(([, v]) => v).map(([k]) => k)
+      : [];
+
+  const medicationList: string[] = log?.medications ?? [];
 
   return (
     <main className="mx-auto w-full max-w-md px-5 py-6 pb-32">
@@ -86,16 +109,33 @@ export default function DiaryDetailPage() {
           )}
 
           {/* 느낌 */}
-          {log.feelings && log.feelings.length > 0 && (
+          {feelingList.length > 0 && (
             <Card className="p-4">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">느낌</p>
               <div className="flex flex-wrap gap-2">
-                {log.feelings.map((f) => (
+                {feelingList.map((f) => (
                   <span
                     key={f}
                     className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
                   >
-                    {f}
+                    {FEELING_LABEL[f] ?? f}
+                  </span>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* 복용 약물 시간대 */}
+          {medicationList.length > 0 && (
+            <Card className="p-4">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">복용 약물</p>
+              <div className="flex flex-wrap gap-2">
+                {medicationList.map((m) => (
+                  <span
+                    key={m}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${MEAL_TIME_COLOR[m] ?? "bg-accent text-accent-foreground"}`}
+                  >
+                    {m}
                   </span>
                 ))}
               </div>

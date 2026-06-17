@@ -153,7 +153,7 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
         {/* 오늘 컨디션 */}
         <SectionCard
           title="오늘 컨디션"
-          moreHref={condition ? "/diary" : undefined}
+          moreHref="/diary"
           moreLabel="자세히 보기"
         >
           {condition ? (

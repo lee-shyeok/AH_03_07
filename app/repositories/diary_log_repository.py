@@ -29,6 +29,7 @@ class DiaryLogRepository:
         body_parts: list[str] | None,
         feeling: dict | None,
         memo: str | None,
+        medications: list[str] | None = None,
     ) -> DiarySymptomLog:
         """증상 기록 생성"""
         return await DiarySymptomLog.create(
@@ -38,6 +39,7 @@ class DiaryLogRepository:
             body_parts=body_parts,
             feeling=feeling,
             memo=memo,
+            medications=medications,
         )
 
     @staticmethod

@@ -34,10 +34,19 @@ function getMonthKey(dateStr: string) {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
 }
 
-function formatDay(dateStr: string) {
+const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function formatDay(dateStr: string, createdAt?: string) {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "-";
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const day = DAYS[d.getDay()];
+  const base = `${d.getMonth() + 1}월 ${d.getDate()}일 (${day})`;
+  if (!createdAt) return base;
+  const t = new Date(createdAt);
+  if (isNaN(t.getTime())) return base;
+  const hh = String(t.getHours()).padStart(2, "0");
+  const mm = String(t.getMinutes()).padStart(2, "0");
+  return `${base} ${hh}:${mm}`;
 }
 
 function filterByRange(logs: DiaryLog[], range: FilterRange): DiaryLog[] {
@@ -189,7 +198,7 @@ export default function DiaryPage() {
                       >
                         <span className="text-2xl">{cond.emoji}</span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold">{dateStr ? formatDay(dateStr) : "-"}</p>
+                          <p className="text-sm font-semibold">{dateStr ? formatDay(dateStr, log.created_at) : "-"}</p>
                           <p className={`text-xs font-medium ${cond.color}`}>{cond.label}</p>
                           {noteStr && (
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">{noteStr}</p>

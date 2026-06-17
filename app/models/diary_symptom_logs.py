@@ -19,6 +19,7 @@ class DiarySymptomLog(models.Model):
     overall_condition = fields.CharEnumField(enum_type=OverallCondition, max_length=20)
     body_parts = fields.JSONField(null=True)
     feeling = fields.JSONField(null=True)
+    medications = fields.JSONField(null=True)
     memo = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
