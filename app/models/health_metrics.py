@@ -16,6 +16,7 @@ class HealthMetric(models.Model):
     user = fields.ForeignKeyField("models.User", related_name="health_metrics", on_delete=fields.CASCADE)
     metric_type = fields.CharEnumField(enum_type=MetricType, max_length=30)
     user_recorded_value = fields.DecimalField(max_digits=10, decimal_places=2)
+    diastolic_value = fields.DecimalField(max_digits=10, decimal_places=2, null=True)
     measured_at = fields.DatetimeField()
     notes = fields.TextField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)

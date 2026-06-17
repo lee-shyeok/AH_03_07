@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.dtos.health_metrics import (
     HealthMetricCreateRequest,
     HealthMetricListResponse,
@@ -26,6 +28,7 @@ class HealthMetricService:
             user_id=user_id,
             metric_type=data.metric_type,
             user_recorded_value=data.user_recorded_value,
+            diastolic_value=Decimal(data.diastolic_value) if data.diastolic_value is not None else None,
             measured_at=data.measured_at,
             notes=data.notes,
         )

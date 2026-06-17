@@ -32,12 +32,14 @@ class HealthMetricRepository:
         user_recorded_value: Decimal,
         measured_at: datetime,
         notes: str | None,
+        diastolic_value: Decimal | None = None,
     ) -> HealthMetric:
         """건강 지표 생성"""
         return await HealthMetric.create(
             user_id=user_id,
             metric_type=metric_type,
             user_recorded_value=user_recorded_value,
+            diastolic_value=diastolic_value,
             measured_at=measured_at,
             notes=notes,
         )

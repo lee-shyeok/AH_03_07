@@ -183,8 +183,12 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
                 )
                 .filter(Boolean)
                 .map((m) => {
-                  const numVal = Number(m!.user_recorded_value);
-                  const colorClass = getMetricValueColor(m!.metric_type as MetricType, numVal);
+                  const systolic = Math.round(Number(m!.user_recorded_value));
+                  const colorClass = getMetricValueColor(m!.metric_type as MetricType, systolic);
+                  const displayVal =
+                    m!.metric_type === "BLOOD_PRESSURE" && m!.diastolic_value
+                      ? `${systolic}/${Math.round(Number(m!.diastolic_value))}`
+                      : String(systolic);
                   return (
                     <Link
                       key={m!.metric_type}
@@ -195,7 +199,7 @@ export default function GeneralHome({ name, medications, recentMetrics }: Genera
                         {METRIC_LABEL[m!.metric_type as MetricType]}
                       </p>
                       <p className={`mt-0.5 text-sm font-bold ${colorClass}`}>
-                        {numVal.toFixed(1)}
+                        {displayVal}
                         <span className="ml-0.5 text-xs font-normal text-muted-foreground">
                           {METRIC_UNIT[m!.metric_type as MetricType]}
                         </span>

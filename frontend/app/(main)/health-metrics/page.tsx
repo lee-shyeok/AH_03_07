@@ -77,12 +77,16 @@ function toTabData(items: HealthMetric[], unit: string): TabData {
     const n = parseFloat(raw.split("/")[0]);
     return isNaN(n) ? 0 : n;
   });
+  const displayValue = (m: HealthMetric) => {
+    const sys = (m.user_recorded_value ?? m.value) ?? "0";
+    return m.diastolic_value ? `${sys}/${m.diastolic_value}` : sys;
+  };
   const history = sorted.map((m) => ({
     date: formatDate(m.measured_at),
-    value: (m.user_recorded_value ?? m.value) ?? "0",
+    value: displayValue(m),
     status: m.status ?? "정상",
   }));
-  const latestVal = (latest.user_recorded_value ?? latest.value) ?? "0";
+  const latestVal = displayValue(latest);
   return { latest: latestVal, unit, status: latest.status ?? "정상", trend, history };
 }
 
@@ -112,19 +116,14 @@ export default function HealthMetricsPage() {
   const [period, setPeriod] = useState<Period>("1w");
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
+  const [diastolVal, setDiastolVal] = useState("");
   const [allMetrics, setAllMetrics] = useState<HealthMetric[]>([]);
   const [hasFetched, setHasFetched] = useState(false);
   const [saving, setSaving] = useState(false);
 
   function handleValChange(raw: string) {
     if (tab === "BLOOD_PRESSURE") {
-      const filtered = raw.replace(/[^\d/]/g, "");
-      const isDeleting = filtered.length < val.length;
-      if (!isDeleting && !filtered.includes("/") && filtered.length === 3) {
-        setVal(filtered + "/");
-      } else {
-        setVal(filtered);
-      }
+      setVal(raw.replace(/\D/g, ""));
     } else {
       const filtered = raw.replace(/[^\d.]/g, "");
       const firstDot = filtered.indexOf(".");
@@ -134,6 +133,10 @@ export default function HealthMetricsPage() {
         setVal(filtered);
       }
     }
+  }
+
+  function handleDiastolChange(raw: string) {
+    setDiastolVal(raw.replace(/\D/g, ""));
   }
 
   async function load() {
@@ -155,7 +158,7 @@ export default function HealthMetricsPage() {
   }
 
   useEffect(() => { load(); }, []);
-  useEffect(() => { setVal(""); }, [tab]);
+  useEffect(() => { setVal(""); setDiastolVal(""); }, [tab]);
 
   const tabMetrics = allMetrics.filter((m) => m.metric_type === tab);
   const filteredMetrics = filterByPeriod(tabMetrics, period);
@@ -177,11 +180,14 @@ export default function HealthMetricsPage() {
 
   async function save() {
     const v = val.trim();
+    const dv = diastolVal.trim();
     if (!v) return;
+    if (tab === "BLOOD_PRESSURE" && !dv) return;
     setSaving(true);
     const payload = {
       metric_type: tab,
       user_recorded_value: formatSaveValue(v),
+      ...(tab === "BLOOD_PRESSURE" && { diastolic_value: dv }),
       measured_at: new Date().toISOString(),
     };
     try {
@@ -197,10 +203,11 @@ export default function HealthMetricsPage() {
       // 그 외 에러도 로컬 상태에는 반영
     }
     setAllMetrics((prev) => [
-      { metric_type: tab, user_recorded_value: v, measured_at: new Date().toISOString(), status: "정상" },
+      { metric_type: tab, user_recorded_value: v, diastolic_value: tab === "BLOOD_PRESSURE" ? dv : null, measured_at: new Date().toISOString(), status: "정상" },
       ...prev,
     ]);
     setVal("");
+    setDiastolVal("");
     setOpen(false);
     setSaving(false);
   }
@@ -309,14 +316,43 @@ export default function HealthMetricsPage() {
               {TABS.find((t) => t.key === tab)?.label} 입력{" "}
               <span className="text-sm font-normal text-muted-foreground">({TAB_UNIT[tab]})</span>
             </h2>
-            <input
-              autoFocus
-              value={val}
-              onChange={(e) => handleValChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && save()}
-              placeholder={tab === "BLOOD_PRESSURE" ? "예: 120/80" : tab === "BLOOD_SUGAR" ? "예: 98" : "예: 75.0"}
-              className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
-            />
+            {tab === "BLOOD_PRESSURE" ? (
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="mb-1 text-center text-xs text-muted-foreground">수축기</p>
+                  <input
+                    autoFocus
+                    value={val}
+                    onChange={(e) => handleValChange(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && save()}
+                    placeholder="예: 120"
+                    inputMode="numeric"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
+                  />
+                </div>
+                <span className="mt-4 text-xl font-bold text-muted-foreground">/</span>
+                <div className="flex-1">
+                  <p className="mb-1 text-center text-xs text-muted-foreground">이완기</p>
+                  <input
+                    value={diastolVal}
+                    onChange={(e) => handleDiastolChange(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && save()}
+                    placeholder="예: 80"
+                    inputMode="numeric"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            ) : (
+              <input
+                autoFocus
+                value={val}
+                onChange={(e) => handleValChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && save()}
+                placeholder={tab === "BLOOD_SUGAR" ? "예: 98" : "예: 75.0"}
+                className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-center text-lg outline-none focus:border-primary"
+              />
+            )}
             <Button className="mt-4 w-full" size="lg" onClick={save} disabled={saving}>
               {saving ? "저장 중..." : "저장"}
             </Button>
