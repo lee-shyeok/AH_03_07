@@ -128,7 +128,7 @@ export default function DiaryDetailPage() {
           {/* 복용 약물 시간대 */}
           {medicationList.length > 0 && (
             <Card className="p-4">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">복용 약물</p>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">복약체크</p>
               <div className="flex flex-wrap gap-2">
                 {medicationList.map((m) => (
                   <span
