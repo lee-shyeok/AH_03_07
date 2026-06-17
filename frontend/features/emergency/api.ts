@@ -10,7 +10,7 @@ export interface EmergencyContact {
 
 export interface EmergencyCard {
   blood_type?: string;
-  conditions?: string;
+  chronic_conditions?: string;
   medications?: string;
   allergies?: string;
   emergency_contacts?: EmergencyContact[];
