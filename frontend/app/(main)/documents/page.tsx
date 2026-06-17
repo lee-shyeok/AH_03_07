@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, FlaskConical, Pill, Plus, ChevronLeft } from "lucide-react";
+import { FileText, FlaskConical, Pill, Plus, ChevronLeft, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getDocuments, MedicalDocument } from "@/features/documents/api";
+import { getDocuments, deleteDocument, MedicalDocument } from "@/features/documents/api";
 
 type Tab = "처방전" | "검사" | "진료기록";
 const TABS: Tab[] = ["처방전", "검사", "진료기록"];
@@ -40,7 +40,11 @@ function toDisplayDate(dateStr: string | undefined): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${month}월 ${day}일 ${hours}:${minutes}`;
 }
 
 const TAB_MATCH: Record<"처방전" | "검사", (type: string) => boolean> = {
@@ -53,6 +57,21 @@ export default function DocumentsPage() {
   const [tab, setTab] = useState<Tab>("처방전");
   const [docs, setDocs] = useState<MedicalDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<Set<number>>(new Set());
+
+  async function handleDelete(e: React.MouseEvent, id: number) {
+    e.stopPropagation();
+    if (!confirm("이 문서를 삭제하시겠습니까?")) return;
+    setDeleting((prev) => new Set(prev).add(id));
+    try {
+      await deleteDocument(id);
+      setDocs((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      alert("삭제에 실패했습니다.");
+    } finally {
+      setDeleting((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  }
 
   useEffect(() => {
     getDocuments()
@@ -166,6 +185,14 @@ export default function DocumentsPage() {
                               <span className="text-xs text-muted-foreground">
                                 {toDisplayDate(d.created_at)}
                               </span>
+                              <button
+                                onClick={(e) => handleDelete(e, d.id)}
+                                disabled={deleting.has(d.id)}
+                                aria-label="문서 삭제"
+                                className="ml-1 rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </Card>
                           );
                         })}
