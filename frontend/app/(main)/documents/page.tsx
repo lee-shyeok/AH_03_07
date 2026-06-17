@@ -132,7 +132,11 @@ export default function DocumentsPage() {
           {!loading && (
             <button
               onClick={() =>
-                router.push(tab === "처방전" ? "/documents/ocr-review" : "/documents/exam-add")
+                router.push(
+                  tab === "처방전"
+                    ? "/documents/ocr-review?document_type=prescription"
+                    : "/documents/ocr-review?document_type=lab_result"
+                )
               }
               className="mt-4 flex w-full items-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-secondary/30 px-4 py-3 text-primary"
             >
