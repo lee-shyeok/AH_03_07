@@ -7,6 +7,7 @@ export interface HealthMetric {
   id?: string | number;
   metric_type: MetricType;
   user_recorded_value?: string;
+  diastolic_value?: string | null;
   value?: string;
   measured_at: string;
   notes?: string | null;
@@ -17,6 +18,7 @@ export interface HealthMetric {
 export interface HealthMetricCreate {
   metric_type: MetricType;
   user_recorded_value: string;
+  diastolic_value?: string;
   measured_at: string;
 }
 
