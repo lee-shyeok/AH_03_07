@@ -10,7 +10,7 @@ const RED = "#EF5B5B";
 
 const MOCK_CARD: EmergencyCard = {
   blood_type: "A형 Rh+",
-  conditions: "류마티스 관절염",
+  chronic_conditions: "류마티스 관절염",
   medications: "메토트렉세이트",
   allergies: "페니실린",
   emergency_contacts: [
@@ -33,7 +33,7 @@ export default function EmergencyPage() {
 
   const info = [
     { label: "혈액형", value: card.blood_type ?? "—", danger: false },
-    { label: "기저 질환", value: card.conditions ?? "—", danger: false },
+    { label: "기저 질환", value: card.chronic_conditions ?? "—", danger: false },
     { label: "복용 약물", value: card.medications ?? "—", danger: false },
     { label: "알레르기", value: card.allergies ?? "—", danger: true },
   ];

@@ -16,6 +16,7 @@ class EmergencyCard(models.Model):
     blood_type = fields.CharField(max_length=10, null=True)
     allergies = fields.TextField(null=True)
     chronic_conditions = fields.TextField(null=True)
+    medications = fields.TextField(null=True)
     emergency_contacts = fields.JSONField(null=True)
     siren_mode = fields.CharEnumField(enum_type=SirenMode, max_length=20, default=SirenMode.NORMAL)
     created_at = fields.DatetimeField(auto_now_add=True)

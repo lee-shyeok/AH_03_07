@@ -29,7 +29,7 @@ const BLOOD_TYPE_OPTIONS = [
 
 const MOCK_CARD: EmergencyCard = {
   blood_type: "A형 Rh+",
-  conditions: "류마티스 관절염",
+  chronic_conditions: "류마티스 관절염",
   medications: "메토트렉세이트 7.5mg",
   allergies: "페니실린",
   emergency_contacts: [],
@@ -224,7 +224,7 @@ export default function EmergencyCardPage() {
 
   const [bloodTypeSelect, setBloodTypeSelect] = useState("");
   const [bloodTypeCustom, setBloodTypeCustom] = useState("");
-  const [conditions, setConditions] = useState("");
+  const [chronicConditions, setChronicConditions] = useState("");
   const [medications, setMedications] = useState("");
   const [allergies, setAllergies] = useState("");
   const [guardians, setGuardians] = useState<EmergencyContact[]>([]);
@@ -245,7 +245,7 @@ export default function EmergencyCardPage() {
     const { select, custom } = initBloodTypeMode(data.blood_type ?? MOCK_CARD.blood_type ?? "");
     setBloodTypeSelect(select);
     setBloodTypeCustom(custom);
-    setConditions(data.conditions ?? MOCK_CARD.conditions ?? "");
+    setChronicConditions(data.chronic_conditions ?? MOCK_CARD.chronic_conditions ?? "");
     setMedications(data.medications ?? MOCK_CARD.medications ?? "");
     setAllergies(data.allergies ?? MOCK_CARD.allergies ?? "");
     setGuardians((data.emergency_contacts ?? MOCK_CARD.emergency_contacts ?? []).slice(0, 3));
@@ -272,7 +272,7 @@ export default function EmergencyCardPage() {
     try {
       await updateEmergencyCard({
         blood_type: getBloodType(),
-        conditions,
+        chronic_conditions: chronicConditions,
         medications,
         allergies,
         emergency_contacts: guardians,
@@ -346,11 +346,11 @@ export default function EmergencyCardPage() {
 
         {/* 기저 질환 */}
         <div className="px-4 py-3">
-          <Label htmlFor="conditions" className="text-xs text-muted-foreground">기저 질환</Label>
+          <Label htmlFor="chronic_conditions" className="text-xs text-muted-foreground">기저 질환</Label>
           <Input
-            id="conditions"
-            value={conditions}
-            onChange={(e) => setConditions(e.target.value)}
+            id="chronic_conditions"
+            value={chronicConditions}
+            onChange={(e) => setChronicConditions(e.target.value)}
             placeholder="예: 류마티스 관절염"
             className="mt-1 border-0 p-0 text-sm font-semibold shadow-none focus-visible:ring-0"
           />

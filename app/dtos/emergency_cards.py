@@ -10,6 +10,7 @@ class EmergencyCardCreateRequest(BaseModel):
     blood_type: str | None = None
     allergies: str | None = None
     chronic_conditions: str | None = None
+    medications: str | None = None
     emergency_contacts: list[dict] | None = None
     siren_mode: SirenMode = SirenMode.NORMAL
 
@@ -19,6 +20,7 @@ class EmergencyCardResponse(BaseModel):
     blood_type: str | None
     allergies: str | None
     chronic_conditions: str | None
+    medications: str | None
     emergency_contacts: list[dict] | None
     siren_mode: SirenMode
     created_at: datetime
