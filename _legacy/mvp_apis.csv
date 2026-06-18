@@ -1,0 +1,96 @@
+﻿No.,API_ID,Category,Method,Path,Description
+1,API-인증-001,인증,POST,/api/v1/auth/signup,회원가입 (이메일·비밀번호·생년월일·법정대리인)
+2,API-인증-002,인증,POST,/api/v1/auth/login,이메일 로그인
+3,API-인증-003,인증,POST,/api/v1/auth/refresh,Access Token 갱신
+4,API-인증-004,인증,POST,/api/v1/auth/logout,로그아웃 (Refresh Token 무효화)
+5,API-사용자-001,사용자,GET,/api/v1/users/me,내 정보 조회
+6,API-사용자-002,사용자,PUT,/api/v1/users/me,내 정보 수정
+7,API-사용자-003,사용자,DELETE,/api/v1/users/me,회원 탈퇴 (soft delete)
+8,API-사용자-004,사용자,GET,/api/v1/users/me/consents,동의 이력 조회
+9,API-사용자-005,사용자,POST,/api/v1/users/me/consents,동의 추가·갱신
+10,API-모드-001,모드,GET,/api/v1/users/me/mode,현재 모드 조회
+11,API-모드-002,모드,PUT,/api/v1/users/me/mode,모드 전환
+12,API-질환-001,질환,POST,/api/v1/diseases,질환 등록 (사용자 자가 입력)
+13,API-질환-002,질환,GET,/api/v1/diseases,내 질환 목록 조회
+14,API-질환-003,질환,PUT,/api/v1/diseases/{id},질환 정보 수정
+15,API-질환-004,질환,DELETE,/api/v1/diseases/{id},질환 삭제
+16,API-의료문서-001,의료문서,POST,/api/v1/medical-documents,의료문서 업로드 (처방전·진료기록·약봉투·검사결과지·건강검진 등)
+17,API-의료문서-002,의료문서,GET,/api/v1/medical-documents,내 의료문서 목록 조회
+18,API-의료문서-003,의료문서,GET,/api/v1/medical-documents/{id},의료문서 상세 조회
+19,API-의료문서-004,의료문서,POST,/api/v1/medical-documents/{id}/ocr-jobs,의료문서 OCR 처리 시작 (비동기 처리 작업 생성)
+20,API-의료문서-005,의료문서,GET,/api/v1/ocr-jobs/{id},OCR 처리 상태 및 결과 조회
+21,API-의료문서-006,의료문서,PUT,/api/v1/medical-documents/{id}/confirm,OCR 결과 사용자 검토·수정 후 확정
+22,API-의료문서-007,의료문서,DELETE,/api/v1/medical-documents/{id},의료문서 삭제
+23,API-처방전-001,처방전,GET,/api/v1/prescriptions,처방전 목록 조회 (의료문서 중 prescription 타입)
+24,API-처방전-002,처방전,GET,/api/v1/prescriptions/{id},처방전 상세 조회
+25,API-진료-001,진료,POST,/api/v1/medical-records,진료 기록 직접 입력
+26,API-진료-002,진료,GET,/api/v1/medical-records,진료 기록 목록 조회
+27,API-진료-003,진료,GET,/api/v1/medical-records/{id},진료 기록 상세 조회
+28,API-진료-004,진료,PUT,/api/v1/medical-records/{id},진료 기록 수정
+29,API-진료-005,진료,DELETE,/api/v1/medical-records/{id},진료 기록 삭제
+30,API-약품-001,약품,POST,/api/v1/medications,사용자 복용 약품 등록 (직접 입력)
+31,API-약품-002,약품,GET,/api/v1/medications,내 약품 목록
+32,API-약품-003,약품,PUT,/api/v1/medications/{id},약품 정보 수정
+33,API-약품-004,약품,DELETE,/api/v1/medications/{id},약품 삭제
+34,API-약품-005,약품,POST,/api/v1/pills/recognize,약품 이미지 기반 후보 약품 제시 (사용자 확정 필수)
+35,API-약품-006,약품,GET,/api/v1/pills/recognitions,약품 인식 이력 조회
+36,API-약품-007,약품,GET,/api/v1/drug-references,약품 기준 정보 조회 (사용자 입력 약품 확인용)
+37,API-복약-001,복약,GET,/api/v1/medication-logs,복약 알림·체크 이력
+38,API-복약-002,복약,PUT,/api/v1/medication-logs/{id}/check,복약 체크 (복용 완료 기록)
+39,API-활성도-001,활성도,POST,/api/v1/activity-logs,활성도 기록 (upsert)
+40,API-활성도-002,활성도,GET,/api/v1/activity-logs,활성도 기록 목록 (추이 차트용)
+41,API-활성도-003,활성도,GET,/api/v1/activity-logs/thresholds,내 알림 기준값 조회
+42,API-활성도-004,활성도,PUT,/api/v1/activity-logs/thresholds,내 알림 기준값 설정·수정
+43,API-증상-001,증상,POST,/api/v1/symptom-checks,위험 증상 자가체크 작성
+44,API-증상-002,증상,GET,/api/v1/symptom-checks,위험 증상 체크 이력 조회
+45,API-위험-001,위험,GET,/api/v1/risk-flags,내 위험 신호 목록 조회 (의료진 상담 권고 신호)
+46,API-위험-002,위험,GET,/api/v1/risk-flags/{id},위험 신호 상세 조회
+47,API-위험-003,위험,PATCH,/api/v1/risk-flags/{id},위험 신호 확인·해소·숨김 처리
+48,API-자가면역-001,자가면역,GET,/api/v1/autoimmune/profile,위험요인 프로필 조회 (사용자 자가 신고)
+49,API-자가면역-002,자가면역,PUT,/api/v1/autoimmune/profile,위험요인 프로필 수정
+50,API-자가면역-003,자가면역,POST,/api/v1/care-schedules,검사·진료·주사 일정 등록
+51,API-자가면역-004,자가면역,GET,/api/v1/care-schedules,일정 목록 조회
+52,API-자가면역-005,자가면역,PUT,/api/v1/care-schedules/{id},일정 수정
+53,API-자가면역-006,자가면역,DELETE,/api/v1/care-schedules/{id},일정 삭제
+54,API-검사-001,검사,POST,/api/v1/lab-results,검사 결과 사용자 기록 (자동 판독 X)
+55,API-검사-002,검사,GET,/api/v1/lab-results,검사 결과 목록
+56,API-안내문-001,안내문,POST,/api/v1/guides/generate,맞춤 안내문 생성 요청 (비동기 처리 작업 생성)
+57,API-안내문-002,안내문,GET,/api/v1/guide-generation-jobs/{id},안내문 생성 작업 상태 조회
+58,API-안내문-003,안내문,GET,/api/v1/guides,내 안내문 목록
+59,API-안내문-004,안내문,GET,/api/v1/guides/{id},안내문 상세 조회
+60,API-안내문-005,안내문,GET,/api/v1/guides/{id}/sources,안내문에 사용된 출처 목록 조회
+61,API-안내문-006,안내문,GET,/api/v1/guides/{id}/sections,안내문 섹션별 조회
+62,API-안내문-007,안내문,POST,/api/v1/guides/{id}/regenerate,안내문 재생성
+63,API-안내문-008,안내문,POST,/api/v1/guides/{id}/feedback,안내문 평가·피드백
+64,API-챗봇-001,챗봇,POST,/api/v1/chat/sessions,챗봇 세션 시작
+65,API-챗봇-002,챗봇,POST,/api/v1/chat/sessions/{id}/messages,챗봇 메시지 전송 + 응답
+66,API-챗봇-003,챗봇,GET,/api/v1/chat/sessions/{id}/messages,대화 내역 조회
+67,API-챗봇-004,챗봇,POST,/api/v1/chat/messages/{id}/feedback,"응답 평가 (+1, -1)"
+68,API-알림-001,알림,POST,/api/v1/notifications/settings,복약 알림 등록·갱신
+69,API-알림-002,알림,GET,/api/v1/notifications/settings,알림 설정 조회
+70,API-알림-003,알림,PUT,/api/v1/notifications/settings,알림 ON/OFF 설정 (사용자 동의 기반)
+71,API-알림-004,알림,GET,/api/v1/notifications,알림 목록 조회
+72,API-알림-005,알림,PUT,/api/v1/notifications/{id}/read,알림 읽음 처리
+73,API-건강수치-001,건강수치,POST,/api/v1/health-metrics,혈압·혈당 수동 입력
+74,API-건강수치-002,건강수치,GET,/api/v1/health-metrics,건강 수치 그래프 데이터
+75,API-보호자-001,보호자,POST,/api/v1/guardians/shares,보호자 공유 링크 생성 (사용자 동의 기반)
+76,API-보호자-002,보호자,GET,/api/v1/guardians/shares,내 보호자 공유 목록
+77,API-보호자-003,보호자,DELETE,/api/v1/guardians/shares/{id},보호자 공유 철회
+78,API-보호자-004,보호자,GET,/api/v1/guardians/view/{token},보호자 본인 인증 후 의료정보 열람
+79,API-약국-001,약국,GET,/api/v1/pharmacies/nearby,주변 약국 정보 조회
+80,API-일반-일기-001,일반-일기,POST,/api/v1/diary/symptom-logs,일반 모드 증상 일기 작성 (일상어 객관식)
+81,API-일반-일기-002,일반-일기,GET,/api/v1/diary/symptom-logs,일반 모드 증상 일기 조회 (날짜순 원본 나열)
+82,API-일반-일기-003,일반-일기,POST,/api/v1/diary/medication-logs,일반 모드 복약 체크 (단순 ✓/✗)
+83,API-일반-일기-004,일반-일기,GET,/api/v1/diary/pdf,진료용 PDF 출력 (증상·복약 별도 섹션)
+84,API-일정-001,일정,GET,/api/v1/general/schedule,일반 모드 통합 캘린더 뷰
+85,API-리포트-001,리포트,POST,/api/v1/reports/pre-visit,진료 전 1페이지 요약 생성 (비동기 처리 작업 생성)
+86,API-리포트-002,리포트,GET,/api/v1/reports/{id},리포트 조회
+87,API-리포트-003,리포트,POST,/api/v1/reports/{id}/share,의료진에게 공유 (보안링크)
+88,API-콘텐츠-001,콘텐츠,POST,/api/v1/contents/card-news,카드뉴스 생성 (비동기 처리 작업 생성)
+89,API-콘텐츠-002,콘텐츠,POST,/api/v1/contents/tts,TTS 음성 변환
+90,API-콘텐츠-003,콘텐츠,GET,/api/v1/contents,변환 내역 조회
+91,API-게임-001,게임,POST,/api/v1/games/scores,미니게임 점수 기록
+92,API-게임-002,게임,GET,/api/v1/games/badges,내 뱃지·포인트 조회
+93,API-피드백-001,피드백,POST,/api/v1/feedback,구조화 피드백 제출 (가명처리 후 모델 개선 활용)
+94,API-마이페이지-001,마이페이지,GET,/api/v1/dashboard,마이페이지 대시보드 메인
+95,API-관리자-001,관리자,GET,/api/v1/admin/safety-filter-logs,안전 필터 차단 이력 조회 (관리자용)
